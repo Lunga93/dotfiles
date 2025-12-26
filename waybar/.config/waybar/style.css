@@ -22,29 +22,32 @@ window#waybar {
     margin: 4px 0;
 }
 
-/* Workspaces – pill-shaped buttons */
+/* Workspaces – Clean & Simple Line Style */
+#workspaces button,
 #niri-workspaces button {
-    padding: 2px 10px;
+    padding: 2px 6px;
     color: #a0a0a0;
-    border-radius: 999px;
     margin: 0 2px;
     transition: all 0.2s ease;
+    border-bottom: 2px solid transparent; /* Reserve space for the line */
 }
 
-#workspaces button.active {
+#workspaces button.active,
+#niri-workspaces button.active {
     color: #ffffff;
-    background: rgba(100, 150, 255, 0.4);
+    background: transparent; /* Removed the expressive background */
+    border-bottom: 2px solid #ffffff; /* Clean line underneath */
 }
 
-/* Taskbar icons */
+/* Taskbar icons – Active Indicator Fix */
 #taskbar button {
     padding: 4px;
     margin: 0 4px;
-    border-radius: 999px;
+    border-radius: 8px;
+    border-bottom: 2px solid transparent;
 }
 
 #taskbar button.active {
-    background: rgba(255, 255, 255, 0.1);
     border-bottom: 2px solid #ffffff;
 }
 
