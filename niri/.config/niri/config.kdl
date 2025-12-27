@@ -46,6 +46,8 @@ binds {
     // Please choose your own file manager
     MOD+E                             hotkey-overlay-title="File Manager: Nautilus" { spawn-sh "nautilus"; }
 
+    // Clipboard
+    MOD+V { spawn-sh "cliphist list | wofi --dmenu | cliphist decode | wl-copy"; }
     // ─── Audio Controls ───
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -175,6 +177,7 @@ binds {
     spawn-sh-at-startup "waybar" // Launch waybar
     spawn-sh-at-startup "xwayland-satellite"
     spawn-at-startup "mako"
+    spawn-sh-at-startup "wl-paste --watch cliphist store"
 
     prefer-no-csd // Disable program decorations
     screenshot-path null // Disable screenshot saving
