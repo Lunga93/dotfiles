@@ -1,46 +1,66 @@
+/* Global font – matches Waybar */
 * {
-    font-family: "Hack", monospace;
+    font-family: "Fira Sans Semibold", "Font Awesome 6 Free", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
 }
 
+/* Main window – clean solid frosted glass */
 window {
-    background-color: #3B4252;
+    background-color: rgba(20, 24, 32, 0.75); /* More solid opacity */
+    border-radius: 24px; /* Soft rounded */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle white edge */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Lighter shadow for clean float */
 }
 
-#input {
-    margin: 5px;
-    border-radius: 0px;
-    border: none;
-    background-color: #3B4252;
-    color: white;
-}
-
-#inner-box {
-    background-color: #383C4A;
-}
-
+/* Outer padding – tighter */
 #outer-box {
-    margin: 2px;
-    padding: 10px;
-    background-color: #383C4A;
+    padding: 16px;
+    background: transparent;
 }
 
+/* Inner box */
+#inner-box {
+    background: transparent;
+}
+
+/* Input bar – clean pill */
+#input {
+    background-color: rgba(30, 34, 42, 0.9); /* Solid dark */
+    color: #e0e0e0;
+    border-radius: 999px;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    border: none;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Entries list */
 #scroll {
-    margin: 5px;
+    background: transparent;
 }
 
-#text {
-    padding: 4px;
-    color: white;
-}
-
-#entry:nth-child(even){
-    background-color: #404552;
+/* Individual entries – minimal */
+#entry {
+    padding: 10px 14px; /* Tighter for compactness */
+    border-radius: 14px;
+    margin: 4px 0;
+    background: rgba(30, 34, 42, 0.2); /* Very subtle base */
+    transition: background 0.2s ease;
 }
 
 #entry:selected {
-    background-color: #4C566A;
+    background-color: rgba(255, 255, 255, 0.15); /* Clean white highlight – no blue */
+    color: #ffffff;
 }
 
-#text:selected {
-    background: transparent;
+/* Text */
+#text {
+    color: #e0e0e0;
+    margin-left: 12px;
+}
+
+/* App icons – subtle round */
+#img {
+    border-radius: 10px;
+    margin-right: 8px;
 }

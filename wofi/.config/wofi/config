@@ -1,6 +1,11 @@
-allow_images=true
-hide_scroll=true
-no_actions=false
-term=alacritty
 mode=drun
---show
+allow_images=true
+allow_markup=true
+insensitive=true
+hide_scroll=true
+location=top_center  # Higher on screen
+y_offset=-200        # Move even higher (negative = up; tweak ±50px)
+width=520            # Smaller width
+height=360           # Compact height
+lines=8              # Fewer results visible
+prompt=Search...
