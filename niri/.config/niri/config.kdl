@@ -178,6 +178,8 @@ binds {
     spawn-sh-at-startup "xwayland-satellite"
     spawn-at-startup "mako"
     spawn-sh-at-startup "wl-paste --watch cliphist store"
+    spawn-sh-at-startup "gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'"
+    spawn-sh-at-startup "gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'"
 
     prefer-no-csd // Disable program decorations
     screenshot-path null // Disable screenshot saving
