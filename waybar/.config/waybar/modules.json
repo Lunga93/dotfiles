@@ -23,7 +23,11 @@
     "icon-size": 21,
     "spacing": 10
   },
-
+  "custom/clipboard": {
+    "format": "",
+    "on-click": "cliphist list | wofi --dmenu | cliphist decode | wl-copy",
+    "tooltip-format": "Clipboard History"
+  },
   "pulseaudio": {
     "format": "{icon}  {volume}%",
     "format-bluetooth": "{volume}% {icon} {format_source}",
