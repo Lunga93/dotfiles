@@ -1,22 +1,29 @@
-# 🌌 Lunga's Dotfiles
+# Lunga's Dotfiles
 
-My personal configuration files for a productive Wayland-based workflow on **Arch Linux / CachyOS**, featuring the **Niri** compositor and **Zen Browser**.
+Personal configuration files for a productive Wayland-based workflow on Arch Linux (CachyOS). This setup features the Niri compositor, aimed at a clean, keyboard-centric experience.
 
-## 🛠 Tech Stack
+![Desktop Screenshot](./public/img.png)
+
+## Core Components
 * **OS:** Arch Linux (CachyOS)
-* **Compositor:** [Niri](https://github.com/YaLTeR/niri) (Scrollable tiling window manager)
+* **Compositor:** Niri (Scrollable tiling window manager)
+* **Status Bar:** Waybar
+* **Launcher:** Wofi
+* **Notifications:** Mako
 * **Terminal:** Alacritty
-* **Browser:** Zen Browser (AUR)
-* **Lockscreen:** Swaylock
-* **Idle Daemon:** Swayidle
-* **Shell:** Zsh
+* **Browser:** Zen Browser
+* **File Manager:** Nautilus (GNOME Files)
+* **Wallpaper Daemon:** swww
 
-## 📂 Structure
-This repository uses **GNU Stow** to manage symbolic links.
-- `niri/`: Configuration for the Niri compositor (`~/.config/niri/config.kdl`)
-- `scripts/`: Custom scripts for power management and shortcuts.
+## Structure
+This repository is managed using **GNU Stow**. Each top-level directory corresponds to a stow package.
 
-## 🚀 Installation
+* `niri/` - Main compositor configuration
+* `waybar/` - Status bar styling and modules
+* `wofi/` - Application launcher styling
+* `mako/` - Notification daemon settings
+
+## Installation
 
 1. **Clone the repository:**
    ```bash
