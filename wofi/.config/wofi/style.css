@@ -1,66 +1,80 @@
-/* Global font – matches Waybar */
+/* Global typography */
 * {
     font-family: "Fira Sans Semibold", "Font Awesome 6 Free", Roboto, Helvetica, Arial, sans-serif;
     font-size: 15px;
+    color: #e0e0e0;
 }
 
-/* Main window – clean solid frosted glass */
+/* Main window */
 window {
-    background-color: rgba(20, 24, 32, 0.75); /* More solid opacity */
-    border-radius: 24px; /* Soft rounded */
-    border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle white edge */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Lighter shadow for clean float */
+    margin: 0;
+    /* Increased opacity to 0.9 (90%) to hide background clutter */
+    background-color: rgba(30, 34, 42, 0.9);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
-/* Outer padding – tighter */
+/* Outer/Inner boxes */
 #outer-box {
-    padding: 16px;
-    background: transparent;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
 }
 
-/* Inner box */
 #inner-box {
-    background: transparent;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
 }
 
-/* Input bar – clean pill */
+/* Input bar */
 #input {
-    background-color: rgba(30, 34, 42, 0.9); /* Solid dark */
-    color: #e0e0e0;
-    border-radius: 999px;
-    padding: 12px 20px;
-    margin-bottom: 16px;
-    border: none;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* Entries list */
-#scroll {
-    background: transparent;
-}
-
-/* Individual entries – minimal */
-#entry {
-    padding: 10px 14px; /* Tighter for compactness */
-    border-radius: 14px;
-    margin: 4px 0;
-    background: rgba(30, 34, 42, 0.2); /* Very subtle base */
-    transition: background 0.2s ease;
-}
-
-#entry:selected {
-    background-color: rgba(255, 255, 255, 0.15); /* Clean white highlight – no blue */
+    background-color: rgba(255, 255, 255, 0.05);
     color: #ffffff;
+    border-radius: 999px;
+    padding: 10px 16px;
+    margin: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: none;
 }
 
-/* Text */
+#input:focus {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+/* Scroll Area */
+#scroll {
+    margin: 0;
+    padding: 0 16px 16px 16px;
+    border: none;
+    background-color: transparent;
+}
+
+/* Individual entries */
+#entry {
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    border: none;
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
+
+/* Selected Entry */
+#entry:selected {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 #text {
-    color: #e0e0e0;
-    margin-left: 12px;
+    margin-left: 10px;
 }
 
-/* App icons – subtle round */
 #img {
-    border-radius: 10px;
-    margin-right: 8px;
+    margin-right: 10px;
+    background: transparent;
 }
