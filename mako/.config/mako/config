@@ -1,25 +1,30 @@
-# Mako – Enhanced Compact Marble Glass Theme
-# Icons on left, clickable dismiss/action, grouped stacking
+# Mako – macOS Big Sur/Ventura Style
+# Refined proportions: Regular body text, bold headers, rounded corners
 
-font=Fira Sans Semibold 14
+# Base font is now smaller and Regular weight (not Semibold)
+font=Fira Sans 12
 
-background-color=#0f1117ee
-text-color=#e0e0e0
-border-color=#ffffff22
-border-radius=16
+# macOS Dark Mode: Neutral dark grey with high transparency
+background-color=#1e1e1ecc
+text-color=#f0f0f0
+
+# Subtle white border for "glass" edge effect
+border-color=#ffffff33
+border-radius=20
 border-size=1
 
-padding=12
-width=380
+# Increased padding for "airy" feel, slightly narrower width
+padding=16
+width=360
 margin=16
 anchor=top-right
 
 # --- ICON SETTINGS ---
 icons=1
-max-icon-size=48
+# 42px looks more proportional to the 360px width than 48px
+max-icon-size=42
 icon-location=left
 
-# STRICT SEARCH PATH: Local WhiteSur -> System WhiteSur -> Fallbacks
 icon-path=~/.local/share/icons/WhiteSur/apps/48:~/.local/share/icons/WhiteSur/apps/scalable:~/.local/share/icons/WhiteSur:/usr/share/icons/WhiteSur/apps/48:/usr/share/icons/WhiteSur/apps/scalable:/usr/share/icons/WhiteSur:/usr/share/icons/Papirus:/usr/share/icons/hicolor
 
 # --- BEHAVIOR ---
@@ -28,12 +33,12 @@ ignore-timeout=1
 max-history=30
 layer=overlay
 
-progress-color=over #ffffff44
+progress-color=over #ffffff22
 group-by=app-name
 
 # --- FORMATTING ---
 markup=1
-format=<b>%s</b>\n%b
+format=<span weight="bold"><big>%s</big></span>\n<span color="#cccccc">%b</span>
 
 actions=1
 on-button-left=dismiss
