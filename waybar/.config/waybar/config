@@ -16,6 +16,7 @@
   "modules-right": [
     "custom/clipboard",
     "tray",
+    "bluetooth",
     "pulseaudio",
     "clock",
     "custom/exit"
