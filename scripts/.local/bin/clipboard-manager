@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# clipboard-manager
+# Presents clipboard history (via cliphist) in wofi and places the selection
+# back to the clipboard using wl-copy. Falls back gracefully when commands
+# are missing.
+
+CLIPHIST_CMD="$(command -v cliphist || true)"
+WOFI_CMD="$(command -v wofi || true)"
+WL_COPY="$(command -v wl-copy || true)"
+
+if [ -z "$CLIPHIST_CMD" ]; then
+    echo "cliphist not found. Install cliphist to use clipboard-manager." >&2
+    exit 2
+fi
+
+if [ -z "$WOFI_CMD" ]; then
+    echo "wofi not found. Install wofi to use clipboard-manager." >&2
+    exit 2
+fi
+
+# Get the clipboard history lines. We keep it generic: cliphist -n prints items
+# Many cliphist versions support `cliphist --print` or `cliphist --limit`.
+HISTORY="$($CLIPHIST_CMD list 2>/dev/null || $CLIPHIST_CMD print 2>/dev/null || $CLIPHIST_CMD 2>/dev/null || true)"
+
+if [ -z "$HISTORY" ]; then
+    echo "No clipboard history available." >&2
+    exit 0
+fi
+
+# Present via wofi and capture selection.
+SELECTION=$(printf "%s" "$HISTORY" | $WOFI_CMD --dmenu --prompt "Clipboard" 2>/dev/null || true)
+
+if [ -z "$SELECTION" ]; then
+    # wofi may print nothing if cancelled
+    exit 0
+fi
+
+if [ -z "$WL_COPY" ]; then
+    echo "wl-copy not found. Selected value:" >&2
+    printf "%s" "$SELECTION"
+    exit 0
+fi
+
+printf "%s" "$SELECTION" | $WL_COPY

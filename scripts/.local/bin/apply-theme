@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# apply-theme <wallpaper-path>
+# Uses wal (pywal) to generate theme files and signals UI components to reload.
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: apply-theme <wallpaper-path>" >&2
+    exit 2
+fi
+
+WALLPAPER="$1"
+WAL_CMD="$(command -v wal || true)"
+
+if [ -z "$WAL_CMD" ]; then
+    echo "pywal (wal) not found; skipping theme generation." >&2
+    exit 0
+fi
+
+# Generate colors
+$WAL_CMD -i "$WALLPAPER" --silent || true
+
+# Attempt to reload Waybar and Mako by sending USR1 (commonly used), but
+# if pkill is not available we simply exit successfully; the live reload is
+# optional and dependent on the running environment.
+if command -v pkill >/dev/null 2>&1; then
+    pkill -USR1 -x waybar || true
+    pkill -USR1 -x mako || true
+fi
+
+echo "Theme applied for $WALLPAPER"

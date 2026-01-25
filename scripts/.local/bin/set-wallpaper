@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# set-wallpaper <image-path>
+# Sets wallpaper using swww and applies theme via apply-theme.
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: set-wallpaper <image-path>" >&2
+    exit 2
+fi
+
+IMG="$1"
+SWWW_CMD="$(command -v swww || true)"
+APPLY_THEME_CMD="$(command -v apply-theme || true)"
+
+if [ -n "$SWWW_CMD" ]; then
+    $SWWW_CMD img "$IMG" || true
+else
+    echo "swww not found; skipping wallpaper set." >&2
+fi
+
+if [ -n "$APPLY_THEME_CMD" ]; then
+    $APPLY_THEME_CMD "$IMG" || true
+else
+    # try local bin path relative to this script file
+    SCRIPTS_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+    if [ -f "$SCRIPTS_DIR/apply-theme" ]; then
+        # call via bash to avoid relying on the executable bit inside the repo
+        bash "$SCRIPTS_DIR/apply-theme" "$IMG" || true
+    fi
+fi

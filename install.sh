@@ -43,6 +43,7 @@ OFFICIAL_PACKAGES=(
     "stow"
     "git"
     "base-devel"
+    "python-pywal"
 )
 
 sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
@@ -65,6 +66,7 @@ AUR_PACKAGES=(
     "xwayland-satellite"  # XWayland manager for Niri
     "aylurs-gtk-shell"    # AGS
     "zen-browser-bin"     # Zen Browser
+    "swaylock-effects-git" # Enhanced lock screen with blur
 )
 
 yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
@@ -82,6 +84,7 @@ STOW_DIRS=(
     "mako"
     "wofi"
     "ags"
+    "scripts"
 )
 
 # Handle potential conflicts by backing up existing configs

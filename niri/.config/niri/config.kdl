@@ -47,7 +47,7 @@ binds {
     MOD+E                             hotkey-overlay-title="File Manager: Nautilus" { spawn-sh "nautilus"; }
 
     // Clipboard
-    MOD+V { spawn-sh "cliphist list | wofi --dmenu | cliphist decode | wl-copy"; }
+    MOD+V { spawn-sh "~/.local/bin/clipboard-manager"; }
     // ─── Audio Controls ───
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -160,7 +160,7 @@ binds {
 
     // ─── Exit / Power ───
     CTRL+ALT+DELETE                     { quit; } // Also quits Niri
-    MOD+ALT+L allow-when-locked=true hotkey-overlay-title="Lock Screen" { spawn "swaylock"; }
+    MOD+ALT+L allow-when-locked=true hotkey-overlay-title="Lock Screen" { spawn-sh "~/.local/bin/lock-screen"; }
     MOD+SHIFT+P                         { power-off-monitors; } // Turn off screens (useful for OLED or privacy)
     MOD+SHIFT+S hotkey-overlay-title="Lock and Suspend" { 
         spawn "sh" "-c" "systemctl suspend && swaylock"; 
@@ -173,7 +173,7 @@ binds {
 
     spawn-sh-at-startup "/usr/lib/polkit-kde-authentication-agent-1 &" // Polkit
     spawn-sh-at-startup "swww-daemon" // Wallpaper daemon
-    spawn-sh-at-startup "swww img ~/Pictures/wallpapers/forest-train.gif" // Set wallpaper
+    spawn-sh-at-startup "~/.local/bin/set-wallpaper ~/Pictures/wallpapers/forest-train.gif" // Set wallpaper & theme
     spawn-sh-at-startup "waybar" // Launch waybar
     spawn-sh-at-startup "xwayland-satellite"
     spawn-at-startup "mako"
