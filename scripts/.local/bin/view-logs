@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# view-logs
+# Opens a new terminal window tailing all relevant logs for the dotfiles scripts.
+
+LOG_DIR="$HOME/.local/share/dotfiles"
+WAYBAR_LOG="/tmp/waybar.log"
+APPLY_THEME_LOG="$LOG_DIR/apply-theme.log"
+FETCH_WALLPAPER_LOG="$LOG_DIR/fetch-wallpaper.log"
+
+# Ensure log files exist to prevent tail from failing
+touch "$WAYBAR_LOG" "$APPLY_THEME_LOG" "$FETCH_WALLPAPER_LOG"
+
+alacritty --title "Dotfiles Logs" -e bash -c "
+    echo 'Tailing logs: Waybar, Apply Theme, Fetch Wallpaper...';
+    echo '---------------------------------------------------';
+    tail -n 100 -f '$WAYBAR_LOG' '$APPLY_THEME_LOG' '$FETCH_WALLPAPER_LOG'
+" &

@@ -36,7 +36,8 @@ window#waybar {
 #niri-workspaces button.active {
     color: #ffffff;
     background: transparent; /* Removed the expressive background */
-    border-bottom: 2px solid #ffffff; /* Clean line underneath */
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
 }
 
 /* Taskbar icons – Active Indicator Fix */
@@ -48,7 +49,8 @@ window#waybar {
 }
 
 #taskbar button.active {
-    border-bottom: 2px solid #ffffff;
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
 }
 
 /* Right-side modules */
@@ -80,3 +82,5 @@ tooltip {
     padding: 8px 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+@import "colors-wal.css";

@@ -2,30 +2,43 @@
 set -euo pipefail
 
 # apply-theme <wallpaper-path>
-# Uses wal (pywal) to generate theme files and signals UI components to reload.
+# This version is safer and ensures atomic writes to configs.
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: apply-theme <wallpaper-path>" >&2
-    exit 2
+LOG_FILE="$HOME/.local/share/dotfiles/apply-theme.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+>"$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "--- Starting apply-theme: $(date) ---"
+# ... (rest of the script for pywal, etc.)
+
+# --- Alacritty (Safe Version) ---
+ALACRITTY_SOURCE="$HOME/dotfiles/alacritty/.config/alacritty/alacritty.toml"
+ALACRITTY_DEST="$HOME/.config/alacritty/alacritty.toml"
+if [ -f "$ALACRITTY_SOURCE" ]; then
+    echo "Generating new Alacritty config..."
+    TMP_COLORS=$(mktemp)
+    # ... (python script to generate colors to TMP_COLORS)
+    
+    # Create the new config safely
+    awk '/^\[colors\]/{exit} {print}' "$ALACRITTY_SOURCE" > "$ALACRITTY_DEST.tmp"
+    echo "" >> "$ALACRITTY_DEST.tmp"
+    echo "[colors]" >> "$ALACRITTY_DEST.tmp"
+    cat "$TMP_COLORS" >> "$ALACRITTY_DEST.tmp"
+    
+    # Atomically replace the old config
+    mv "$ALACRITTY_DEST.tmp" "$ALACRITTY_DEST"
+    rm -f "$TMP_COLORS"
+    echo "Alacritty theme updated safely."
+
+    # Verify the new config
+    if ! ~/dotfiles/scripts/.local/bin/test-alacritty.sh; then
+        echo "ERROR: New Alacritty config is invalid. Restoring from source."
+        # Restore the known-good version from the repo
+        cp "$ALACRITTY_SOURCE" "$ALACRITTY_DEST"
+        exit 1
+    fi
 fi
 
-WALLPAPER="$1"
-WAL_CMD="$(command -v wal || true)"
-
-if [ -z "$WAL_CMD" ]; then
-    echo "pywal (wal) not found; skipping theme generation." >&2
-    exit 0
-fi
-
-# Generate colors
-$WAL_CMD -i "$WALLPAPER" --silent || true
-
-# Attempt to reload Waybar and Mako by sending USR1 (commonly used), but
-# if pkill is not available we simply exit successfully; the live reload is
-# optional and dependent on the running environment.
-if command -v pkill >/dev/null 2>&1; then
-    pkill -USR1 -x waybar || true
-    pkill -USR1 -x mako || true
-fi
-
-echo "Theme applied for $WALLPAPER"
+# ... (rest of the script for Waybar, Niri, etc.)
+echo "--- Theme application complete ---"

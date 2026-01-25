@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# wallpaper-menu: let you pick a wallpaper from the archive or skip
+ARCHIVE_DIR="$HOME/Pictures/wallpapers/archive"
+CURRENT="$HOME/Pictures/wallpapers/daily.jpg"
+WOFI_CMD="$(command -v wofi || true)"
+
+mkdir -p "$ARCHIVE_DIR"
+
+if [ -z "$WOFI_CMD" ]; then
+    echo "wofi not found" >&2
+    exit 2
+fi
+
+mapfile -t files < <(ls -1t "$ARCHIVE_DIR" 2>/dev/null || true)
+files+=("Use current")
+
+choice=$(printf "%s\n" "${files[@]}" | $WOFI_CMD --dmenu --prompt "Choose wallpaper" )
+if [ -z "$choice" ]; then
+    exit 0
+fi
+
+if [ "$choice" = "Use current" ]; then
+    ~/.local/bin/set-wallpaper "$CURRENT"
+    exit 0
+fi
+
+if [ -f "$ARCHIVE_DIR/$choice" ]; then
+    ~/.local/bin/set-wallpaper "$ARCHIVE_DIR/$choice"
+fi

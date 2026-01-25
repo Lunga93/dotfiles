@@ -12,6 +12,11 @@ Included scripts
   (Waybar, Mako) to reload if possible.
 - `set-wallpaper` — sets wallpaper with `swww` and applies the generated theme.
 - `lock-screen` — wraps `swaylock-effects` or `swaylock` with preferred flags.
+ - `fetch-wallpaper` — downloads a daily wallpaper (local → Unsplash → Picsum)
+   and applies it via `set-wallpaper`.
+ - `wallpaper-menu` — interactive selection menu to pick from archived wallpapers.
+ - `wallpaper-control` — management menu (Fetch, Re-apply, Select, Enable/Disable
+   daily timer, Skip Today).
 
 Installation
 ------------

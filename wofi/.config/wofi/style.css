@@ -1,3 +1,5 @@
+@import "colors-wal.css";
+
 /* Global typography */
 * {
     font-family: "Fira Sans Semibold", "Font Awesome 6 Free", Roboto, Helvetica, Arial, sans-serif;

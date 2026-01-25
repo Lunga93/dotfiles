@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# wallpaper-control
+# Presents a small wofi menu to manage daily wallpaper fetcher
+
+WOFI="$(command -v wofi || true)"
+FETCH="${HOME}/.local/bin/fetch-wallpaper"
+SETWALLPAPER="${HOME}/.local/bin/set-wallpaper"
+WALLPAPER="${HOME}/Pictures/wallpapers/daily.jpg"
+SKIPFILE="${HOME}/.local/share/dotfiles/skip_today"
+
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "Wallpaper" "$1"
+    else
+        echo "$1"
+    fi
+}
+
+timer_active() {
+    systemctl --user is-active --quiet daily-wallpaper.timer
+}
+
+menu() {
+    local status
+    if timer_active; then
+        status="Disable Daily Wallpaper"
+    else
+        status="Enable Daily Wallpaper"
+    fi
+
+    local skipopt
+    if [ -f "$SKIPFILE" ] && [ "$(cat "$SKIPFILE")" = "$(date +%F)" ]; then
+        skipopt="Unskip Today"
+    else
+        skipopt="Skip Today"
+    fi
+
+    printf "%s\n" "Fetch New Wallpaper" "Re-apply Current Theme" "Select from Archive" "$status" "$skipopt" "Cancel" | $WOFI --dmenu --prompt "Wallpaper" 2>/dev/null
+}
+
+choice="$(menu)"
+[ -n "$choice" ] || exit 0
+
+case "$choice" in
+    "Fetch New Wallpaper")
+        $FETCH && notify "Fetched new wallpaper" || notify "Fetch failed" ;;
+    "Re-apply Current Theme")
+        [ -f "$WALLPAPER" ] && $SETWALLPAPER "$WALLPAPER" && notify "Re-applied theme" || notify "No current wallpaper" ;;
+    "Select from Archive")
+        $HOME/.local/bin/wallpaper-menu || true ;;
+    "Disable Daily Wallpaper")
+        systemctl --user disable --now daily-wallpaper.timer && notify "Daily wallpaper disabled" || notify "Failed to disable" ;;
+    "Enable Daily Wallpaper")
+        systemctl --user enable --now daily-wallpaper.timer && notify "Daily wallpaper enabled" || notify "Failed to enable" ;;
+    "Skip Today")
+        mkdir -p "$(dirname "$SKIPFILE")" && date +%F > "$SKIPFILE" && notify "Wallpaper skipped for today" ;;
+    "Unskip Today")
+        rm -f "$SKIPFILE" && notify "Wallpaper skip removed" ;;
+    *)
+        exit 0 ;;
+esac

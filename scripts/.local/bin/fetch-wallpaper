@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# fetch-wallpaper
+# Downloads a random wallpaper using Unsplash and triggers set-wallpaper
+
+CONFIG_DIR="$HOME/.config/dotfiles"
+OUT_DIR="$HOME/Pictures/wallpapers"
+OUT_FILE="$OUT_DIR/daily.jpg"
+
+mkdir -p "$OUT_DIR"
+
+# Priority order for wallpaper source:
+# 1) If $LOCAL_WALLPAPER_DIR is set and contains files, pick a random local file
+# 2) If UNSPLASH_API_KEY exists at $CONFIG_DIR/unsplash_api_key use Unsplash
+# 3) Fallback to Lorem Picsum (no API key required)
+
+LOCAL_WALLPAPER_DIR="${LOCAL_WALLPAPER_DIR:-$HOME/Pictures/wallpapers/local}"
+UNSPLASH_KEY_FILE="$CONFIG_DIR/unsplash_api_key"
+
+choose_local() {
+    if [ -d "$LOCAL_WALLPAPER_DIR" ]; then
+        # find images and pick one randomly
+        mapfile -t files < <(find "$LOCAL_WALLPAPER_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) )
+        if [ "${#files[@]}" -gt 0 ]; then
+            # pick random
+            idx=$((RANDOM % ${#files[@]}))
+            echo "${files[$idx]}"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+download_picsum() {
+    # Determine size: prefer WALLPAPER_SIZE env var or detect from sway outputs
+    local size="${WALLPAPER_SIZE:-}"
+    if [ -z "$size" ]; then
+        if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+            size=$(swaymsg -t get_outputs 2>/dev/null | jq -r 'map(select(.active==true))[0].current_mode | "\(.width)x\(.height)"' 2>/dev/null || true)
+        fi
+    fi
+    if [ -z "$size" ]; then
+        size="1920/1080"
+    fi
+    # Picsum uses /WIDTH/HEIGHT
+    size=${size/x/\/}
+    local url="https://picsum.photos/${size}"
+    echo "Downloading random image from picsum.photos (${size})..."
+    curl -sSL -o "$OUT_FILE" "$url"
+}
+
+download_unsplash() {
+    local apikey="$1"
+    echo "Fetching random wallpaper from Unsplash (no admin keys required if you provide one)..."
+    JSON=$(curl -sS -G "https://api.unsplash.com/photos/random" \
+        -H "Accept-Version: v1" \
+        -H "Authorization: Client-ID $apikey" \
+        --data-urlencode "orientation=landscape" \
+        --data-urlencode "query=nature,landscape" ) || return 1
+    IMG_URL=$(echo "$JSON" | jq -r '.urls.raw // .urls.full // .urls.regular')
+    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
+        return 1
+    fi
+    echo "Downloading image from Unsplash..."
+    curl -sSL -o "$OUT_FILE" "$IMG_URL"
+}
+
+main() {
+    LOGFILE="$HOME/.local/share/dotfiles/fetch-wallpaper.log"
+    mkdir -p "$(dirname "$LOGFILE")"
+    logger() { printf "%s %s\n" "$(date --iso-8601=seconds)" "$*" >> "$LOGFILE"; }
+
+    # rotate logs (keep 30)
+    if [ -f "$LOGFILE" ] && [ $(wc -c < "$LOGFILE") -gt $((1024*1024*5)) ]; then
+        # rotate if >5MB
+        mv "$LOGFILE" "$LOGFILE.$(date +%s)" || true
+        # keep last 30
+        ls -1t "$LOGFILE".* 2>/dev/null | tail -n +31 | xargs -r rm -f
+    fi
+
+    logger "fetch-wallpaper: started"
+
+    # 1) Try local directory
+    if img=$(choose_local); then
+        echo "Using local wallpaper: $img"
+        cp "$img" "$OUT_FILE"
+        logger "Using local wallpaper: $img"
+    else
+        # 2) Try unsplash if key present
+        if [ -f "$UNSPLASH_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
+            KEY=$(tr -d '\n\r ' < "$UNSPLASH_KEY_FILE")
+            if [ -n "$KEY" ]; then
+            if download_unsplash "$KEY"; then
+                echo "Downloaded from Unsplash"
+                logger "Downloaded from Unsplash"
+            else
+                echo "Unsplash fetch failed; falling back to Picsum" >&2
+                logger "Unsplash failed, falling back to Picsum"
+                download_picsum
+            fi
+            else
+                download_picsum
+            fi
+        else
+            # 3) picsum
+            download_picsum
+        fi
+    fi
+
+    if [ ! -s "$OUT_FILE" ]; then
+        echo "Download failed or file empty." >&2
+        return 1
+    fi
+
+    # Archive previous wallpaper
+    if [ -f "$OUT_FILE" ]; then
+        archive_dir="$OUT_DIR/archive"
+        mkdir -p "$archive_dir"
+        ts=$(date +%Y%m%d%H%M%S)
+        cp -f "$OUT_FILE" "$archive_dir/daily-$ts.jpg" || true
+    fi
+    echo "Wallpaper saved to $OUT_FILE"
+    logger "Wallpaper saved to $OUT_FILE"
+
+    # Trigger theme application
+    if [ -x "$HOME/.local/bin/set-wallpaper" ]; then
+        "$HOME/.local/bin/set-wallpaper" "$OUT_FILE" || true
+    else
+        echo "set-wallpaper not found; apply-theme not invoked." >&2
+    fi
+
+    return 0
+}
+
+main "$@"

@@ -44,6 +44,8 @@ OFFICIAL_PACKAGES=(
     "git"
     "base-devel"
     "python-pywal"
+    "curl"
+    "jq"
 )
 
 sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
@@ -85,6 +87,7 @@ STOW_DIRS=(
     "wofi"
     "ags"
     "scripts"
+    "alacritty"
 )
 
 # Handle potential conflicts by backing up existing configs

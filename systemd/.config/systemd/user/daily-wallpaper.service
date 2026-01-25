@@ -1,0 +1,7 @@
+[Unit]
+Description=Fetch today's wallpaper and apply theme
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/fetch-wallpaper
+Nice=10
