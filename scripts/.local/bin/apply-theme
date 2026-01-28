@@ -149,6 +149,28 @@ echo "$ACCENT" > "$LAST_ACCENT_FILE"
 
 echo "Extracted Accent Color: $ACCENT"
 
+# Calculate inverse color for power button icon (User Request)
+INVERSE_ACCENT=$(python3 - "$ACCENT" <<PY
+import sys
+
+def hex2rgb(h):
+    h = h.lstrip('#')
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+def rgb2hex(r, g, b):
+    return '#{:02x}{:02x}{:02x}'.format(r, g, b)
+
+try:
+    accent = sys.argv[1]
+    r, g, b = hex2rgb(accent)
+    # Simple inversion
+    inv_r, inv_g, inv_b = 255 - r, 255 - g, 255 - b
+    print(rgb2hex(inv_r, inv_g, inv_b))
+except:
+    print("#000000")
+PY
+)
+
 # Run accent guardian to detect stagnation and remediate if needed
 if [ -x "$HOME/dotfiles/scripts/.local/bin/accent-guardian" ]; then
     "$HOME/dotfiles/scripts/.local/bin/accent-guardian" || true
@@ -223,6 +245,11 @@ if [ -d "$WAYBAR_DIR" ]; then
 #niri-workspaces button.active {
     border-bottom-color: ${ACCENT};
 }
+
+#custom-exit {
+    background-color: ${ACCENT};
+    color: ${INVERSE_ACCENT};
+}
 CSS
 fi
 
@@ -238,6 +265,23 @@ if [ -f "$NIRI_CONF" ]; then
     # Matches: inactive-color "#xxxxxx"
     if grep -q "inactive-color" "$NIRI_CONF"; then
          sed -i -E "s/(inactive-color\s*\")[^\"]+(\")/\1${ACCENT}\2/" "$NIRI_CONF"
+    fi
+fi
+
+# --- Mako (Notifications) ---
+MAKO_CONF="$HOME/.config/mako/config"
+if [ -f "$MAKO_CONF" ]; then
+    echo "Updating Mako configuration..."
+    # Background (with 80% opacity - cc)
+    sed -i -E "s/^(background-color=).*/\1${BG}cc/" "$MAKO_CONF"
+    # Text (Foreground)
+    sed -i -E "s/^(text-color=).*/\1${FG}/" "$MAKO_CONF"
+    # Border (Accent)
+    sed -i -E "s/^(border-color=).*/\1${ACCENT}/" "$MAKO_CONF"
+    
+    # Reload mako if running
+    if pgrep -x mako >/dev/null; then
+        makoctl reload || true
     fi
 fi
 
@@ -257,6 +301,11 @@ fi
 if command -v niri >/dev/null; then
     echo "Signaling Niri..."
     niri msg action load-config-file || echo "Niri reload failed."
+fi
+
+# Notify user of completion
+if command -v notify-send >/dev/null; then
+    notify-send "Theme Updated" "New wallpaper and colors applied." -i "$WALLPAPER" -a "apply-theme" || true
 fi
 
 echo "--- Theme application complete ---"
