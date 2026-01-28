@@ -32,6 +32,48 @@ choose_local() {
     return 1
 }
 
+download_reddit() {
+    SUBREDDITS=("EarthPorn" "CityPorn" "SpacePorn" "ArchitecturePorn" "wallpapers" "SkyPorn")
+    # Pick random subreddit
+    SUB=${SUBREDDITS[$RANDOM % ${#SUBREDDITS[@]}]}
+    echo "Fetching top wallpaper from r/$SUB..."
+    
+    # Fetch JSON (User-Agent is required for Reddit API)
+    JSON=$(curl -s -A "linux:dotfiles:v1.0 (by /u/anonymous)" "https://www.reddit.com/r/$SUB/top.json?t=week&limit=20") || return 1
+    
+    # Extract random image URL from top 20
+    # Filter for urls ending in jpg/png/jpeg
+    IMG_URL=$(echo "$JSON" | jq -r '.data.children[].data.url | select(endswith(".jpg") or endswith(".png") or endswith(".jpeg"))' | shuf -n 1)
+    
+    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
+        echo "No valid images found in r/$SUB"
+        return 1
+    fi
+    
+    echo "Downloading image from r/$SUB ($IMG_URL)..."
+    curl -sSL -o "$OUT_FILE" "$IMG_URL"
+}
+
+download_bing() {
+    echo "Fetching Photo of the Day from Bing..."
+    # Randomize index between 0 (today) and 7 (a week ago)
+    # This ensures "Fetch New Wallpaper" actually gets something different if run multiple times
+    IDX=$((RANDOM % 8))
+    
+    # Fetch JSON
+    JSON=$(curl -sSL "https://www.bing.com/HPImageArchive.aspx?format=js&idx=$IDX&n=1&mkt=en-US") || return 1
+    
+    # Extract relative URL
+    REL_URL=$(echo "$JSON" | jq -r '.images[0].url')
+    if [ -z "$REL_URL" ] || [ "$REL_URL" = "null" ]; then
+        return 1
+    fi
+    
+    FULL_URL="https://www.bing.com${REL_URL}"
+    echo "Downloading image from Bing ($FULL_URL)..."
+    curl -sSL -o "$OUT_FILE" "$FULL_URL"
+}
+
 download_picsum() {
     # Determine size: prefer WALLPAPER_SIZE env var or detect from sway outputs
     local size="${WALLPAPER_SIZE:-}"
@@ -87,24 +129,36 @@ main() {
         cp "$img" "$OUT_FILE"
         logger "Using local wallpaper: $img"
     else
-        # 2) Try unsplash if key present
-        if [ -f "$UNSPLASH_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
-            KEY=$(tr -d '\n\r ' < "$UNSPLASH_KEY_FILE")
-            if [ -n "$KEY" ]; then
-            if download_unsplash "$KEY"; then
-                echo "Downloaded from Unsplash"
-                logger "Downloaded from Unsplash"
-            else
-                echo "Unsplash fetch failed; falling back to Picsum" >&2
-                logger "Unsplash failed, falling back to Picsum"
-                download_picsum
-            fi
-            else
-                download_picsum
-            fi
+        # 2) Try Reddit (High variety/quality)
+        if command -v jq >/dev/null 2>&1 && command -v shuf >/dev/null 2>&1 && download_reddit; then
+            echo "Downloaded from Reddit"
+            logger "Downloaded from Reddit"
         else
-            # 3) picsum
-            download_picsum
+            # 3) Try Bing
+            if command -v jq >/dev/null 2>&1 && download_bing; then
+                echo "Downloaded from Bing"
+                logger "Downloaded from Bing"
+            else
+                # 4) Try unsplash if key present
+                if [ -f "$UNSPLASH_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
+                    KEY=$(tr -d '\n\r ' < "$UNSPLASH_KEY_FILE")
+                    if [ -n "$KEY" ]; then
+                        if download_unsplash "$KEY"; then
+                            echo "Downloaded from Unsplash"
+                            logger "Downloaded from Unsplash"
+                        else
+                             echo "Unsplash fetch failed; falling back to Picsum" >&2
+                             download_picsum
+                        fi
+                    else
+                        download_picsum
+                    fi
+                else
+                    # 5) Fallback to picsum
+                    echo "Reddit/Bing failed or jq missing; falling back to Picsum" >&2
+                    download_picsum
+                fi
+            fi
         fi
     fi
 

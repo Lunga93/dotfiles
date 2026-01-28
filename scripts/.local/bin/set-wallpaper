@@ -3,22 +3,42 @@ set -euo pipefail
 
 # set-wallpaper <image-path>
 # Sets wallpaper using swww and applies theme via apply-theme.
+# Saves state for persistence on reboot.
+
+STATE_FILE="$HOME/.config/current_wallpaper"
 
 if [ "$#" -lt 1 ]; then
     echo "Usage: set-wallpaper <image-path>" >&2
     exit 2
 fi
 
-IMG="$1"
+IMG="$(readlink -f "$1")"
 SWWW_CMD="$(command -v swww || true)"
 APPLY_THEME_CMD="$(command -v apply-theme || true)"
 
+# 1. Save state immediately
+echo "$IMG" > "$STATE_FILE"
+
+# 2. Set Wallpaper
 if [ -n "$SWWW_CMD" ]; then
-    $SWWW_CMD img "$IMG" || true
+    # Ensure swww is ready before trying to set (up to 5s)
+    for i in {1..10}; do
+        if swww query &>/dev/null; then break; fi
+        sleep 0.5
+    done
+
+    # Slick, fast transition: grow from center, 120fps, 0.5s
+    $SWWW_CMD img "$IMG" \
+        --transition-type grow \
+        --transition-pos 0.5,0.5 \
+        --transition-fps 120 \
+        --transition-step 90 \
+        --transition-duration 0.5 || true
 else
     echo "swww not found; skipping wallpaper set." >&2
 fi
 
+# 3. Apply Theme
 if [ -n "$APPLY_THEME_CMD" ]; then
     $APPLY_THEME_CMD "$IMG" || true
 else

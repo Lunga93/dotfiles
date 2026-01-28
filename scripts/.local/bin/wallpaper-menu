@@ -1,31 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# wallpaper-menu: let you pick a wallpaper from the archive or skip
-ARCHIVE_DIR="$HOME/Pictures/wallpapers/archive"
-CURRENT="$HOME/Pictures/wallpapers/daily.jpg"
+# wallpaper-menu
+# Scans ~/Pictures/wallpapers (recursive) and presents a wofi menu to select one.
+
+WALLPAPER_ROOT="$HOME/Pictures/wallpapers"
 WOFI_CMD="$(command -v wofi || true)"
 
-mkdir -p "$ARCHIVE_DIR"
-
 if [ -z "$WOFI_CMD" ]; then
-    echo "wofi not found" >&2
+    echo "Error: wofi not found." >&2
     exit 2
 fi
 
-mapfile -t files < <(ls -1t "$ARCHIVE_DIR" 2>/dev/null || true)
-files+=("Use current")
+# Generate list of images (jpg, png, gif), relative to WALLPAPER_ROOT for display
+# We use 'find' to get all files, then 'sed' to make paths relative for the menu
+mapfile -t IMAGE_LIST < <(find "$WALLPAPER_ROOT" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) | sed "s|$WALLPAPER_ROOT/||" | sort)
 
-choice=$(printf "%s\n" "${files[@]}" | $WOFI_CMD --dmenu --prompt "Choose wallpaper" )
-if [ -z "$choice" ]; then
+if [ ${#IMAGE_LIST[@]} -eq 0 ]; then
+    notify-send "Wallpaper Menu" "No wallpapers found in $WALLPAPER_ROOT"
+    exit 1
+fi
+
+# Show menu
+CHOICE=$(printf "%s\n" "${IMAGE_LIST[@]}" | "$WOFI_CMD" --dmenu --prompt "Select Wallpaper" --width 600 --height 400 --cache-file /dev/null)
+
+if [ -z "$CHOICE" ]; then
+    echo "No selection made."
     exit 0
 fi
 
-if [ "$choice" = "Use current" ]; then
-    ~/.local/bin/set-wallpaper "$CURRENT"
-    exit 0
-fi
+FULL_PATH="$WALLPAPER_ROOT/$CHOICE"
 
-if [ -f "$ARCHIVE_DIR/$choice" ]; then
-    ~/.local/bin/set-wallpaper "$ARCHIVE_DIR/$choice"
+if [ -f "$FULL_PATH" ]; then
+    echo "Selected: $FULL_PATH"
+    # Call the central set-wallpaper script
+    "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/set-wallpaper" "$FULL_PATH"
+else
+    echo "Error: File not found: $FULL_PATH"
+    exit 1
 fi

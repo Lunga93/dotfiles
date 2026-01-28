@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -u
+
+# test-theme.sh
+# Diagnostic script to verify wallpaper and theme persistence state without visual confirmation.
+
+STATE_FILE="$HOME/.config/current_wallpaper"
+WAL_CACHE="$HOME/.cache/wal/colors.json"
+SWWW_CMD="$(command -v swww || true)"
+
+echo "=== Theme System Diagnostics ==="
+echo "Timestamp: $(date)"
+
+# 1. Check swww-daemon
+if pgrep -x swww-daemon >/dev/null; then
+    echo "[PASS] swww-daemon is running."
+else
+    echo "[FAIL] swww-daemon is NOT running."
+fi
+
+# 2. Check State File
+if [ -f "$STATE_FILE" ]; then
+    EXPECTED_IMG="$(cat "$STATE_FILE")"
+    echo "[PASS] State file exists: $EXPECTED_IMG"
+else
+    echo "[FAIL] State file missing ($STATE_FILE)."
+    EXPECTED_IMG=""
+fi
+
+# 3. Verify Active Wallpaper (swww query)
+if [ -n "$SWWW_CMD" ] && pgrep -x swww-daemon >/dev/null; then
+    CURRENT_SWWW_IMG="$($SWWW_CMD query | awk -F 'image: ' '{print $2}' | head -n1)"
+    if [ "$CURRENT_SWWW_IMG" == "$EXPECTED_IMG" ]; then
+         echo "[PASS] Active wallpaper matches state."
+    else
+         echo "[FAIL] Active wallpaper mismatch!"
+         echo "       Expected: $EXPECTED_IMG"
+         echo "       Actual:   $CURRENT_SWWW_IMG"
+    fi
+else
+    echo "[SKIP] Cannot query swww (daemon not running or tool missing)."
+fi
+
+# 4. Check Theme Generation (Freshness)
+if [ -f "$WAL_CACHE" ]; then
+    # Check if wal cache is newer than state file (meaning it was updated after setting wallpaper)
+    if [ "$STATE_FILE" -nt "$WAL_CACHE" ]; then
+        echo "[WARN] Theme cache is OLDER than wallpaper state change."
+        echo "       State changed: $(date -r "$STATE_FILE")"
+        echo "       Theme gen:     $(date -r "$WAL_CACHE")"
+    else
+        echo "[PASS] Theme cache is up-to-date."
+    fi
+else
+    echo "[FAIL] Theme cache missing ($WAL_CACHE)."
+fi
+
+echo "=== Diagnostics Complete ==="

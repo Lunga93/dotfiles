@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# restore-wallpaper
+# Restores the last set wallpaper from state file, or defaults to a preset.
+# Handles waiting for swww-daemon to be ready.
+
+STATE_FILE="$HOME/.config/current_wallpaper"
+DEFAULT_WALLPAPER="$HOME/Pictures/wallpapers/forest-train.gif"
+SET_WALLPAPER_SCRIPT="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/set-wallpaper"
+
+# 1. Wait for swww-daemon to be ready (max 10 seconds)
+echo "Waiting for swww-daemon..."
+for i in {1..20}; do
+    if swww query &>/dev/null; then
+        echo "swww is ready."
+        break
+    fi
+    sleep 0.5
+done
+
+# 2. Determine which wallpaper to use
+if [ -f "$STATE_FILE" ]; then
+    TARGET_WALLPAPER="$(cat "$STATE_FILE")"
+    if [ ! -f "$TARGET_WALLPAPER" ]; then
+        echo "Saved wallpaper not found: $TARGET_WALLPAPER. Using default."
+        TARGET_WALLPAPER="$DEFAULT_WALLPAPER"
+    fi
+else
+    echo "No saved state. Using default."
+    TARGET_WALLPAPER="$DEFAULT_WALLPAPER"
+fi
+
+# 3. Apply it using the set-wallpaper script (which handles theming)
+if [ -x "$SET_WALLPAPER_SCRIPT" ]; then
+    "$SET_WALLPAPER_SCRIPT" "$TARGET_WALLPAPER"
+else
+    echo "Error: set-wallpaper script not found at $SET_WALLPAPER_SCRIPT"
+    exit 1
+fi

@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# accent-guardian
+# Ensures the accent color changes over time. If the accent repeats N times,
+# take remedial action: clear pywal cache and fetch a new wallpaper.
+
+GUARD_LOG="$HOME/.local/share/dotfiles/accent_guardian.log"
+mkdir -p "$(dirname "$GUARD_LOG")"
+
+LAST_FILE="$HOME/.local/share/dotfiles/last_accent"
+COUNT_FILE="$HOME/.local/share/dotfiles/accent_stagnant_count"
+THRESHOLD=3
+
+current() {
+    jq -r '.colors.color2' "$HOME/.cache/wal/colors.json" 2>/dev/null || true
+}
+
+CUR=$(current)
+if [ -z "$CUR" ]; then
+    echo "$(date --iso-8601=seconds) No current accent found." >> "$GUARD_LOG"
+    exit 0
+fi
+
+PREV=""
+if [ -f "$LAST_FILE" ]; then
+    PREV=$(cat "$LAST_FILE")
+fi
+
+if [ "$CUR" = "$PREV" ]; then
+    COUNT=0
+    if [ -f "$COUNT_FILE" ]; then
+        COUNT=$(cat "$COUNT_FILE") || COUNT=0
+    fi
+    COUNT=$((COUNT+1))
+    echo "$COUNT" > "$COUNT_FILE"
+    echo "$(date --iso-8601=seconds) Accent repeated ($COUNT): $CUR" >> "$GUARD_LOG"
+else
+    echo "0" > "$COUNT_FILE"
+    echo "$CUR" > "$LAST_FILE"
+    echo "$(date --iso-8601=seconds) Accent changed: $CUR" >> "$GUARD_LOG"
+    exit 0
+fi
+
+if [ "$COUNT" -ge "$THRESHOLD" ]; then
+    echo "$(date --iso-8601=seconds) Accent stagnant for $COUNT runs. Running remedial actions." >> "$GUARD_LOG"
+    # Clear pywal cache
+    if [ -d "$HOME/.cache/wal" ]; then
+        find "$HOME/.cache/wal" -maxdepth 1 -type f -name 'colors*' -print0 | xargs -0 -r rm -f || true
+    fi
+    # Try fetching a new wallpaper (picsum fallback) without enabling timer
+    if [ -x "$HOME/.local/bin/fetch-wallpaper" ]; then
+        "$HOME/.local/bin/fetch-wallpaper" || true
+        echo "$(date --iso-8601=seconds) Ran fetch-wallpaper as remediation." >> "$GUARD_LOG"
+    fi
+    # Reset count
+    echo "0" > "$COUNT_FILE"
+fi

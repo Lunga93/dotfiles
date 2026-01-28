@@ -1,0 +1,20 @@
+# Alacritty template (no colors block). apply-theme will append a single [colors] block.
+
+[window]
+dynamic_padding = true
+decorations = "full"
+opacity = 0.8
+
+[font]
+size = 12
+normal = { family = "monospace", style = "Regular" }
+bold = { family = "monospace", style = "Bold" }
+italic = { family = "monospace", style = "Italic" }
+
+[scrolling]
+history = 10000
+
+[general]
+live_config_reload = true
+
+# Colors block is intentionally omitted here. apply-theme writes it.
