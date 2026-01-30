@@ -150,3 +150,7 @@ Contact
 -------
 If you use or adapt this repository, open an issue or send a pull request with
 your changes and rationale. Keep changes small and include rollback steps.
+
+License
+-------
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
