@@ -35,6 +35,13 @@ output "HDMI-A-1" {
     scale 1 // No scaling (use 2 for HiDPI)
 }
 
+// Specific monitor profile for SKYDATA TV (applies when this device is connected)
+// Use the exact name reported by `niri msg outputs` so niri matches the display.
+output "SKYDATA S.P.A. TV-monitor 0x01010101" {
+    mode "1920x1080@60.000" // Prefer 1080p@60
+    scale 1
+}
+
 // ────────────── Keybindings ──────────────
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Key-Bindings
 
