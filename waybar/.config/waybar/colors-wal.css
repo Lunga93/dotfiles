@@ -2,5 +2,10 @@
 #taskbar button.active,
 #workspaces button.active,
 #niri-workspaces button.active {
-    border-bottom-color: #925D4D;
+    border-bottom-color: #97CBE7;
+}
+
+#custom-exit {
+    background-color: #97CBE7;
+    color: #683418;
 }
