@@ -33,6 +33,7 @@ input {
 output "HDMI-A-1" {
     mode "1920x1080@143.996" // Set resolution and refresh rate
     scale 1 // No scaling (use 2 for HiDPI)
+    position x=0 y=1080
 }
 
 // Specific monitor profile for SKYDATA TV (applies when this device is connected)
@@ -40,6 +41,7 @@ output "HDMI-A-1" {
 output "SKYDATA S.P.A. TV-monitor 0x01010101" {
     mode "1920x1080@59.939" // Prefer 1080p@59.94 (TV safe)
     scale 1
+    position x=0 y=0
 }
 
 // ────────────── Keybindings ──────────────

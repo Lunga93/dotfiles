@@ -290,8 +290,8 @@ echo "Reloading UI components..."
 
 # Waybar: try reload, if missing start it
 if pgrep -x waybar >/dev/null; then
-    echo "Signaling Waybar..."
-    pkill -USR1 waybar
+    echo "Reloading Waybar style..."
+    pkill -SIGUSR2 waybar
 else
     echo "Starting Waybar..."
     (nohup waybar >/tmp/waybar.log 2>&1 &)
