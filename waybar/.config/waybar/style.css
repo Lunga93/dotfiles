@@ -101,3 +101,36 @@ tooltip {
 }
 
 @import "colors-wal.css";
+
+/* Hover 'zoom' effect (simulated) --------------------------------------------------
+ * Waybar's CSS engine doesn't support transforms like `scale()` reliably, so we
+ * simulate a zoom by animating padding and font-size and adding a subtle shadow.
+ * This keeps animations compatible with Waybar's supported properties.
+ */
+.modules-left button,
+.modules-center button,
+.modules-right button,
+#taskbar button {
+    transition: background 0.14s ease, box-shadow 0.14s ease, padding 0.14s ease, font-size 0.14s ease;
+    /* keep a sane base padding so the change is noticeable but not jarring */
+    padding: 4px;
+}
+
+.modules-left button:hover,
+.modules-center button:hover,
+.modules-right button:hover,
+#taskbar button:hover {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 6px; /* slightly larger to simulate zoom */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+    font-size: 15px; /* increase glyph size slightly */
+}
+
+/* A slightly stronger effect for custom actionable icons (power, quick settings) */
+#custom-exit:hover,
+#custom-quicksettings:hover,
+#custom-network:hover {
+    padding: 8px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+    background: rgba(255,255,255,0.06);
+}
