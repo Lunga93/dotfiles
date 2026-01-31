@@ -148,28 +148,11 @@ echo "$ACCENT" > "$LAST_ACCENT_FILE"
 # ------------------------------------
 
 echo "Extracted Accent Color: $ACCENT"
-
-# Calculate inverse color for power button icon (User Request)
-INVERSE_ACCENT=$(python3 - "$ACCENT" <<PY
-import sys
-
-def hex2rgb(h):
-    h = h.lstrip('#')
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-
-def rgb2hex(r, g, b):
-    return '#{:02x}{:02x}{:02x}'.format(r, g, b)
-
-try:
-    accent = sys.argv[1]
-    r, g, b = hex2rgb(accent)
-    # Simple inversion
-    inv_r, inv_g, inv_b = 255 - r, 255 - g, 255 - b
-    print(rgb2hex(inv_r, inv_g, inv_b))
-except:
-    print("#000000")
-PY
-)
+# Note: older versions computed an inverse accent color for the power button.
+# That inversion logic is removed because the new modern glass power button
+# is styled via CSS and should not rely on a naive color inversion which
+# often produces poor contrast. Keep INVERSE_ACCENT empty for compatibility.
+INVERSE_ACCENT=""
 
 # Run accent guardian to detect stagnation and remediate if needed
 if [ -x "$HOME/dotfiles/scripts/.local/bin/accent-guardian" ]; then
@@ -246,10 +229,8 @@ if [ -d "$WAYBAR_DIR" ]; then
     border-bottom-color: ${ACCENT};
 }
 
-#custom-exit {
-    background-color: ${ACCENT};
-    color: ${INVERSE_ACCENT};
-}
+/* Do not touch #custom-exit here: the modern glass power button is managed
+   by waybar/.config/waybar/style.css to ensure consistent visuals. */
 CSS
 fi
 

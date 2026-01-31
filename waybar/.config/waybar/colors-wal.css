@@ -2,10 +2,8 @@
 #taskbar button.active,
 #workspaces button.active,
 #niri-workspaces button.active {
-    border-bottom-color: #97CBE7;
+    border-bottom-color: #6D8EB6;
 }
 
-#custom-exit {
-    background-color: #97CBE7;
-    color: #683418;
-}
+/* Do not touch #custom-exit here: the modern glass power button is managed
+   by waybar/.config/waybar/style.css to ensure consistent visuals. */
