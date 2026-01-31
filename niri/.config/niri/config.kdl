@@ -38,7 +38,7 @@ output "HDMI-A-1" {
 // Specific monitor profile for SKYDATA TV (applies when this device is connected)
 // Use the exact name reported by `niri msg outputs` so niri matches the display.
 output "SKYDATA S.P.A. TV-monitor 0x01010101" {
-    mode "1920x1080@60.000" // Prefer 1080p@60
+    mode "1920x1080@59.939" // Prefer 1080p@59.94 (TV safe)
     scale 1
 }
 
@@ -213,8 +213,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#768899"
-            inactive-color "#768899"
+            active-color "#CA5A3B"
+            inactive-color "#CA5A3B"
         }
 
         shadow {
