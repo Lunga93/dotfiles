@@ -111,26 +111,28 @@ tooltip {
 .modules-center button,
 .modules-right button,
 #taskbar button {
-    transition: background 0.14s ease, box-shadow 0.14s ease, padding 0.14s ease, font-size 0.14s ease;
-    /* keep a sane base padding so the change is noticeable but not jarring */
+    /* Slightly longer transition to make the zoom more visible */
+    transition: background 0.18s cubic-bezier(.2,.9,.2,1), box-shadow 0.18s cubic-bezier(.2,.9,.2,1), padding 0.18s cubic-bezier(.2,.9,.2,1), font-size 0.18s cubic-bezier(.2,.9,.2,1);
+    /* Base padding - keep small so zoom is pronounced */
     padding: 4px;
+    font-size: 14px;
 }
 
 .modules-left button:hover,
 .modules-center button:hover,
 .modules-right button:hover,
 #taskbar button:hover {
-    background: rgba(255, 255, 255, 0.04);
-    padding: 6px; /* slightly larger to simulate zoom */
-    box-shadow: 0 8px 20px rgba(0,0,0,0.14);
-    font-size: 15px; /* increase glyph size slightly */
+    background: rgba(255, 255, 255, 0.06);
+    padding: 10px; /* increased padding for a stronger zoom */
+    box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+    font-size: 17px; /* larger glyph size for clearer visual scaling */
 }
 
-/* A slightly stronger effect for custom actionable icons (power, quick settings) */
+/* Stronger, more prominent effect for custom actionable icons */
 #custom-exit:hover,
 #custom-quicksettings:hover,
 #custom-network:hover {
-    padding: 8px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.18);
-    background: rgba(255,255,255,0.06);
+    padding: 12px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+    background: rgba(255,255,255,0.08);
 }
