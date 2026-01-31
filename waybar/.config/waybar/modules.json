@@ -56,7 +56,7 @@
   },
 
   "custom/exit": {
-    "format": " 󰐥 ",
+    "format": "󰐥",
     "on-click": "~/.config/waybar/scripts/power-menu.sh",
     "tooltip-format": "Power Menu"
   }
