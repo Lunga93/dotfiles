@@ -7,8 +7,21 @@ set -euo pipefail
 CONFIG_DIR="$HOME/.config/dotfiles"
 OUT_DIR="$HOME/Pictures/wallpapers"
 OUT_FILE="$OUT_DIR/daily.jpg"
+OUT_TMP="$OUT_DIR/daily.tmp"
 
 mkdir -p "$OUT_DIR"
+
+# Helper to validate downloaded image
+validate_image() {
+    if [ ! -s "$OUT_TMP" ]; then return 1; fi
+    # Check if file command identifies it as image
+    if ! file --mime-type "$OUT_TMP" | grep -q "image/"; then
+        echo "Error: Downloaded file is not a valid image (detected: $(file -b --mime-type "$OUT_TMP"))." >&2
+        rm -f "$OUT_TMP"
+        return 1
+    fi
+    return 0
+}
 
 # Priority order for wallpaper source:
 # 1) If $LOCAL_WALLPAPER_DIR is set and contains files, pick a random local file
@@ -37,41 +50,47 @@ download_reddit() {
     # Pick random subreddit
     SUB=${SUBREDDITS[$RANDOM % ${#SUBREDDITS[@]}]}
     echo "Fetching top wallpaper from r/$SUB..."
-    
+
     # Fetch JSON (User-Agent is required for Reddit API)
     JSON=$(curl -s -A "linux:dotfiles:v1.0 (by /u/anonymous)" "https://www.reddit.com/r/$SUB/top.json?t=week&limit=20") || return 1
-    
-    # Extract random image URL from top 20
-    # Filter for urls ending in jpg/png/jpeg
-    IMG_URL=$(echo "$JSON" | jq -r '.data.children[].data.url | select(endswith(".jpg") or endswith(".png") or endswith(".jpeg"))' | shuf -n 1)
-    
+
+    # Prefer high-resolution images: check reddit preview metadata for >=1920x1080
+    IMG_URL=$(echo "$JSON" | \
+        jq -r '.data.children[]?.data | select(.preview != null) | .preview.images[0].source.url as $u | .preview.images[0].source.width as $w | .preview.images[0].source.height as $h | {url:$u, w:$w, h:$h} | select(.w >= 1920 or .h >= 1080) | .url' | sed 's/\\&amp;/\&/g' | shuf -n 1)
+
+    # Fallback: plain url fields (some posts don't include preview metadata)
+    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
+        IMG_URL=$(echo "$JSON" | jq -r '.data.children[].data.url | select(endswith(".jpg") or endswith(".png") or endswith(".jpeg"))' | shuf -n 1)
+    fi
+
     if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
         echo "No valid images found in r/$SUB"
         return 1
     fi
-    
+
     echo "Downloading image from r/$SUB ($IMG_URL)..."
-    curl -sSL -o "$OUT_FILE" "$IMG_URL"
+    curl -f -sSL -o "$OUT_TMP" "$IMG_URL" || return 1
+    validate_image || return 1
 }
 
 download_bing() {
     echo "Fetching Photo of the Day from Bing..."
     # Randomize index between 0 (today) and 7 (a week ago)
-    # This ensures "Fetch New Wallpaper" actually gets something different if run multiple times
     IDX=$((RANDOM % 8))
-    
+
     # Fetch JSON
     JSON=$(curl -sSL "https://www.bing.com/HPImageArchive.aspx?format=js&idx=$IDX&n=1&mkt=en-US") || return 1
-    
+
     # Extract relative URL
     REL_URL=$(echo "$JSON" | jq -r '.images[0].url')
     if [ -z "$REL_URL" ] || [ "$REL_URL" = "null" ]; then
         return 1
     fi
-    
+
     FULL_URL="https://www.bing.com${REL_URL}"
     echo "Downloading image from Bing ($FULL_URL)..."
-    curl -sSL -o "$OUT_FILE" "$FULL_URL"
+    curl -f -sSL -o "$OUT_TMP" "$FULL_URL" || return 1
+    validate_image || return 1
 }
 
 download_picsum() {
@@ -83,29 +102,41 @@ download_picsum() {
         fi
     fi
     if [ -z "$size" ]; then
-        size="1920/1080"
+        # Ensure default is full HD
+        size="1920x1080"
     fi
     # Picsum uses /WIDTH/HEIGHT
     size=${size/x/\/}
     local url="https://picsum.photos/${size}"
     echo "Downloading random image from picsum.photos (${size})..."
-    curl -sSL -o "$OUT_FILE" "$url"
+    curl -f -L -s -o "$OUT_TMP" "$url" || return 1
+    validate_image || return 1
 }
 
 download_unsplash() {
     local apikey="$1"
-    echo "Fetching random wallpaper from Unsplash (no admin keys required if you provide one)..."
+    echo "Fetching random wallpaper from Unsplash (requesting full-HD, clean/minimal photos)..."
+    # Use queries that favour clean/minimal photography suitable for wallpapers
     JSON=$(curl -sS -G "https://api.unsplash.com/photos/random" \
         -H "Accept-Version: v1" \
         -H "Authorization: Client-ID $apikey" \
         --data-urlencode "orientation=landscape" \
-        --data-urlencode "query=nature,landscape" ) || return 1
-    IMG_URL=$(echo "$JSON" | jq -r '.urls.raw // .urls.full // .urls.regular')
+        --data-urlencode "query=minimal,clean,landscape,wallpaper" \
+        --data-urlencode "content_filter=high" ) || return 1
+    # Prefer the raw URL and request a cropped 1920x1080 image via Unsplash URL params
+    IMG_RAW=$(echo "$JSON" | jq -r '.urls.raw // .urls.full // .urls.regular')
+    if [ -n "$IMG_RAW" ] && [ "$IMG_RAW" != "null" ]; then
+        # Append width/height and fit params to ensure full-HD output when supported
+        IMG_URL="${IMG_RAW}&w=1920&h=1080&fit=crop&q=80"
+    else
+        IMG_URL=""
+    fi
     if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
         return 1
     fi
     echo "Downloading image from Unsplash..."
-    curl -sSL -o "$OUT_FILE" "$IMG_URL"
+    curl -f -sSL -o "$OUT_TMP" "$IMG_URL" || return 1
+    validate_image || return 1
 }
 
 main() {
@@ -126,54 +157,64 @@ main() {
     # 1) Try local directory
     if img=$(choose_local); then
         echo "Using local wallpaper: $img"
-        cp "$img" "$OUT_FILE"
+        cp "$img" "$OUT_TMP"
         logger "Using local wallpaper: $img"
     else
-        # 2) Try Reddit (High variety/quality)
-        if command -v jq >/dev/null 2>&1 && command -v shuf >/dev/null 2>&1 && download_reddit; then
-            echo "Downloaded from Reddit"
-            logger "Downloaded from Reddit"
-        else
-            # 3) Try Bing
-            if command -v jq >/dev/null 2>&1 && download_bing; then
-                echo "Downloaded from Bing"
-                logger "Downloaded from Bing"
+        # remove any stale temp
+        rm -f "$OUT_TMP" || true
+
+        # 2) Prefer Unsplash (clean, high-res photos) if API key is present
+        src=""
+        if [ -f "$UNSPLASH_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
+            KEY=$(tr -d '\n\r ' < "$UNSPLASH_KEY_FILE")
+            if [ -n "$KEY" ] && download_unsplash "$KEY"; then
+                src="Unsplash"
+                logger "Downloaded from Unsplash"
             else
-                # 4) Try unsplash if key present
-                if [ -f "$UNSPLASH_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
-                    KEY=$(tr -d '\n\r ' < "$UNSPLASH_KEY_FILE")
-                    if [ -n "$KEY" ]; then
-                        if download_unsplash "$KEY"; then
-                            echo "Downloaded from Unsplash"
-                            logger "Downloaded from Unsplash"
-                        else
-                             echo "Unsplash fetch failed; falling back to Picsum" >&2
-                             download_picsum
-                        fi
-                    else
-                        download_picsum
-                    fi
-                else
-                    # 5) Fallback to picsum
-                    echo "Reddit/Bing failed or jq missing; falling back to Picsum" >&2
-                    download_picsum
-                fi
+                logger "Unsplash fetch failed; trying other sources"
             fi
+        fi
+
+        # 3) Try Reddit
+        if [ -z "$src" ] && command -v jq >/dev/null 2>&1 && command -v shuf >/dev/null 2>&1 && download_reddit; then
+            src="Reddit"
+            logger "Downloaded from Reddit"
+        fi
+
+        # 4) Try Bing
+        if [ -z "$src" ] && command -v jq >/dev/null 2>&1 && download_bing; then
+            src="Bing"
+            logger "Downloaded from Bing"
+        fi
+
+        # 5) Fallback to picsum
+        if [ -z "$src" ]; then
+            logger "Falling back to Picsum"
+            download_picsum && src="Picsum"
+        fi
+
+        if [ -z "$src" ]; then
+            echo "All wallpaper sources failed." >&2
+        else
+            echo "Downloaded from $src"
         fi
     fi
 
-    if [ ! -s "$OUT_FILE" ]; then
+    # Ensure a new file was downloaded to the temp location
+    if [ ! -s "$OUT_TMP" ]; then
         echo "Download failed or file empty." >&2
         return 1
     fi
 
-    # Archive previous wallpaper
+    # Archive previous wallpaper (if any) then move the new one into place
     if [ -f "$OUT_FILE" ]; then
         archive_dir="$OUT_DIR/archive"
         mkdir -p "$archive_dir"
         ts=$(date +%Y%m%d%H%M%S)
         cp -f "$OUT_FILE" "$archive_dir/daily-$ts.jpg" || true
     fi
+
+    mv -f "$OUT_TMP" "$OUT_FILE"
     echo "Wallpaper saved to $OUT_FILE"
     logger "Wallpaper saved to $OUT_FILE"
 
