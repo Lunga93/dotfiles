@@ -46,13 +46,29 @@ choose_local() {
 }
 
 download_reddit() {
-    SUBREDDITS=("EarthPorn" "CityPorn" "SpacePorn" "ArchitecturePorn" "wallpapers" "SkyPorn")
+    SUBREDDITS=("EarthPorn" "CityPorn" "SpacePorn" "ArchitecturePorn" "wallpapers" "SkyPorn" "MinimalWallpaper" "HighRes" "InfrastructurePorn")
     # Pick random subreddit
     SUB=${SUBREDDITS[$RANDOM % ${#SUBREDDITS[@]}]}
-    echo "Fetching top wallpaper from r/$SUB..."
+
+    # Pick random sort method to increase variety
+    # Weighted slightly towards top/week or top/month for quality, but include hot/new/random
+    SORT_MODES=("hot" "new" "top-day" "top-week" "top-month" "top-year" "top-all")
+    MODE=${SORT_MODES[$RANDOM % ${#SORT_MODES[@]}]}
+
+    case "$MODE" in
+        "hot") URL_SUFFIX="hot.json?limit=75" ;;
+        "new") URL_SUFFIX="new.json?limit=75" ;;
+        "top-day") URL_SUFFIX="top.json?t=day&limit=75" ;;
+        "top-week") URL_SUFFIX="top.json?t=week&limit=75" ;;
+        "top-month") URL_SUFFIX="top.json?t=month&limit=75" ;;
+        "top-year") URL_SUFFIX="top.json?t=year&limit=75" ;;
+        "top-all") URL_SUFFIX="top.json?t=all&limit=75" ;;
+    esac
+
+    echo "Fetching wallpaper from r/$SUB ($MODE)..."
 
     # Fetch JSON (User-Agent is required for Reddit API)
-    JSON=$(curl -s -A "linux:dotfiles:v1.0 (by /u/anonymous)" "https://www.reddit.com/r/$SUB/top.json?t=week&limit=20") || return 1
+    JSON=$(curl -f -s -A "linux:dotfiles:v1.0 (by /u/anonymous)" "https://www.reddit.com/r/$SUB/$URL_SUFFIX") || return 1
 
     # Prefer high-resolution images: check reddit preview metadata for >=1920x1080
     IMG_URL=$(echo "$JSON" | \
@@ -115,13 +131,18 @@ download_picsum() {
 
 download_unsplash() {
     local apikey="$1"
-    echo "Fetching random wallpaper from Unsplash (requesting full-HD, clean/minimal photos)..."
+    
+    # Randomize query topics for variety
+    TOPICS=("minimal,clean" "nature,landscape" "architecture" "abstract,geometric" "space,stars" "dark,moody" "mountains" "ocean,sea" "forest")
+    QUERY=${TOPICS[$RANDOM % ${#TOPICS[@]}]}
+    
+    echo "Fetching random wallpaper from Unsplash (query: $QUERY)..."
     # Use queries that favour clean/minimal photography suitable for wallpapers
     JSON=$(curl -sS -G "https://api.unsplash.com/photos/random" \
         -H "Accept-Version: v1" \
         -H "Authorization: Client-ID $apikey" \
         --data-urlencode "orientation=landscape" \
-        --data-urlencode "query=minimal,clean,landscape,wallpaper" \
+        --data-urlencode "query=$QUERY" \
         --data-urlencode "content_filter=high" ) || return 1
     # Prefer the raw URL and request a cropped 1920x1080 image via Unsplash URL params
     IMG_RAW=$(echo "$JSON" | jq -r '.urls.raw // .urls.full // .urls.regular')
