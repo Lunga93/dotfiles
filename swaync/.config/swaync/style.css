@@ -1,0 +1,212 @@
+/* SwayNC - Marble Glass Theme (Mako Port) */
+@import "colors.css";
+
+/* Global Window Settings */
+.control-center .notification-row:focus,
+.control-center .notification-row:hover {
+    background: rgba(30, 30, 30, 0.8);
+    box-shadow: none;
+}
+
+.notification-row {
+    outline: none;
+    margin: 4px 8px;
+    padding: 0;
+}
+
+.notification {
+    border-radius: 20px;
+    margin: 6px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    border: 1px solid @accent;
+    background: @background;
+}
+
+.notification-content {
+    background: transparent;
+    padding: 16px;
+    border-radius: 20px;
+}
+
+.close-button {
+    background: @accent;
+    color: @text;
+    text-shadow: none;
+    padding: 0;
+    border-radius: 100%;
+    margin-top: 5px;
+    margin-right: 5px;
+    box-shadow: none;
+    border: none;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.close-button:hover {
+    box-shadow: none;
+    background: #ff9e64;
+    transition: all 0.15s ease-in-out;
+    border: none;
+}
+
+.notification-default-action,
+.notification-action {
+    padding: 4px;
+    margin: 0;
+    box-shadow: none;
+    background: transparent;
+    border: none;
+    color: #f0f0f0;
+}
+
+.notification-default-action:hover,
+.notification-action:hover {
+    -gtk-icon-effect: none;
+    background: transparent;
+}
+
+.notification-default-action {
+    border-radius: 20px;
+}
+
+/* When clicking the notification body */
+.notification-default-action:not(:only-child) {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+.notification-action {
+    border-radius: 20px;
+    color: #f0f0f0;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 6px;
+}
+
+/* Inline Reply Text Field */
+.inline-reply {
+    margin-top: 8px;
+}
+
+.inline-reply-entry {
+    background: rgba(0, 0, 0, 0.3);
+    color: #f0f0f0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.inline-reply-button {
+    margin-left: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #f0f0f0;
+}
+
+.inline-reply-button:disabled {
+    background: initial;
+    color: #565f89;
+    border: 1px solid transparent;
+}
+
+.inline-reply-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Text Styling */
+.summary {
+    font-family: "Fira Sans", sans-serif;
+    font-size: 14px; /* Slightly larger header */
+    font-weight: bold;
+    color: #f0f0f0;
+    text-shadow: none;
+}
+
+.time {
+    font-family: "Fira Sans", sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    color: #a0a0a0;
+    text-shadow: none;
+    margin-right: 18px;
+}
+
+.body {
+    font-family: "Fira Sans", sans-serif;
+    font-size: 12px; /* Mako base size */
+    font-weight: normal;
+    color: #cccccc; /* Slightly darker than summary */
+    text-shadow: none;
+}
+
+/* Control Center Panel */
+.control-center {
+    background: rgba(20, 20, 25, 0.85); /* Slightly darker/more opaque for panel */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    padding: 14px;
+}
+
+.widget-title {
+    color: #f0f0f0;
+    font-family: "Fira Sans", sans-serif;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 8px;
+}
+
+.widget-title > button {
+    font-size: 12px;
+    color: #f0f0f0;
+    text-shadow: none;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+    border-radius: 12px;
+    border: none;
+    padding: 4px 12px;
+}
+
+.widget-title > button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.widget-dnd {
+    margin: 8px;
+    font-size: 1.1em;
+}
+
+.widget-dnd > switch {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.widget-dnd > switch:checked {
+    background: #7aa2f7; /* Accent color */
+}
+
+.widget-label {
+    margin: 8px;
+}
+
+.widget-label > label {
+    font-size: 1.1em;
+}
+
+.widget-mpris {
+    color: #f0f0f0;
+    padding: 8px;
+    margin: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.widget-mpris > box > button {
+    border-radius: 12px;
+}
+
+/* Critical Urgency */
+.notification.critical {
+    background: rgba(255, 85, 85, 0.8); /* Red tint */
+    border: 1px solid #ff5555;
+}
