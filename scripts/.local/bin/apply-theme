@@ -266,6 +266,21 @@ if [ -f "$MAKO_CONF" ]; then
     fi
 fi
 
+# --- SwayNC ---
+SWAYNC_DIR="$HOME/.config/swaync"
+if [ -d "$SWAYNC_DIR" ]; then
+    echo "Generating SwayNC colors..."
+    cat > "$SWAYNC_DIR/colors.css" <<CSS
+@define-color background ${BG}cc;
+@define-color accent ${ACCENT};
+@define-color text ${FG};
+CSS
+    # Reload swaync style
+    if command -v swaync-client >/dev/null; then
+        swaync-client -rs || true
+    fi
+fi
+
 # --- Reload UI ---
 echo "Reloading UI components..."
 

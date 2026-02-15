@@ -85,10 +85,37 @@ exit 0
 EOF
     chmod +x "$SANDBOX_ROOT/bin/wl-copy"
 
-    # wal (pywal) mock — log the invocation
+    # wal (pywal) mock — log the invocation and create dummy colors
     cat > "$SANDBOX_ROOT/bin/wal" <<'EOF'
 #!/usr/bin/env bash
 echo "[MOCK] wal $@" >> "$SANDBOX_ROOT/calls.log"
+mkdir -p "$HOME/.cache/wal"
+cat > "$HOME/.cache/wal/colors.json" <<JSON
+{
+    "special": {
+        "background": "#1e1e1e",
+        "foreground": "#f0f0f0"
+    },
+    "colors": {
+        "color0": "#1e1e1e",
+        "color1": "#bf616a",
+        "color2": "#a3be8c",
+        "color3": "#ebcb8b",
+        "color4": "#81a1c1",
+        "color5": "#b48ead",
+        "color6": "#88c0d0",
+        "color7": "#e5e9f0",
+        "color8": "#4c566a",
+        "color9": "#bf616a",
+        "color10": "#a3be8c",
+        "color11": "#ebcb8b",
+        "color12": "#81a1c1",
+        "color13": "#b48ead",
+        "color14": "#8fbcbb",
+        "color15": "#eceff4"
+    }
+}
+JSON
 exit 0
 EOF
     chmod +x "$SANDBOX_ROOT/bin/wal"
