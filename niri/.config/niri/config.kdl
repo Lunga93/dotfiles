@@ -65,6 +65,10 @@ binds {
     MOD+V { spawn-sh "~/.local/bin/clipboard-manager"; }
     MOD+SHIFT+W { spawn-sh "~/.local/bin/wallpaper-control"; }
     MOD+SHIFT+I { spawn-sh "~/.local/bin/view-logs"; }
+    
+    // Notifications (SwayNC)
+    MOD+N { spawn-sh "swaync-client -t -sw"; }
+
     // ─── Audio Controls ───
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -193,7 +197,8 @@ binds {
     spawn-sh-at-startup "~/.local/bin/restore-wallpaper" // Restore last wallpaper & theme
     spawn-sh-at-startup "waybar" // Launch waybar
     spawn-sh-at-startup "xwayland-satellite"
-    spawn-at-startup "mako"
+    // spawn-at-startup "mako" // Disabled in favor of swaync
+    spawn-at-startup "swaync"
     spawn-sh-at-startup "wl-paste --watch cliphist store"
     spawn-sh-at-startup "gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'"
     spawn-sh-at-startup "gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'"
