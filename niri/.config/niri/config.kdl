@@ -38,7 +38,8 @@ output "ViewSonic Corporation VX2758-C-MH V9M191500306" {
 
 // Specific monitor profile for SKYDATA TV (applies when this device is connected)
 // Use the exact name reported by `niri msg outputs` so niri matches the display.
-output "SKYDATA S.P.A. TV-monitor 0x01010101" {
+// Name corrected to match `niri msg outputs` (exact device string)
+output "SKYDATA S.P.A. TV MONITOR 0x00000001" {
     // TV is 1080p — prefer standard 60Hz mode
     mode "1920x1080@60"
     scale 1
@@ -216,8 +217,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#D0CAB4"
-            inactive-color "#D0CAB4"
+            active-color "#A2205B"
+            inactive-color "#A2205B"
         }
 
         shadow {

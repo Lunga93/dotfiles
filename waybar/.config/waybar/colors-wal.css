@@ -2,7 +2,7 @@
 #taskbar button.active,
 #workspaces button.active,
 #niri-workspaces button.active {
-    border-bottom-color: #D0CAB4;
+    border-bottom-color: #A2205B;
 }
 
 /* Do not touch #custom-exit here: the modern glass power button is managed
