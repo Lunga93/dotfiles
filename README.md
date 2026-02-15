@@ -18,7 +18,7 @@ Core components (what this repo provides)
 - Niri — compositor configuration (layouts, keybindings, startup programs)
 - Waybar — status bar modules and styling (battery, network, media)
 - Wofi — application launcher theme and layout
-- Mako — notifications styling and rules
+- SwayNC — notifications styling and rules
 - Alacritty — terminal configuration (via stowed config)
 - Wallpapers and small theme assets under `public/`
 
@@ -59,7 +59,7 @@ High-level install steps (what happens when you run `./install.sh`)
 
 What the installer will try to install (summary)
 -----------------------------------------------
-- Official repo packages (examples): `niri`, `waybar`, `mako`, `wofi`,
+- Official repo packages (examples): `niri`, `waybar`, `swaync`, `wofi`,
   `alacritty`, `nautilus`, `swww`, `stow`, `git`, `base-devel`, fonts.
 - AUR packages (examples): `overskride`, `swww` (if not in repo),
   `xwayland-satellite`, `aylurs-gtk-shell`, `zen-browser-bin`.

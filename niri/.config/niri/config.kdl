@@ -197,7 +197,6 @@ binds {
     spawn-sh-at-startup "~/.local/bin/restore-wallpaper" // Restore last wallpaper & theme
     spawn-sh-at-startup "waybar" // Launch waybar
     spawn-sh-at-startup "xwayland-satellite"
-    // spawn-at-startup "mako" // Disabled in favor of swaync
     spawn-at-startup "swaync"
     spawn-sh-at-startup "wl-paste --watch cliphist store"
     spawn-sh-at-startup "gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'"

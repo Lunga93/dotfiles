@@ -249,23 +249,6 @@ if [ -f "$NIRI_CONF" ]; then
     fi
 fi
 
-# --- Mako (Notifications) ---
-MAKO_CONF="$HOME/.config/mako/config"
-if [ -f "$MAKO_CONF" ]; then
-    echo "Updating Mako configuration..."
-    # Background (with 80% opacity - cc)
-    sed -i -E "s/^(background-color=).*/\1${BG}cc/" "$MAKO_CONF"
-    # Text (Foreground)
-    sed -i -E "s/^(text-color=).*/\1${FG}/" "$MAKO_CONF"
-    # Border (Accent)
-    sed -i -E "s/^(border-color=).*/\1${ACCENT}/" "$MAKO_CONF"
-    
-    # Reload mako if running
-    if pgrep -x mako >/dev/null; then
-        makoctl reload || true
-    fi
-fi
-
 # --- SwayNC ---
 SWAYNC_DIR="$HOME/.config/swaync"
 if [ -d "$SWAYNC_DIR" ]; then
