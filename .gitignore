@@ -4,3 +4,4 @@
 *.swp
 /.idea/
 AGENTS.md
+.opencode/
