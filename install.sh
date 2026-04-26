@@ -106,6 +106,17 @@ done
 echo -e "${GREEN}Enabling services...${NC}"
 sudo systemctl enable --now bluetooth
 
+# Reload user units so freshly stowed unit files are visible to systemd --user.
+systemctl --user daemon-reload || true
+
+# Enable user timers (the activation symlink under timers.target.wants/ is no
+# longer tracked in the repo — it's created by `systemctl --user enable`).
+if [ -f "$HOME/.config/systemd/user/daily-wallpaper.timer" ]; then
+    echo -e "${GREEN}Enabling daily-wallpaper.timer...${NC}"
+    systemctl --user enable --now daily-wallpaper.timer || \
+        echo -e "${RED}Could not enable daily-wallpaper.timer (run manually after login).${NC}"
+fi
+
 # 8. Wallpaper Setup (Placeholder)
 echo -e "${BLUE}Setting up wallpaper directory...${NC}"
 mkdir -p ~/Pictures/wallpapers
