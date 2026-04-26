@@ -1,17 +1,16 @@
-/* Global typography */
+@import "colors-wal.css";
+
 * {
-    font-family: "Fira Sans Semibold", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Fira Sans Semibold", "Symbols Nerd Font", "MesloLGS Nerd Font", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
     color: #e0e0e0;
 }
 
-/* Main bar – fully transparent to allow separated section panels */
 window#waybar {
     background: transparent;
     padding: 0;
 }
 
-/* Separated background panels (Marble Glass) */
 .modules-left,
 .modules-center,
 .modules-right {
@@ -22,25 +21,23 @@ window#waybar {
     margin: 4px 0;
 }
 
-/* Workspaces – Clean & Simple Line Style */
 #workspaces button,
 #niri-workspaces button {
     padding: 2px 6px;
     color: #a0a0a0;
     margin: 0 2px;
     transition: all 0.2s ease;
-    border-bottom: 2px solid transparent; /* Reserve space for the line */
+    border-bottom: 2px solid transparent;
 }
 
 #workspaces button.active,
 #niri-workspaces button.active {
     color: #ffffff;
-    background: transparent; /* Removed the expressive background */
+    background: transparent;
     border-bottom-width: 2px;
     border-bottom-style: solid;
 }
 
-/* Taskbar icons – Active Indicator Fix */
 #taskbar button {
     padding: 4px;
     margin: 0 4px;
@@ -53,7 +50,6 @@ window#waybar {
     border-bottom-style: solid;
 }
 
-/* Right-side modules */
 #clock,
 #pulseaudio,
 #bluetooth,
@@ -65,7 +61,6 @@ window#waybar {
     color: #2980b9;
 }
 
-/* Modern Glass Power Button */
 #custom-exit {
     background: rgba(255, 255, 255, 0.06);
     color: #ffffff;
@@ -73,8 +68,6 @@ window#waybar {
     border-radius: 12px;
     margin-left: 12px;
     padding: 6px 14px;
-    /* keep styling minimal to avoid unsupported properties in Waybar's CSS
-       engine: no flexbox/display, no transforms */
     padding-left: 14px;
     padding-right: 14px;
     transition: box-shadow 0.18s ease, background 0.18s ease;
@@ -87,12 +80,10 @@ window#waybar {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
-/* Subtle pressed state */
 #custom-exit:active {
     box-shadow: 0 4px 10px rgba(0,0,0,0.12);
 }
 
-/* Tooltips */
 tooltip {
     background: rgba(15, 17, 23, 0.9);
     border-radius: 16px;
@@ -100,26 +91,17 @@ tooltip {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@import "colors-wal.css";
-
-/* Hover 'zoom' effect (simulated) --------------------------------------------------
- * Waybar's CSS engine doesn't support transforms like `scale()` reliably, so we
- * simulate a zoom by animating padding and font-size and adding a subtle shadow.
- * This keeps animations compatible with Waybar's supported properties.
- */
 .modules-left button,
 .modules-center button,
 .modules-right button,
 #taskbar button {
-    /* Stable layout: do NOT animate padding or font-size to avoid shifting nearby elements */
     transition: background 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, color 0.14s ease;
-    padding: 6px; /* fixed padding to prevent layout shifts */
-    border-radius: 10px; /* subtle pill shape like Apple */
+    padding: 6px;
+    border-radius: 10px;
     border: 1px solid transparent;
     background: transparent;
 }
 
-/* Hover effect: Apple-like subtle glow and rounded background without moving other items */
 .modules-left button:hover,
 .modules-center button:hover,
 .modules-right button:hover,
@@ -130,7 +112,6 @@ tooltip {
     color: #ffffff;
 }
 
-/* Slightly stronger, but still non-shifting, effect for primary custom icons */
 #custom-exit:hover,
 #custom-quicksettings:hover,
 #custom-network:hover {
