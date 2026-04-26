@@ -1,0 +1,263 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# audio-menu
+# Volume + audio device picker rendered through wofi.
+#
+# Layout (top-down): current state + visual volume bar, quick volume actions
+# (mute, ±5%, presets), then output sinks, input sources, and pavucontrol.
+
+WPCTL="$(command -v wpctl || true)"
+WOFI="$(command -v wofi || true)"
+PACTL="$(command -v pactl || true)"
+NOTIFY="$(command -v notify-send || true)"
+PAVUCONTROL="$(command -v pavucontrol || true)"
+
+require() {
+    local bin=$1 name=$2
+    if [ -z "$bin" ]; then
+        echo "Error: $name not found in PATH." >&2
+        [ -n "$NOTIFY" ] && "$NOTIFY" -a audio-menu "Audio menu" "$name not installed"
+        exit 2
+    fi
+}
+
+require "$WPCTL" "wpctl (wireplumber)"
+require "$WOFI" "wofi"
+require "$PACTL" "pactl (pipewire-pulse)"
+
+ICON_OUT="󰓃"
+ICON_IN="󰍬"
+ICON_MUTE="󰝟"
+ICON_VOL_UP="󰝝"
+ICON_VOL_DOWN="󰝞"
+ICON_TOOLS="󰒓"
+ICON_HEAD="󰋋"
+ICON_HDMI="󰽟"
+ICON_OPT="󰽛"
+ICON_BT="󰂯"
+ICON_USB="󰕓"
+DOT_DEFAULT="●"
+DOT_OTHER="○"
+
+notify() {
+    [ -n "$NOTIFY" ] || return 0
+    "$NOTIFY" -a audio-menu "$@"
+}
+
+# Map a node Name (like alsa_output.pci-...analog-stereo or bluez_*) to a
+# concise human label and an icon.
+#   $1 = direction (sink|source)
+#   $2 = pactl Name
+#   $3 = pactl Description (fallback)
+# Echoes "<icon>\t<friendly>".
+friendly_name() {
+    local dir=$1 name=$2 desc=${3:-}
+    local icon label
+    local lname
+    lname=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')
+
+    if [ "$dir" = "source" ]; then
+        icon="$ICON_IN"
+        case "$lname" in
+            *bluez*)            label="Bluetooth Mic"; icon="$ICON_BT" ;;
+            *usb*)              label="USB Microphone"; icon="$ICON_USB" ;;
+            *analog*|*line-in*) label="Microphone (Analog)" ;;
+            *)                  label=${desc:-$name} ;;
+        esac
+    else
+        icon="$ICON_OUT"
+        case "$lname" in
+            *hdmi*)
+                label="HDMI"
+                icon="$ICON_HDMI"
+                # If multiple HDMI sinks, append a short location hint
+                case "$lname" in
+                    *hdmi-stereo-extra1*) label="HDMI 2" ;;
+                    *hdmi-stereo-extra2*) label="HDMI 3" ;;
+                esac
+                ;;
+            *iec958*|*spdif*)   label="Optical (S/PDIF)"; icon="$ICON_OPT" ;;
+            *bluez*)            label="Bluetooth"; icon="$ICON_BT" ;;
+            *usb*headset*)      label="USB Headset"; icon="$ICON_HEAD" ;;
+            *usb*)              label="USB Audio"; icon="$ICON_USB" ;;
+            *analog*|*headphones*) label="Speakers (Analog)" ;;
+            *)                  label=${desc:-$name} ;;
+        esac
+    fi
+    printf '%s\t%s' "$icon" "$label"
+}
+
+# Returns "<vol_int>\t<muted 0|1>" for default sink
+default_sink_state() {
+    local v m
+    v=$("$PACTL" get-sink-volume @DEFAULT_SINK@ 2>/dev/null \
+        | awk '/Volume:/ { for (i=1;i<=NF;i++) if ($i ~ /%/) { sub(/%.*/,"",$i); print $i+0; exit } }')
+    m=$("$PACTL" get-sink-mute @DEFAULT_SINK@ 2>/dev/null | awk '{print ($2 == "yes") ? 1 : 0}')
+    printf '%s\t%s' "${v:-0}" "${m:-0}"
+}
+
+volume_bar() {
+    local pct=$1 width=14 filled bar=""
+    [ "$pct" -gt 100 ] && pct=100
+    filled=$(( pct * width / 100 ))
+    local i
+    for ((i=0; i<width; i++)); do
+        if [ $i -lt $filled ]; then bar+="▰"; else bar+="▱"; fi
+    done
+    printf '%s' "$bar"
+}
+
+# Emit "<dir>\t<id>\t<is_default>\t<name>\t<description>" for every sink/source.
+list_nodes() {
+    "$PACTL" -f json list sinks 2>/dev/null \
+        | jq -r '.[] | "sink\t\(.index)\t0\t\(.name)\t\(.description // "")"' 2>/dev/null || \
+    list_nodes_fallback sinks
+    "$PACTL" -f json list sources 2>/dev/null \
+        | jq -r '.[] | select(.name | endswith(".monitor") | not)
+                       | select(.properties."device.class" // "" != "monitor")
+                       | "source\t\(.index)\t0\t\(.name)\t\(.description // "")"' 2>/dev/null || \
+    list_nodes_fallback sources
+}
+
+# pactl without -f json: parse the human listing.
+list_nodes_fallback() {
+    local kind=$1 dir
+    case $kind in sinks) dir=sink ;; sources) dir=source ;; esac
+    "$PACTL" list "$kind" \
+        | awk -v dir="$dir" '
+            /^Sink #|^Source #/ {
+                if (id != "" && name != "" && !is_monitor) {
+                    print dir "\t" id "\t0\t" name "\t" desc
+                }
+                id = $0; sub(/^[^#]*#/, "", id)
+                name = ""; desc = ""; is_monitor = 0
+                next
+            }
+            /^\tName: / { name = $0; sub(/^\tName: /, "", name);
+                          if (name ~ /\.monitor$/) is_monitor = 1 }
+            /^\tDescription: / { desc = $0; sub(/^\tDescription: /, "", desc) }
+            END {
+                if (id != "" && name != "" && !is_monitor)
+                    print dir "\t" id "\t0\t" name "\t" desc
+            }'
+}
+
+# Get default sink/source names so we can mark the active row.
+default_names() {
+    local s src
+    s=$("$PACTL" get-default-sink 2>/dev/null || true)
+    src=$("$PACTL" get-default-source 2>/dev/null || true)
+    printf '%s\t%s' "$s" "$src"
+}
+
+# Build the wofi menu. Echoes lines: <action_kind>\t<arg>\t<label>
+build_menu() {
+    local cur_vol cur_mute defs default_sink default_source
+    IFS=$'\t' read -r cur_vol cur_mute < <(default_sink_state)
+    IFS=$'\t' read -r default_sink default_source < <(default_names)
+
+    local mute_label
+    if [ "$cur_mute" = 1 ]; then
+        mute_label="$ICON_MUTE  Unmute"
+    else
+        mute_label="$ICON_MUTE  Mute"
+    fi
+
+    # Header row showing volume (selectable but no-op).
+    printf 'noop\t-\t%s  %s  %s%%\n' "$ICON_OUT" "$(volume_bar "$cur_vol")" "$cur_vol"
+
+    printf 'volume\t+5\t%s  Volume +5%%\n' "$ICON_VOL_UP"
+    printf 'volume\t-5\t%s  Volume -5%%\n' "$ICON_VOL_DOWN"
+    printf 'mute\tsink\t%s\n'   "$mute_label"
+
+    local p
+    for p in 100 75 50 25 0; do
+        printf 'volume_set\t%s\t   Set volume to %s%%\n' "$p" "$p"
+    done
+
+    printf 'sep\t-\t─── Outputs ───\n'
+
+    local kind id _flag name desc icon friendly marker is_def
+    while IFS=$'\t' read -r kind id _flag name desc; do
+        [ "$kind" = "sink" ] || continue
+        IFS=$'\t' read -r icon friendly < <(friendly_name sink "$name" "$desc")
+        is_def=0
+        [ "$name" = "$default_sink" ] && is_def=1
+        marker=$([ $is_def = 1 ] && echo "$DOT_DEFAULT" || echo "$DOT_OTHER")
+        printf 'sink\t%s\t%s  %s  %s\n' "$id" "$icon" "$marker" "$friendly"
+    done < <(list_nodes)
+
+    printf 'sep\t-\t─── Inputs ───\n'
+    while IFS=$'\t' read -r kind id _flag name desc; do
+        [ "$kind" = "source" ] || continue
+        IFS=$'\t' read -r icon friendly < <(friendly_name source "$name" "$desc")
+        is_def=0
+        [ "$name" = "$default_source" ] && is_def=1
+        marker=$([ $is_def = 1 ] && echo "$DOT_DEFAULT" || echo "$DOT_OTHER")
+        printf 'source\t%s\t%s  %s  %s\n' "$id" "$icon" "$marker" "$friendly"
+    done < <(list_nodes)
+
+    printf 'sep\t-\t───────────────\n'
+    printf 'mute\tsource\t%s  Toggle microphone mute\n' "$ICON_MUTE"
+    if [ -n "$PAVUCONTROL" ]; then
+        printf 'action\tpavucontrol\t%s  Open pavucontrol\n' "$ICON_TOOLS"
+    fi
+}
+
+main() {
+    local menu choice matched kind arg
+    menu=$(build_menu)
+    choice=$(printf '%s\n' "$menu" | cut -f3- \
+        | "$WOFI" --dmenu \
+                  --prompt "Audio" \
+                  --width 460 \
+                  --height 540 \
+                  --cache-file /dev/null \
+                  --insensitive 2>/dev/null || true)
+
+    [ -z "$choice" ] && exit 0
+
+    matched=$(printf '%s\n' "$menu" | awk -F'\t' -v want="$choice" '$3 == want { print $1 "\t" $2; exit }')
+    [ -z "$matched" ] && exit 0
+    kind=${matched%%$'\t'*}
+    arg=${matched#*$'\t'}
+
+    case "$kind" in
+        sink)
+            "$WPCTL" set-default "$arg"
+            notify "Output set" "$choice"
+            ;;
+        source)
+            "$WPCTL" set-default "$arg"
+            notify "Input set" "$choice"
+            ;;
+        volume)
+            local sign=${arg:0:1} mag=${arg:1}
+            "$WPCTL" set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ "${mag}%${sign}"
+            ;;
+        volume_set)
+            # wpctl wants a 0..1.5 float
+            local frac
+            case "$arg" in
+                0)   frac="0.0" ;;
+                100) frac="1.0" ;;
+                *)   frac="0.${arg}" ;;
+            esac
+            "$WPCTL" set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ "$frac"
+            ;;
+        mute)
+            case "$arg" in
+                sink)   "$WPCTL" set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+                source) "$WPCTL" set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
+            esac
+            ;;
+        action)
+            [ "$arg" = "pavucontrol" ] && [ -n "$PAVUCONTROL" ] && \
+                setsid -f "$PAVUCONTROL" >/dev/null 2>&1 || true
+            ;;
+        sep|noop) : ;;
+    esac
+}
+
+main "$@"

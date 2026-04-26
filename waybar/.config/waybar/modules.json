@@ -35,13 +35,48 @@
     "format-muted": " {format_source}",
     "format-source": "{volume}% ",
     "format-source-muted": "",
-    "on-click": "pavucontrol"
+    "format-icons": {
+      "default": ["", "", ""],
+      "headphone": "",
+      "headset": "",
+      "hdmi": "󰵟",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default-bluetooth": ""
+    },
+    "tooltip-format": "{desc}\n{volume}% • scroll to change • middle-click mute",
+    "on-click": "audio-menu",
+    "on-click-right": "pavucontrol",
+    "on-click-middle": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "on-scroll-up": "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+",
+    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
   },
 
   "clock": {
     "format": "{:%H:%M %a}",
+    "format-alt": "{:%a %d %b %Y  %H:%M}",
+    "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "month",
+      "mode-mon-col": 3,
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "format": {
+        "months":     "<span color='#ffead3'><b>{}</b></span>",
+        "days":       "<span color='#ecc6d9'><b>{}</b></span>",
+        "weeks":      "<span color='#99ffdd'><b>W{}</b></span>",
+        "weekdays":   "<span color='#ffcc66'><b>{}</b></span>",
+        "today":      "<span color='#ff6699'><b><u>{}</u></b></span>"
+      }
+    },
+    "actions": {
+      "on-click-right":  "mode",
+      "on-click-middle": "shift_reset",
+      "on-scroll-up":    "shift_up",
+      "on-scroll-down":  "shift_down"
+    },
     "on-click": "gnome-calendar",
-    "tooltip-format": false,
     "interval": 10
   },
 
