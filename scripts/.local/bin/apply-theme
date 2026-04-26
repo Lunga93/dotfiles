@@ -217,6 +217,64 @@ if [ -d "$WOFI_DIR" ]; then
 CSS
 fi
 
+# GTK / libadwaita — write a colors-wal.css that gtk.css imports. Keeps
+# Nautilus and friends in sync with the wallpaper without touching the
+# tracked gtk.css overrides.
+write_gtk_palette() {
+    local dir=$1
+    [ -d "$dir" ] || return 0
+    local view_bg
+    view_bg=$(python3 - "$BG" <<'PY'
+import sys
+h = sys.argv[1].lstrip('#')
+r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+def lighten(v): return min(255, v + 10)
+print(f"#{lighten(r):02x}{lighten(g):02x}{lighten(b):02x}")
+PY
+)
+    cat > "$dir/colors-wal.css" <<CSS
+@define-color accent_color          ${ACCENT};
+@define-color accent_bg_color       ${ACCENT};
+@define-color accent_fg_color       ${BG};
+
+@define-color window_bg_color       ${BG};
+@define-color window_fg_color       ${FG};
+
+@define-color view_bg_color         ${view_bg};
+@define-color view_fg_color         ${FG};
+
+@define-color headerbar_bg_color    ${BG};
+@define-color headerbar_fg_color    ${FG};
+@define-color headerbar_border_color ${ACCENT};
+
+@define-color sidebar_bg_color      ${BG};
+@define-color sidebar_fg_color      ${FG};
+@define-color sidebar_backdrop_color ${BG};
+
+@define-color popover_bg_color      ${view_bg};
+@define-color popover_fg_color      ${FG};
+
+@define-color card_bg_color         ${view_bg};
+@define-color card_fg_color         ${FG};
+
+@define-color borders               alpha(${FG}, 0.12);
+@define-color shade_color           alpha(black, 0.36);
+@define-color thumbnail_bg_color    ${view_bg};
+
+@define-color destructive_color     #ff453a;
+@define-color destructive_bg_color  #ff453a;
+@define-color destructive_fg_color  ${FG};
+
+@define-color success_color         ${ACCENT};
+@define-color warning_color         #ffd60a;
+@define-color error_color           #ff453a;
+CSS
+}
+
+write_gtk_palette "$HOME/.config/gtk-3.0"
+write_gtk_palette "$HOME/.config/gtk-4.0"
+[ -f "$HOME/.config/gtk-4.0/gtk.css" ] && touch "$HOME/.config/gtk-4.0/gtk.css"
+
 echo "Reloading UI components..."
 
 # quickshell auto-reloads palette via FileView watching ~/.cache/wal/colors.json.

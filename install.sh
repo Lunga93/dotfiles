@@ -101,6 +101,7 @@ STOW_DIRS=(
     "scripts"
     "alacritty"
     "quickshell"
+    "gtk"
 )
 
 # Handle potential conflicts by backing up existing configs
