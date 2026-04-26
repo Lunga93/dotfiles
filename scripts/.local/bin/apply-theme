@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# apply-theme <wallpaper-path>
-# Uses wal (pywal) to generate theme files and signals UI components to reload.
-
 LOG_FILE="$HOME/.local/share/dotfiles/apply-theme.log"
 mkdir -p "$(dirname "$LOG_FILE")"
-# Truncate log to start fresh for this run
 >"$LOG_FILE"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -25,33 +21,23 @@ if [ -z "$WAL_CMD" ]; then
     exit 0
 fi
 
-# 1. Clear pywal cache to ensure we get NEW colors for the new image
 if [ -d "$HOME/.cache/wal" ]; then
     echo "Clearing pywal cache..."
-    # remove known colors files safely
     find "$HOME/.cache/wal" -maxdepth 1 -type f -name 'colors*' -print0 | xargs -0 -r rm -f || true
-    # also remove any generated theme jsons
     find "$HOME/.cache/wal" -maxdepth 1 -type f -name '*.json' -print0 | xargs -0 -r rm -f || true
-    # CRITICAL: Clear the schemes cache, otherwise wal reuses old colors for the same filename (daily.jpg)
     find "$HOME/.cache/wal/schemes" -maxdepth 1 -type f -print0 | xargs -0 -r rm -f || true
 fi
 
 echo "Generating colors with pywal..."
-# -n: skip setting wallpaper (handled by swww in set-wallpaper)
-# -i: input image
-# -q: quiet
 if ! $WAL_CMD -n -i "$WALLPAPER" -q; then
     echo "pywal failed."
     exit 1
 fi
 echo "pywal complete."
 
-# --- Broadcast Sequences (Instant Terminal Update) ---
-# This forces existing terminals to update colors immediately using escape sequences.
 SEQUENCES_FILE="$HOME/.cache/wal/sequences"
 if [ -f "$SEQUENCES_FILE" ]; then
     echo "Broadcasting escape sequences to open terminals..."
-    # Loop through all pseudo-terminals
     for term in /dev/pts/[0-9]*; do
         if [ -w "$term" ]; then
             cat "$SEQUENCES_FILE" > "$term" 2>/dev/null || true
@@ -67,21 +53,16 @@ if [ ! -f "$PY_COLORS" ]; then
 fi
 
 echo "Updating application themes..."
-# Extract special colors using jq
 BG=$(jq -r '.special.background' "$PY_COLORS")
 FG=$(jq -r '.special.foreground' "$PY_COLORS")
 ACCENT=$(jq -r '.colors.color2' "$PY_COLORS")
 
-# --- Agent: Ensure accent variety ---
-# Improved accent selector: pick the palette color most different from background
-# to ensure visible variety and avoid repeated accents.
 LAST_ACCENT_FILE="$HOME/.local/share/dotfiles/last_accent"
 LAST_ACCENT=""
 if [ -f "$LAST_ACCENT_FILE" ]; then
     LAST_ACCENT=$(cat "$LAST_ACCENT_FILE")
 fi
 
-# Use Python to select the best accent from the palette based on saturation and variety
 BEST_ACCENT=$(python3 - "$PY_COLORS" "$LAST_ACCENT" <<PY
 import json,sys,colorsys
 
@@ -92,45 +73,36 @@ def hex2rgb(h):
 try:
     data=json.load(open(sys.argv[1]))
     colors = data.get('colors', {})
-    
-    # Candidate colors: color1 to color6 (usually the main colored accents in pywal)
-    # We skip color0/8 (blacks) and color7/15 (whites) to avoid boring accents.
+
     candidates = []
     for i in range(1, 7):
         c = colors.get(f'color{i}')
         if c: candidates.append(c)
 
     last_accent = sys.argv[2] if len(sys.argv)>2 else ''
-    
+
     best_color = None
     max_score = -1.0
 
     for c in candidates:
         if c == last_accent and len(candidates) > 1:
             continue
-            
+
         r, g, b = hex2rgb(c)
         h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
-        
-        # Scoring: 
-        # - High Saturation is good (avoid greys)
-        # - High Value is good (visibility)
-        # - Penalty for very low saturation (near white/grey)
-        
+
         score = (s * 3.0) + (v * 1.0)
-        
+
         if score > max_score:
             max_score = score
             best_color = c
 
     if not best_color:
-        # Fallback to color2 if logic fails
         best_color = colors.get('color2', '#ffffff')
 
     print(best_color)
 
 except Exception as e:
-    # Safe fallback
     print("#ffffff")
 PY
 )
@@ -145,29 +117,21 @@ if [ -n "$BEST_ACCENT" ] && [ "$BEST_ACCENT" != "null" ]; then
 fi
 
 echo "$ACCENT" > "$LAST_ACCENT_FILE"
-# ------------------------------------
 
 echo "Extracted Accent Color: $ACCENT"
-# Note: older versions computed an inverse accent color for the power button.
-# That inversion logic is removed because the new modern glass power button
-# is styled via CSS and should not rely on a naive color inversion which
-# often produces poor contrast. Keep INVERSE_ACCENT empty for compatibility.
 INVERSE_ACCENT=""
 
-# Run accent guardian to detect stagnation and remediate if needed
 if [ -x "$HOME/dotfiles/scripts/.local/bin/accent-guardian" ]; then
     "$HOME/dotfiles/scripts/.local/bin/accent-guardian" || true
 fi
 
-# --- Alacritty (Safe Template Approach) ---
 ALACRITTY_TEMPLATE="$HOME/dotfiles/alacritty/template.alacritty.toml"
 ALACRITTY_DEST="$HOME/.config/alacritty/alacritty.toml"
 
 if [ -f "$ALACRITTY_TEMPLATE" ]; then
     echo "Generating new Alacritty config from template..."
     TMP_COLORS=$(mktemp)
-    
-    # Generate the [colors] block from pywal JSON
+
     python3 - "$PY_COLORS" <<'PY' > "$TMP_COLORS"
 import json, sys
 try:
@@ -175,33 +139,29 @@ try:
     s = data.get('special', {})
     c = data.get('colors', {})
     def q(val): return f'"{val}"'
-    
+
     print('[colors.primary]')
     print(f'background = {q(s.get("background"))}')
     print(f'foreground = {q(s.get("foreground"))}')
-    
+
     print('[colors.normal]')
     names=['black','red','green','yellow','blue','magenta','cyan','white']
     for i,n in enumerate(names): print(f'{n} = {q(c.get(f"color{i}"))}')
-    
+
     print('[colors.bright]')
     for i,n in enumerate(names): print(f'{n} = {q(c.get(f"color{i+8}"))}')
 except Exception as e:
     print(f"# Error generating colors: {e}")
 PY
 
-    # Create new config from the template (which contains no [colors] block):
-    # Copy the template fully then append the generated colors.
     cat "$ALACRITTY_TEMPLATE" > "$ALACRITTY_DEST.tmp"
     echo "" >> "$ALACRITTY_DEST.tmp"
     cat "$TMP_COLORS" >> "$ALACRITTY_DEST.tmp"
-    
-    # Atomically move into place
+
     mv "$ALACRITTY_DEST.tmp" "$ALACRITTY_DEST"
     rm -f "$TMP_COLORS"
     echo "Alacritty config updated."
 
-    # Validate
     if ! ~/dotfiles/scripts/.local/bin/test-alacritty.sh; then
         echo "ERROR: New Alacritty config is invalid. Restoring from template."
         rm -f "$ALACRITTY_DEST"
@@ -217,39 +177,29 @@ else
     echo "WARNING: Alacritty template not found at $ALACRITTY_TEMPLATE"
 fi
 
-# --- Waybar ---
 WAYBAR_DIR="$HOME/.config/waybar"
 if [ -d "$WAYBAR_DIR" ]; then
     echo "Generating Waybar CSS with accent: $ACCENT"
     cat > "$WAYBAR_DIR/colors-wal.css" <<CSS
-/* Generated by apply-theme */
 #taskbar button.active,
 #workspaces button.active,
 #niri-workspaces button.active {
     border-bottom-color: ${ACCENT};
 }
-
-/* Do not touch #custom-exit here: the modern glass power button is managed
-   by waybar/.config/waybar/style.css to ensure consistent visuals. */
 CSS
 fi
 
-# --- Niri ---
 NIRI_CONF="$HOME/.config/niri/config.kdl"
 if [ -f "$NIRI_CONF" ]; then
     echo "Updating Niri focus ring to: $ACCENT"
-    # Safe regex replacement in place
-    # Matches: active-color "#xxxxxx"
     if grep -q "active-color" "$NIRI_CONF"; then
         sed -i -E "s/(active-color\s*\")[^\"]+(\")/\1${ACCENT}\2/" "$NIRI_CONF"
     fi
-    # Matches: inactive-color "#xxxxxx"
     if grep -q "inactive-color" "$NIRI_CONF"; then
          sed -i -E "s/(inactive-color\s*\")[^\"]+(\")/\1${ACCENT}\2/" "$NIRI_CONF"
     fi
 fi
 
-# --- SwayNC ---
 SWAYNC_DIR="$HOME/.config/swaync"
 if [ -d "$SWAYNC_DIR" ]; then
     echo "Generating SwayNC colors..."
@@ -258,31 +208,29 @@ if [ -d "$SWAYNC_DIR" ]; then
 @define-color accent ${ACCENT};
 @define-color text ${FG};
 CSS
-    # Reload swaync style
-    if command -v swaync-client >/dev/null; then
-        swaync-client -rs || true
+    if command -v swaync-client >/dev/null && pgrep -x swaync >/dev/null; then
+        timeout 2 swaync-client -rs || true
     fi
 fi
 
-# --- Reload UI ---
 echo "Reloading UI components..."
 
-# Waybar: try reload, if missing start it
 if pgrep -x waybar >/dev/null; then
-    echo "Reloading Waybar style..."
-    pkill -SIGUSR2 waybar
-else
-    echo "Starting Waybar..."
-    (nohup waybar >/tmp/waybar.log 2>&1 &)
+    echo "Restarting Waybar..."
+    pkill -x waybar || true
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        pgrep -x waybar >/dev/null || break
+        sleep 0.1
+    done
 fi
+echo "Starting Waybar..."
+(nohup waybar >/tmp/waybar.log 2>&1 &)
 
-# Niri: reload config
 if command -v niri >/dev/null; then
     echo "Signaling Niri..."
     niri msg action load-config-file || echo "Niri reload failed."
 fi
 
-# Notify user of completion
 if command -v notify-send >/dev/null; then
     notify-send "Theme Updated" "New wallpaper and colors applied." -i "$WALLPAPER" -a "apply-theme" || true
 fi

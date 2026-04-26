@@ -20,22 +20,45 @@ APPLY_THEME_CMD="$(command -v apply-theme || true)"
 echo "$IMG" > "$STATE_FILE"
 
 # 2. Set Wallpaper
+# Prefer swww (if available and responding). If the swww daemon isn't
+# available fall back to a simpler wallpaper setter (swaybg) where possible.
+fallback_set_wallpaper() {
+    if command -v swaybg >/dev/null 2>&1; then
+        echo "Using swaybg fallback to set wallpaper." >&2
+        # Run in background so we don't block session startup
+        swaybg -i "$IMG" -m fill &>/dev/null &
+        disown || true
+        return 0
+    fi
+    echo "No supported wallpaper setter found; skipping wallpaper set." >&2
+    return 1
+}
+
 if [ -n "$SWWW_CMD" ]; then
-    # Ensure swww is ready before trying to set (up to 5s)
+    # Ensure swww daemon is ready before trying to set (up to ~5s)
+    SWWW_READY=0
     for i in {1..10}; do
-        if swww query &>/dev/null; then break; fi
+        if "$SWWW_CMD" query &>/dev/null; then
+            SWWW_READY=1
+            break
+        fi
         sleep 0.5
     done
 
-    # Slick, fast transition: grow from center, 120fps, 0.5s
-    $SWWW_CMD img "$IMG" \
-        --transition-type grow \
-        --transition-pos 0.5,0.5 \
-        --transition-fps 120 \
-        --transition-step 90 \
-        --transition-duration 0.5 || true
+    if [ "$SWWW_READY" -eq 1 ]; then
+        # Slick, fast transition: grow from center, 120fps, 0.5s
+        "$SWWW_CMD" img "$IMG" \
+            --transition-type grow \
+            --transition-pos 0.5,0.5 \
+            --transition-fps 120 \
+            --transition-step 90 \
+            --transition-duration 0.5 || true
+    else
+        echo "swww found but daemon not responding; falling back." >&2
+        fallback_set_wallpaper || true
+    fi
 else
-    echo "swww not found; skipping wallpaper set." >&2
+    fallback_set_wallpaper || true
 fi
 
 # 3. Apply Theme
