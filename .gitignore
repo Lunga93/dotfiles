@@ -13,5 +13,9 @@ CLAUDE.md
 colors-wal.css
 swaync/.config/swaync/colors.css
 
-# systemctl --user enable activation symlinks (created at install time, not stowed)
-systemd/.config/systemd/user/timers.target.wants/
+# systemctl --user enable/mask activation symlinks (machine-local state).
+# ~/.config/systemd is a symlink into the repo, so `systemctl --user enable`
+# creates *.target.wants/ symlinks here, and `systemctl --user mask` creates
+# unit-name symlinks pointing to /dev/null.
+systemd/.config/systemd/user/*.target.wants/
+systemd/.config/systemd/user/mako.service

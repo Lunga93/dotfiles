@@ -50,6 +50,18 @@ OFFICIAL_PACKAGES=(
 
 sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
 
+# 3b. Evict mako if present.
+# Both mako and swaync ship D-Bus activation files for
+# org.freedesktop.Notifications. If mako is installed it tends to win the
+# race on boot, silently shadowing swaync and freezing notification colors
+# at mako's hard-coded config. Mako is not in OFFICIAL_PACKAGES, but may
+# be left over from a previous setup or pulled in as a dependency.
+if pacman -Q mako &> /dev/null; then
+    echo -e "${BLUE}Removing mako (conflicts with swaync for notifications)...${NC}"
+    sudo pacman -Rns --noconfirm mako || true
+fi
+rm -rf "$HOME/.config/mako"
+
 # 4. Install AUR Helper (yay) if missing
 if ! command -v yay &> /dev/null; then
     echo -e "${BLUE}Installing yay (AUR helper)...${NC}"
@@ -115,6 +127,15 @@ if [ -f "$HOME/.config/systemd/user/daily-wallpaper.timer" ]; then
     echo -e "${GREEN}Enabling daily-wallpaper.timer...${NC}"
     systemctl --user enable --now daily-wallpaper.timer || \
         echo -e "${RED}Could not enable daily-wallpaper.timer (run manually after login).${NC}"
+fi
+
+# Enable swaync via its package-provided unit. We start it via systemd rather
+# than niri's spawn-at-startup so D-Bus activation ordering is correct and
+# Restart=on-failure handles crashes.
+if systemctl --user list-unit-files swaync.service &> /dev/null; then
+    echo -e "${GREEN}Enabling swaync.service...${NC}"
+    systemctl --user enable --now swaync.service || \
+        echo -e "${RED}Could not enable swaync.service (run manually after login).${NC}"
 fi
 
 # 8. Wallpaper Setup (Placeholder)

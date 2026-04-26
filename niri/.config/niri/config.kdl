@@ -197,7 +197,8 @@ binds {
     spawn-sh-at-startup "~/.local/bin/restore-wallpaper" // Restore last wallpaper & theme
     spawn-sh-at-startup "waybar" // Launch waybar
     spawn-sh-at-startup "xwayland-satellite"
-    spawn-at-startup "swaync"
+    // swaync runs via systemd --user (swaync.service, WantedBy=graphical-session.target).
+    // Spawning it here too causes a D-Bus name race with the systemd activation.
     spawn-sh-at-startup "wl-paste --watch cliphist store"
     spawn-sh-at-startup "gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'"
     spawn-sh-at-startup "gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'"
@@ -221,8 +222,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#628F1C"
-            inactive-color "#628F1C"
+            active-color "#E1AC5D"
+            inactive-color "#E1AC5D"
         }
 
         shadow {

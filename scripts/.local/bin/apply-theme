@@ -209,6 +209,9 @@ if [ -d "$SWAYNC_DIR" ]; then
 @define-color text ${FG};
 CSS
     if command -v swaync-client >/dev/null && pgrep -x swaync >/dev/null; then
+        # reload-config first, then reload-css. -rs alone is unreliable for
+        # picking up changes inside @import-ed files (colors.css).
+        timeout 2 swaync-client -R  || true
         timeout 2 swaync-client -rs || true
     fi
 fi
