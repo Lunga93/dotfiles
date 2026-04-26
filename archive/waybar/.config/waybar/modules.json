@@ -52,9 +52,9 @@
       "car": "",
       "default-bluetooth": ""
     },
-    "tooltip-format": "{desc}\n{volume}% • scroll to change • middle-click mute",
-    "on-click": "audio-menu",
-    "on-click-right": "pavucontrol",
+    "tooltip-format": "{desc}\n{volume}% • click for panel • scroll to change",
+    "on-click": "audio-panel",
+    "on-click-right": "audio-menu",
     "on-click-middle": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
     "on-scroll-up": "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+",
     "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
@@ -69,11 +69,11 @@
       "weeks-pos": "right",
       "on-scroll": 1,
       "format": {
-        "months": "<span color='#d2d9dd'><b>{}</b></span>",
-        "days": "<span color='#DECEA9'><b>{}</b></span>",
-        "weeks": "<span color='#A3AFCE'><b>W{}</b></span>",
-        "weekdays": "<span color='#A2A0A2'><b>{}</b></span>",
-        "today": "<span color='#5498BC'><b><u>{}</u></b></span>"
+        "months": "<span color='#a3dede'><b>{}</b></span>",
+        "days": "<span color='#4E99D9'><b>{}</b></span>",
+        "weeks": "<span color='#65A8E0'><b>W{}</b></span>",
+        "weekdays": "<span color='#5AA29F'><b>{}</b></span>",
+        "today": "<span color='#0291A8'><b><u>{}</u></b></span>"
       }
     },
     "actions": {

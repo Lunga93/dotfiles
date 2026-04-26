@@ -177,59 +177,6 @@ else
     echo "WARNING: Alacritty template not found at $ALACRITTY_TEMPLATE"
 fi
 
-WAYBAR_DIR="$HOME/.config/waybar"
-if [ -d "$WAYBAR_DIR" ]; then
-    echo "Generating Waybar CSS with accent: $ACCENT"
-    cat > "$WAYBAR_DIR/colors-wal.css" <<CSS
-#taskbar button.active,
-#workspaces button.active,
-#niri-workspaces button.active {
-    border-bottom-color: ${ACCENT};
-}
-CSS
-
-    # Re-theme the clock calendar tooltip. The Pango spans inside
-    # waybar's clock.tooltip-format use literal hex colors; they cannot
-    # reference CSS, so we surgically rewrite the format strings via jq
-    # on every theme change. Mapped to the pywal palette:
-    #   months   -> special.foreground
-    #   days     -> color5 (magenta-ish)
-    #   weeks    -> color6 (cyan-ish)
-    #   weekdays -> color3 (yellow-ish)
-    #   today    -> ACCENT
-    MODULES_JSON="$WAYBAR_DIR/modules.json"
-    if command -v jq >/dev/null && [ -f "$MODULES_JSON" ]; then
-        C_MONTHS="$FG"
-        C_DAYS=$(jq    -r '.colors.color5' "$PY_COLORS")
-        C_WEEKS=$(jq   -r '.colors.color6' "$PY_COLORS")
-        C_WKDAYS=$(jq  -r '.colors.color3' "$PY_COLORS")
-        C_TODAY="$ACCENT"
-
-        TMP_MODULES=$(mktemp)
-        if jq \
-            --arg months   "<span color='${C_MONTHS}'><b>{}</b></span>" \
-            --arg days     "<span color='${C_DAYS}'><b>{}</b></span>" \
-            --arg weeks    "<span color='${C_WEEKS}'><b>W{}</b></span>" \
-            --arg weekdays "<span color='${C_WKDAYS}'><b>{}</b></span>" \
-            --arg today    "<span color='${C_TODAY}'><b><u>{}</u></b></span>" \
-            '(.clock.calendar.format) |= (
-                .months   = $months
-              | .days     = $days
-              | .weeks    = $weeks
-              | .weekdays = $weekdays
-              | .today    = $today
-            )' "$MODULES_JSON" > "$TMP_MODULES" \
-            && jq -e . "$TMP_MODULES" >/dev/null
-        then
-            mv "$TMP_MODULES" "$MODULES_JSON"
-            echo "Updated waybar calendar colors (today=$C_TODAY)."
-        else
-            echo "WARNING: jq rewrite of $MODULES_JSON failed; leaving file unchanged."
-            rm -f "$TMP_MODULES"
-        fi
-    fi
-fi
-
 NIRI_CONF="$HOME/.config/niri/config.kdl"
 if [ -f "$NIRI_CONF" ]; then
     echo "Updating Niri focus ring to: $ACCENT"
@@ -257,18 +204,22 @@ CSS
     fi
 fi
 
+QS_DIR="$HOME/.config/quickshell"
+if [ -d "$QS_DIR" ]; then
+    : "Theme.qml watches ~/.cache/wal/colors.json directly via FileView; no regen needed."
+fi
+
+WOFI_DIR="$HOME/.config/wofi"
+if [ -d "$WOFI_DIR" ]; then
+    cat > "$WOFI_DIR/colors-wal.css" <<CSS
+#input { background-color: ${BG}14; color: ${FG}; }
+#entry:selected { background-color: ${ACCENT}33; color: ${FG}; }
+CSS
+fi
+
 echo "Reloading UI components..."
 
-if pgrep -x waybar >/dev/null; then
-    echo "Restarting Waybar..."
-    pkill -x waybar || true
-    for _ in 1 2 3 4 5 6 7 8 9 10; do
-        pgrep -x waybar >/dev/null || break
-        sleep 0.1
-    done
-fi
-echo "Starting Waybar..."
-(nohup waybar >/tmp/waybar.log 2>&1 &)
+# quickshell auto-reloads palette via FileView watching ~/.cache/wal/colors.json.
 
 if command -v niri >/dev/null; then
     echo "Signaling Niri..."

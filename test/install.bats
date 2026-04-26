@@ -32,5 +32,5 @@ teardown() {
     [ "$status" -eq 0 ]
 
     # The sandbox HOME should contain a backup created by the script
-    [ -d "$SANDBOX_HOME/.config/waybar.bak" ]
+    [ -d "$SANDBOX_HOME/.config/niri.bak" ]
 }

@@ -22,7 +22,6 @@ sudo pacman -Syu --noconfirm
 echo -e "${GREEN}Installing official packages...${NC}"
 OFFICIAL_PACKAGES=(
     "niri"
-    "waybar"
     "swaync"
     "wofi"
     "alacritty"
@@ -46,6 +45,8 @@ OFFICIAL_PACKAGES=(
     "python-pywal"
     "curl"
     "jq"
+    "quickshell"
+    "pavucontrol"
 )
 
 sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
@@ -94,12 +95,12 @@ cd "$SCRIPT_DIR"
 # Directories to stow
 STOW_DIRS=(
     "niri"
-    "waybar"
     "swaync"
     "wofi"
     "ags"
     "scripts"
     "alacritty"
+    "quickshell"
 )
 
 # Handle potential conflicts by backing up existing configs
