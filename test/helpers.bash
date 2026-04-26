@@ -11,7 +11,7 @@ create_sandbox() {
     touch "$SANDBOX_ROOT/calls.log"
 
     # Create a fake config dir to test backup behavior
-    mkdir -p "$SANDBOX_HOME/.config/waybar"
+    mkdir -p "$SANDBOX_HOME/.config/niri"
 
     # Create lightweight mocks for commands used by install.sh
     # Each mock writes its invocation to $SANDBOX_ROOT/calls.log and exits 0.
@@ -153,6 +153,134 @@ EOF
     mkdir -p "$SANDBOX_REPO"
     cp -a "$(pwd)"/* "$SANDBOX_REPO/" || true
     export SANDBOX_REPO
+}
+
+# ─────────────────────────── Audio mocks (pactl/wpctl) ───────────────────────
+# install_audio_mocks
+#   Drops in deterministic mocks for pactl and wpctl so audio-status / audio-set
+#   can be tested without a running pipewire session. Mocks read fixture data
+#   from $SANDBOX_AUDIO and log writes to $SANDBOX_ROOT/calls.log.
+#
+# Exposed env knobs:
+#   SANDBOX_DEFAULT_SINK    name of default sink   (default: alsa_output.test.analog-stereo)
+#   SANDBOX_DEFAULT_SOURCE  name of default source (default: alsa_input.test.analog-stereo)
+#   SANDBOX_SINK_VOLUME     0-150
+#   SANDBOX_SINK_MUTED      yes|no
+#   SANDBOX_SOURCE_VOLUME   0-150
+#   SANDBOX_SOURCE_MUTED    yes|no
+install_audio_mocks() {
+    : "${SANDBOX_DEFAULT_SINK:=alsa_output.test.analog-stereo}"
+    : "${SANDBOX_DEFAULT_SOURCE:=alsa_input.test.analog-stereo}"
+    : "${SANDBOX_SINK_VOLUME:=42}"
+    : "${SANDBOX_SINK_MUTED:=no}"
+    : "${SANDBOX_SOURCE_VOLUME:=78}"
+    : "${SANDBOX_SOURCE_MUTED:=no}"
+    export SANDBOX_DEFAULT_SINK SANDBOX_DEFAULT_SOURCE
+    export SANDBOX_SINK_VOLUME SANDBOX_SINK_MUTED
+    export SANDBOX_SOURCE_VOLUME SANDBOX_SOURCE_MUTED
+
+    cat > "$SANDBOX_ROOT/bin/pactl" <<'EOF'
+#!/usr/bin/env bash
+echo "[MOCK] pactl $*" >> "$SANDBOX_ROOT/calls.log"
+case "$1 $2" in
+    "get-default-sink "*|"get-default-sink ")
+        printf '%s\n' "$SANDBOX_DEFAULT_SINK" ;;
+    "get-default-source "*|"get-default-source ")
+        printf '%s\n' "$SANDBOX_DEFAULT_SOURCE" ;;
+    "get-sink-volume "*)
+        v=${SANDBOX_SINK_VOLUME}
+        printf 'Volume: front-left: 0 / %s%% / 0.00 dB,   front-right: 0 / %s%% / 0.00 dB\n' "$v" "$v" ;;
+    "get-source-volume "*)
+        v=${SANDBOX_SOURCE_VOLUME}
+        printf 'Volume: mono: 0 / %s%% / 0.00 dB\n' "$v" ;;
+    "get-sink-mute "*)
+        printf 'Mute: %s\n' "$SANDBOX_SINK_MUTED" ;;
+    "get-source-mute "*)
+        printf 'Mute: %s\n' "$SANDBOX_SOURCE_MUTED" ;;
+esac
+
+# `pactl -f json list sinks|sources`
+if [ "$1" = "-f" ] && [ "$2" = "json" ] && [ "$3" = "list" ]; then
+    case "$4" in
+        sinks)
+            cat <<JSON
+[
+  {"index":47,"name":"alsa_output.test.analog-stereo","description":"Built-in Speakers"},
+  {"index":48,"name":"alsa_output.test.hdmi-stereo","description":"HDMI Output"}
+]
+JSON
+            ;;
+        sources)
+            cat <<JSON
+[
+  {"index":55,"name":"alsa_input.test.analog-stereo","description":"Built-in Mic","properties":{"device.class":"sound"}},
+  {"index":56,"name":"alsa_output.test.analog-stereo.monitor","description":"Monitor of Speakers","properties":{"device.class":"monitor"}}
+]
+JSON
+            ;;
+    esac
+fi
+
+if [ "$1" = "subscribe" ]; then
+    # Emit a couple of fake events then exit so --watch tests don't hang.
+    echo "Event 'change' on sink #47"
+    sleep 0.05
+    echo "Event 'change' on source #55"
+fi
+exit 0
+EOF
+    chmod +x "$SANDBOX_ROOT/bin/pactl"
+
+    cat > "$SANDBOX_ROOT/bin/wpctl" <<'EOF'
+#!/usr/bin/env bash
+echo "[MOCK] wpctl $*" >> "$SANDBOX_ROOT/calls.log"
+exit 0
+EOF
+    chmod +x "$SANDBOX_ROOT/bin/wpctl"
+}
+
+# install_bluetooth_mocks
+#   Mocks bluetoothctl + a fake /sys/class/bluetooth/hci0 directory so
+#   bluetooth-status returns deterministic data.
+#
+#   SANDBOX_BT_AVAILABLE   yes|no  (default yes)
+#   SANDBOX_BT_POWERED     yes|no  (default no)
+#   SANDBOX_BT_CONNECTED   space-separated "MAC|Name" pairs (default empty)
+install_bluetooth_mocks() {
+    : "${SANDBOX_BT_AVAILABLE:=yes}"
+    : "${SANDBOX_BT_POWERED:=no}"
+    : "${SANDBOX_BT_CONNECTED:=}"
+    export SANDBOX_BT_AVAILABLE SANDBOX_BT_POWERED SANDBOX_BT_CONNECTED
+
+    if [ "$SANDBOX_BT_AVAILABLE" = "yes" ]; then
+        mkdir -p "$SANDBOX_ROOT/sys/class/bluetooth/hci0"
+        # bluetooth-status uses /sys/class/bluetooth/hci* via compgen, which
+        # checks the real path. We can't redirect that, so the script's
+        # adapter_present must accept an env override for tests.
+    fi
+
+    cat > "$SANDBOX_ROOT/bin/bluetoothctl" <<'EOF'
+#!/usr/bin/env bash
+echo "[MOCK] bluetoothctl $*" >> "$SANDBOX_ROOT/calls.log"
+case "$1" in
+    show)
+        printf '\tPowered: %s\n'        "$SANDBOX_BT_POWERED"
+        printf '\tDiscovering: no\n'
+        printf '\tDiscoverable: no\n'
+        ;;
+    devices)
+        if [ "$2" = "Connected" ] && [ -n "$SANDBOX_BT_CONNECTED" ]; then
+            for entry in $SANDBOX_BT_CONNECTED; do
+                mac=${entry%%|*}; name=${entry#*|}
+                printf 'Device %s %s\n' "$mac" "$name"
+            done
+        fi
+        ;;
+    power) ;;
+esac
+exit 0
+EOF
+    chmod +x "$SANDBOX_ROOT/bin/bluetoothctl"
 }
 
 cleanup_sandbox() {

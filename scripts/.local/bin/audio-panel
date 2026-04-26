@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# audio-panel — toggle the quickshell audio panel.
+# Falls back to the wofi audio-menu if quickshell isn't running.
+
+if ! command -v qs >/dev/null; then
+    exec audio-menu
+fi
+
+if ! qs ipc call audio toggle 2>/dev/null; then
+    setsid -f qs >/dev/null 2>&1 || true
+    sleep 0.3
+    qs ipc call audio toggle 2>/dev/null || exec audio-menu
+fi

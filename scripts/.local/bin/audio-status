@@ -1,0 +1,245 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# audio-status [--watch|--pretty]
+# Emits the current pulseaudio state as JSON. --watch streams a fresh line on
+# every pactl subscribe event; consumers (eww, audio-menu) treat that stream
+# as the single source of truth.
+
+PACTL="$(command -v pactl || true)"
+JQ="$(command -v jq || true)"
+
+if [ -z "$PACTL" ]; then
+    echo '{"error":"pactl not found"}' >&2
+    exit 2
+fi
+if [ -z "$JQ" ]; then
+    echo '{"error":"jq not found"}' >&2
+    exit 2
+fi
+
+ICON_OUT="󰓃"
+ICON_IN="󰍬"
+ICON_HEAD="󰋋"
+ICON_HDMI="󰽟"
+ICON_OPT="󰽛"
+ICON_BT="󰂯"
+ICON_USB="󰕓"
+
+friendly_name() {
+    local dir=$1 name=$2 desc=${3:-}
+    local icon label lname
+    lname=${name,,}
+
+    if [ "$dir" = "source" ]; then
+        icon="$ICON_IN"
+        case "$lname" in
+            *bluez*)            label="Bluetooth Mic"; icon="$ICON_BT" ;;
+            *usb*)              label="USB Microphone"; icon="$ICON_USB" ;;
+            *analog*|*line-in*) label="Microphone (Analog)" ;;
+            *)                  label=${desc:-$name} ;;
+        esac
+    else
+        icon="$ICON_OUT"
+        case "$lname" in
+            *hdmi*)
+                label="HDMI"
+                icon="$ICON_HDMI"
+                case "$lname" in
+                    *hdmi-stereo-extra1*) label="HDMI 2" ;;
+                    *hdmi-stereo-extra2*) label="HDMI 3" ;;
+                esac
+                ;;
+            *iec958*|*spdif*)      label="Optical (S/PDIF)"; icon="$ICON_OPT" ;;
+            *bluez*)               label="Bluetooth"; icon="$ICON_BT" ;;
+            *usb*headset*)         label="USB Headset"; icon="$ICON_HEAD" ;;
+            *usb*)                 label="USB Audio"; icon="$ICON_USB" ;;
+            *analog*|*headphones*) label="Speakers (Analog)" ;;
+            *)                     label=${desc:-$name} ;;
+        esac
+    fi
+    printf '%s\t%s' "$icon" "$label"
+}
+
+read_volume() {
+    local dir=$1 target=$2 raw
+    case "$dir" in
+        sink)   raw=$("$PACTL" get-sink-volume   "$target" 2>/dev/null || true) ;;
+        source) raw=$("$PACTL" get-source-volume "$target" 2>/dev/null || true) ;;
+    esac
+    printf '%s' "$raw" | awk '
+        /Volume:/ {
+            n=0; sum=0
+            for (i=1;i<=NF;i++) if ($i ~ /%/) { v=$i; sub(/%.*/,"",v); sum+=v+0; n++ }
+            if (n>0) { printf "%d", sum/n; exit }
+        }
+        END { if (NR==0) print 0 }
+    '
+}
+
+read_mute() {
+    local dir=$1 target=$2 raw
+    case "$dir" in
+        sink)   raw=$("$PACTL" get-sink-mute   "$target" 2>/dev/null || true) ;;
+        source) raw=$("$PACTL" get-source-mute "$target" 2>/dev/null || true) ;;
+    esac
+    case "$raw" in *yes*) echo true ;; *) echo false ;; esac
+}
+
+# pactl -f json is the happy path; older pulseaudio-utils ship broken JSON
+# escaping, so list_nodes_fallback parses the human listing instead.
+list_nodes_json() {
+    local kind=$1
+    "$PACTL" -f json list "$kind" 2>/dev/null | "$JQ" -c --arg kind "$kind" '
+        if $kind == "sources" then
+            map(select(
+                (.name | endswith(".monitor") | not)
+                and (.properties["device.class"] // "" != "monitor")
+            ))
+        else . end
+        | map({
+            id: (.index | tonumber? // .index),
+            name: .name,
+            description: (.description // "")
+        })
+    ' 2>/dev/null
+}
+
+list_nodes_fallback() {
+    local kind=$1 dir
+    case "$kind" in
+        sinks)   dir=sink ;;
+        sources) dir=source ;;
+        *)       return 1 ;;
+    esac
+    "$PACTL" list "$kind" 2>/dev/null | awk -v dir="$dir" '
+        BEGIN { id=""; name=""; desc=""; is_monitor=0; first=1; printf "[" }
+        function flush() {
+            if (id != "" && name != "" && !is_monitor) {
+                if (!first) printf ","
+                first=0
+                gsub(/"/,"\\\"",desc)
+                printf "{\"id\":%s,\"name\":\"%s\",\"description\":\"%s\"}", id, name, desc
+            }
+        }
+        /^Sink #|^Source #/ {
+            flush()
+            id=$0; sub(/^[^#]*#/,"",id)
+            name=""; desc=""; is_monitor=0
+            next
+        }
+        /^[ \t]*Name: / {
+            name=$0; sub(/^[ \t]*Name: /,"",name)
+            if (name ~ /\.monitor$/) is_monitor=1
+        }
+        /^[ \t]*Description: / {
+            desc=$0; sub(/^[ \t]*Description: /,"",desc)
+        }
+        END { flush(); printf "]" }
+    '
+}
+
+list_nodes() {
+    local kind=$1 out
+    out=$(list_nodes_json "$kind" || true)
+    if [ -z "$out" ] || [ "$out" = "null" ]; then
+        out=$(list_nodes_fallback "$kind" || echo "[]")
+    fi
+    printf '%s' "$out"
+}
+
+decorate_nodes() {
+    local dir=$1 default_name=$2 raw=$3
+    local enriched="[]"
+    local i len
+    len=$(printf '%s' "$raw" | "$JQ" 'length' 2>/dev/null || echo 0)
+    [ "$len" = "null" ] && len=0
+    for ((i=0; i<len; i++)); do
+        local id name desc icon label is_default
+        id=$(printf '%s'   "$raw" | "$JQ" -r ".[$i].id")
+        name=$(printf '%s' "$raw" | "$JQ" -r ".[$i].name")
+        desc=$(printf '%s' "$raw" | "$JQ" -r ".[$i].description")
+        IFS=$'\t' read -r icon label < <(friendly_name "$dir" "$name" "$desc")
+        if [ "$name" = "$default_name" ]; then is_default=true; else is_default=false; fi
+        enriched=$(printf '%s' "$enriched" | "$JQ" -c \
+            --argjson id "$id" \
+            --arg     name "$name" \
+            --arg     label "$label" \
+            --arg     icon "$icon" \
+            --argjson def "$is_default" \
+            '. + [{id:$id, name:$name, label:$label, icon:$icon, default:$def}]')
+    done
+    printf '%s' "$enriched"
+}
+
+snapshot() {
+    local default_sink default_source
+    default_sink=$("$PACTL"   get-default-sink   2>/dev/null || echo "")
+    default_source=$("$PACTL" get-default-source 2>/dev/null || echo "")
+
+    local sinks_raw sources_raw sinks sources
+    sinks_raw=$(list_nodes sinks)
+    sources_raw=$(list_nodes sources)
+    sinks=$(decorate_nodes   sink   "$default_sink"   "$sinks_raw")
+    sources=$(decorate_nodes source "$default_source" "$sources_raw")
+
+    local sink_volume sink_muted source_volume source_muted
+    sink_volume=$(read_volume   sink   @DEFAULT_SINK@)
+    sink_muted=$(read_mute      sink   @DEFAULT_SINK@)
+    source_volume=$(read_volume source @DEFAULT_SOURCE@)
+    source_muted=$(read_mute    source @DEFAULT_SOURCE@)
+
+    local active_sink active_source
+    active_sink=$(printf   '%s' "$sinks"   | "$JQ" -c '[.[] | select(.default)] | first // null')
+    active_source=$(printf '%s' "$sources" | "$JQ" -c '[.[] | select(.default)] | first // null')
+
+    "$JQ" -nc \
+        --argjson sink          "$active_sink" \
+        --argjson source        "$active_source" \
+        --argjson sinks         "$sinks" \
+        --argjson sources       "$sources" \
+        --argjson sink_volume   "${sink_volume:-0}" \
+        --argjson sink_muted    "$sink_muted" \
+        --argjson source_volume "${source_volume:-0}" \
+        --argjson source_muted  "$source_muted" '
+        {
+            sink:    (if $sink   then ($sink   + {volume:$sink_volume,   muted:$sink_muted})   else null end),
+            source:  (if $source then ($source + {volume:$source_volume, muted:$source_muted}) else null end),
+            sinks:   $sinks,
+            sources: $sources
+        }'
+}
+
+# pactl subscribe fires multiple events per user action; debounce 60ms bursts.
+watch() {
+    snapshot
+    local last=""
+    "$PACTL" subscribe 2>/dev/null | while read -r _line; do
+        while read -r -t 0.06 _drain; do :; done || true
+        local cur
+        cur=$(snapshot)
+        if [ "$cur" != "$last" ]; then
+            printf '%s\n' "$cur"
+            last=$cur
+        fi
+    done
+}
+
+case "${1:-}" in
+    --watch)  watch ;;
+    --pretty) snapshot | "$JQ" . ;;
+    "")       snapshot ;;
+    -h|--help)
+        cat <<'USAGE'
+audio-status — emit current audio state as JSON.
+
+  audio-status            One-shot JSON snapshot.
+  audio-status --watch    Stream JSON on every pulseaudio change.
+  audio-status --pretty   Snapshot, formatted (debug).
+USAGE
+        ;;
+    *)
+        echo "Unknown argument: $1" >&2
+        exit 2
+        ;;
+esac

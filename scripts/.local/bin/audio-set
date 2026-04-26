@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# audio-set <verb> [arg]
+#   sink|source <id|name>            set default device
+#   sink-volume|source-volume <v>    v: "5"=5%, "+5"=relative, "0.65"=fraction
+#   mute sink|source                 toggle mute
+# Verb wrapper around wpctl so declarative consumers (eww onclick, waybar
+# on-scroll) don't embed shell logic.
+
+WPCTL="$(command -v wpctl || true)"
+PACTL="$(command -v pactl || true)"
+
+if [ -z "$WPCTL" ] || [ -z "$PACTL" ]; then
+    echo "audio-set: wpctl and pactl are required" >&2
+    exit 2
+fi
+
+VOL_CAP="1.5"
+
+usage() {
+    sed -n '3,9p' "$0" | sed 's/^# \{0,1\}//'
+    exit "${1:-2}"
+}
+
+to_wpctl_volume() {
+    local arg=$1
+    case "$arg" in
+        +*)  printf '%s' "${arg#+}%+" ;;
+        -*)  printf '%s' "${arg#-}%-" ;;
+        *.*) printf '%s' "$arg" ;;
+        *)
+            if [[ "$arg" =~ ^[0-9]+$ ]]; then
+                printf '%s' "$(awk -v p="$arg" 'BEGIN{printf "%.2f", p/100}')"
+            else
+                echo "audio-set: bad volume '$arg'" >&2
+                exit 2
+            fi
+            ;;
+    esac
+}
+
+set_default() {
+    local kind=$1 target=$2
+    if [ -z "$target" ]; then
+        echo "audio-set: $kind requires an id or name" >&2
+        exit 2
+    fi
+    "$WPCTL" set-default "$target"
+}
+
+set_volume() {
+    local target=$1 arg=$2 value
+    value=$(to_wpctl_volume "$arg")
+    "$WPCTL" set-volume -l "$VOL_CAP" "$target" "$value"
+}
+
+toggle_mute() {
+    local kind=$1
+    case "$kind" in
+        sink)   "$WPCTL" set-mute @DEFAULT_AUDIO_SINK@   toggle ;;
+        source) "$WPCTL" set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
+        *)      echo "audio-set: mute target must be sink|source" >&2; exit 2 ;;
+    esac
+}
+
+main() {
+    [ $# -ge 1 ] || usage
+    case "$1" in
+        sink)          shift; set_default sink   "${1:-}" ;;
+        source)        shift; set_default source "${1:-}" ;;
+        sink-volume)   shift; set_volume @DEFAULT_AUDIO_SINK@   "${1:-}" ;;
+        source-volume) shift; set_volume @DEFAULT_AUDIO_SOURCE@ "${1:-}" ;;
+        mute)          shift; toggle_mute "${1:-}" ;;
+        -h|--help)     usage 0 ;;
+        *)             echo "audio-set: unknown verb '$1'" >&2; usage ;;
+    esac
+}
+
+main "$@"

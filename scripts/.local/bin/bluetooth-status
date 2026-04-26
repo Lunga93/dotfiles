@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bluetooth-status [--watch]
+# Emits the current bluez state as JSON. --watch streams a fresh line on every
+# org.bluez D-Bus property change, debounced. Same pattern as audio-status.
+
+JQ="$(command -v jq || true)"
+BLUETOOTHCTL="$(command -v bluetoothctl || true)"
+DBUS_MONITOR="$(command -v dbus-monitor || true)"
+
+if [ -z "$JQ" ]; then
+    echo '{"available":false,"error":"jq not found"}'
+    exit 0
+fi
+
+adapter_present() {
+    if [ -n "${BT_SYS_DIR:-}" ]; then
+        compgen -G "${BT_SYS_DIR}/hci*" >/dev/null 2>&1
+    else
+        compgen -G "/sys/class/bluetooth/hci*" >/dev/null 2>&1
+    fi
+}
+
+snapshot() {
+    if ! adapter_present; then
+        printf '{"available":false}'
+        return
+    fi
+    if [ -z "$BLUETOOTHCTL" ]; then
+        printf '{"available":true,"powered":false,"error":"bluetoothctl missing"}'
+        return
+    fi
+
+    local show powered scanning discoverable
+    show=$(timeout 1 "$BLUETOOTHCTL" show 2>/dev/null || true)
+    powered=$(printf  '%s' "$show" | awk -F': ' '/^\tPowered:/      {print tolower($2); exit}')
+    scanning=$(printf '%s' "$show" | awk -F': ' '/^\tDiscovering:/  {print tolower($2); exit}')
+    discoverable=$(printf '%s' "$show" | awk -F': ' '/^\tDiscoverable:/{print tolower($2); exit}')
+
+    local connected_json="[]"
+    if [ "$powered" = "yes" ]; then
+        connected_json=$(timeout 1 "$BLUETOOTHCTL" devices Connected 2>/dev/null \
+            | awk '{
+                addr=$2;
+                $1=""; $2=""; sub(/^  /,""); name=$0;
+                printf "%s{\"address\":\"%s\",\"name\":\"%s\"}", (NR==1?"":","), addr, name
+            }
+            BEGIN{printf "["} END{printf "]"}'
+        )
+        # Awk above leaves "[" as first char only when no rows; sanitize.
+        [ -z "$connected_json" ] && connected_json="[]"
+    fi
+
+    "$JQ" -nc \
+        --argjson powered      "$([ "$powered" = "yes" ]      && echo true || echo false)" \
+        --argjson scanning     "$([ "$scanning" = "yes" ]     && echo true || echo false)" \
+        --argjson discoverable "$([ "$discoverable" = "yes" ] && echo true || echo false)" \
+        --argjson connected    "$connected_json" \
+        '{available: true, powered: $powered, scanning: $scanning, discoverable: $discoverable, connected: $connected, count: ($connected | length)}'
+}
+
+watch() {
+    snapshot
+    if [ -z "$DBUS_MONITOR" ] || ! adapter_present; then
+        # Fall back to polling every 5s.
+        while sleep 5; do snapshot; done
+        return
+    fi
+    local last
+    last=$(snapshot)
+    "$DBUS_MONITOR" --system \
+        "type='signal',interface='org.freedesktop.DBus.Properties',sender='org.bluez'" 2>/dev/null \
+        | while read -r _line; do
+            while read -r -t 0.15 _drain; do :; done || true
+            local cur
+            cur=$(snapshot)
+            if [ "$cur" != "$last" ]; then
+                printf '%s\n' "$cur"
+                last=$cur
+            fi
+        done
+}
+
+case "${1:-}" in
+    --watch)  watch ;;
+    --pretty) snapshot | "$JQ" . ;;
+    "")       snapshot ;;
+    -h|--help)
+        cat <<'USAGE'
+bluetooth-status — emit current bluez state as JSON.
+
+  bluetooth-status            One-shot snapshot.
+  bluetooth-status --watch    Stream JSON on bluez changes (or 5s poll fallback).
+  bluetooth-status --pretty   Snapshot, formatted (debug).
+USAGE
+        ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
+esac

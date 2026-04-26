@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bluetooth-menu — wofi fallback. Lists connected devices + a quick toggle.
+# Reads bluetooth-status, mutates via bluetoothctl.
+
+WOFI="$(command -v wofi || true)"
+JQ="$(command -v jq   || true)"
+BLUETOOTHCTL="$(command -v bluetoothctl || true)"
+NOTIFY="$(command -v notify-send || true)"
+OVERSKRIDE="$(command -v overskride || true)"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STATUS="$SCRIPT_DIR/bluetooth-status"
+
+require() { [ -n "$1" ] && [ -x "${2:-$1}" ] || { echo "Error: $3 missing" >&2; exit 2; }; }
+require "$WOFI" "$WOFI" wofi
+require "$JQ"   "$JQ"   jq
+[ -x "$STATUS" ] || { echo "bluetooth-status not found" >&2; exit 2; }
+
+state=$("$STATUS")
+available=$(printf '%s' "$state" | "$JQ" -r '.available')
+
+if [ "$available" != "true" ]; then
+    [ -n "$NOTIFY" ] && "$NOTIFY" -a bluetooth-menu "Bluetooth" "No adapter found"
+    exit 0
+fi
+
+powered=$(printf '%s' "$state" | "$JQ" -r '.powered')
+
+build_menu() {
+    if [ "$powered" = "true" ]; then
+        printf 'toggle\toff\t󰂲  Power off\n'
+    else
+        printf 'toggle\ton\t󰂯  Power on\n'
+    fi
+    printf '%s' "$state" | "$JQ" -r '.connected[] | "device\t\(.address)\t󰂱  \(.name)"'
+    [ -n "$OVERSKRIDE" ] && printf 'open\toverskride\t󰒓  Open Bluetooth manager\n'
+}
+
+menu=$(build_menu)
+choice=$(printf '%s\n' "$menu" | cut -f3- \
+    | "$WOFI" --dmenu --prompt "Bluetooth" --width 380 --height 320 \
+              --cache-file /dev/null --insensitive 2>/dev/null || true)
+[ -z "$choice" ] && exit 0
+
+matched=$(printf '%s\n' "$menu" | awk -F'\t' -v want="$choice" '$3 == want { print $1 "\t" $2; exit }')
+[ -z "$matched" ] && exit 0
+kind=${matched%%$'\t'*}
+arg=${matched#*$'\t'}
+
+case "$kind" in
+    toggle) "$BLUETOOTHCTL" power "$arg" >/dev/null 2>&1 || true ;;
+    device) "$BLUETOOTHCTL" disconnect "$arg" >/dev/null 2>&1 || true ;;
+    open)   [ -n "$OVERSKRIDE" ] && setsid -f "$OVERSKRIDE" >/dev/null 2>&1 || true ;;
+esac
