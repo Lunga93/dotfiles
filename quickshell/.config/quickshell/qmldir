@@ -1,0 +1,29 @@
+singleton Theme 1.0 Theme.qml
+singleton Globals 1.0 Globals.qml
+singleton AudioNames 1.0 AudioNames.qml
+
+Card 1.0 Card.qml
+Popout 1.0 Popout.qml
+IconButton 1.0 IconButton.qml
+VolumeSlider 1.0 VolumeSlider.qml
+VolumeRow 1.0 VolumeRow.qml
+DeviceChip 1.0 DeviceChip.qml
+AudioPanel 1.0 AudioPanel.qml
+
+BarPill 1.0 BarPill.qml
+BarIconButton 1.0 BarIconButton.qml
+BarText 1.0 BarText.qml
+Bar 1.0 Bar.qml
+Indicator 1.0 Indicator.qml
+
+WorkspacesSegment 1.0 WorkspacesSegment.qml
+TaskbarSegment 1.0 TaskbarSegment.qml
+TraySegment 1.0 TraySegment.qml
+BluetoothSegment 1.0 BluetoothSegment.qml
+VolumeSegment 1.0 VolumeSegment.qml
+ClockSegment 1.0 ClockSegment.qml
+ClipboardButton 1.0 ClipboardButton.qml
+PowerButton 1.0 PowerButton.qml
+
+CalendarPopout 1.0 CalendarPopout.qml
+PowerMenuPopout 1.0 PowerMenuPopout.qml
