@@ -2,11 +2,15 @@
   "niri/workspaces": {
     "on-click": "activate"
   },
-
   "wlr/taskbar": {
     "format": "{icon}",
     "icon-size": 22,
-    "icon-theme": ["WhiteSur", "Papirus", "Adwaita", "hicolor"],
+    "icon-theme": [
+      "WhiteSur",
+      "Papirus",
+      "Adwaita",
+      "hicolor"
+    ],
     "tooltip-format": "{title}",
     "on-click": "activate",
     "on-click-middle": "close",
@@ -18,7 +22,6 @@
       "Foot Server": "Terminal"
     }
   },
-
   "tray": {
     "icon-size": 21,
     "spacing": 10
@@ -36,7 +39,11 @@
     "format-source": "{volume}% ",
     "format-source-muted": "",
     "format-icons": {
-      "default": ["", "", ""],
+      "default": [
+        "",
+        "",
+        ""
+      ],
       "headphone": "",
       "headset": "",
       "hdmi": "󰵟",
@@ -52,7 +59,6 @@
     "on-scroll-up": "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+",
     "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
   },
-
   "clock": {
     "format": "{:%H:%M %a}",
     "format-alt": "{:%a %d %b %Y  %H:%M}",
@@ -63,23 +69,22 @@
       "weeks-pos": "right",
       "on-scroll": 1,
       "format": {
-        "months":     "<span color='#ffead3'><b>{}</b></span>",
-        "days":       "<span color='#ecc6d9'><b>{}</b></span>",
-        "weeks":      "<span color='#99ffdd'><b>W{}</b></span>",
-        "weekdays":   "<span color='#ffcc66'><b>{}</b></span>",
-        "today":      "<span color='#ff6699'><b><u>{}</u></b></span>"
+        "months": "<span color='#d2d9dd'><b>{}</b></span>",
+        "days": "<span color='#DECEA9'><b>{}</b></span>",
+        "weeks": "<span color='#A3AFCE'><b>W{}</b></span>",
+        "weekdays": "<span color='#A2A0A2'><b>{}</b></span>",
+        "today": "<span color='#5498BC'><b><u>{}</u></b></span>"
       }
     },
     "actions": {
-      "on-click-right":  "mode",
+      "on-click-right": "mode",
       "on-click-middle": "shift_reset",
-      "on-scroll-up":    "shift_up",
-      "on-scroll-down":  "shift_down"
+      "on-scroll-up": "shift_up",
+      "on-scroll-down": "shift_down"
     },
     "on-click": "gnome-calendar",
     "interval": 10
   },
-
   "bluetooth": {
     "format": "",
     "format-connected": "",
@@ -89,7 +94,6 @@
     "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
     "on-click": "overskride"
   },
-
   "custom/exit": {
     "format": "󰐥",
     "on-click": "~/.config/waybar/scripts/power-menu.sh",
