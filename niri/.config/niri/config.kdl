@@ -18,7 +18,7 @@ input {
     }
 
     mouse {
-        left-handed
+        // left-handed  // primary click on right button — uncomment for left-handed
     }
 
     focus-follows-mouse // Automatically focus windows under the mouse pointer
