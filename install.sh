@@ -37,7 +37,7 @@ OFFICIAL_PACKAGES=(
     "cliphist"
     "wl-clipboard"
     "ttf-fira-sans"
-    "ttf-font-awesome"
+    "otf-font-awesome"
     "ttf-roboto"
     "stow"
     "git"
@@ -47,6 +47,10 @@ OFFICIAL_PACKAGES=(
     "jq"
     "quickshell"
     "pavucontrol"
+    "ntfs-3g"
+    "sddm"
+    "qt6-svg"
+    "qt6-declarative"
 )
 
 sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
@@ -102,6 +106,7 @@ STOW_DIRS=(
     "alacritty"
     "quickshell"
     "gtk"
+    "systemd"
 )
 
 # Handle potential conflicts by backing up existing configs
@@ -115,6 +120,64 @@ for dir in "${STOW_DIRS[@]}"; do
     echo "Stowing $dir..."
     stow -R "$dir"
 done
+
+# 6b. SDDM theme (quickshell-pywal)
+# Theme dir lives under /usr/share (root-owned). Runtime overrides go to
+# /var/lib/sddm-theme which is user-owned, so apply-theme writes colors and
+# wallpaper without sudo. theme.conf.user inside the theme dir is a symlink
+# into the runtime dir — SDDM merges it on top of theme.conf transparently.
+echo -e "${GREEN}Installing SDDM theme (quickshell-pywal)...${NC}"
+SDDM_THEME_NAME="quickshell-pywal"
+SDDM_THEME_SRC="$SCRIPT_DIR/sddm/themes/$SDDM_THEME_NAME"
+SDDM_THEME_DST="/usr/share/sddm/themes/$SDDM_THEME_NAME"
+SDDM_RUNTIME_DIR="/var/lib/sddm-theme"
+
+if [ ! -d "$SDDM_THEME_SRC" ]; then
+    echo -e "${RED}SDDM theme source missing at $SDDM_THEME_SRC, skipping.${NC}"
+else
+    TARGET_USER="${USER:-$(whoami)}"
+    TARGET_GROUP="$(id -gn "$TARGET_USER")"
+
+    sudo install -d -m 755 -o "$TARGET_USER" -g "$TARGET_GROUP" "$SDDM_RUNTIME_DIR"
+
+    if [ -d "$SDDM_THEME_DST" ]; then
+        TS=$(date +%Y%m%d-%H%M%S)
+        echo -e "${BLUE}Backing up existing theme to ${SDDM_THEME_DST}.bak.${TS}${NC}"
+        sudo mv "$SDDM_THEME_DST" "${SDDM_THEME_DST}.bak.${TS}"
+    fi
+    sudo cp -r "$SDDM_THEME_SRC" "$SDDM_THEME_DST"
+
+    sudo ln -sfT "$SDDM_RUNTIME_DIR/theme.conf.user" \
+        "$SDDM_THEME_DST/theme.conf.user"
+
+    if [ ! -f "$SDDM_RUNTIME_DIR/theme.conf.user" ]; then
+        cat > "$SDDM_RUNTIME_DIR/theme.conf.user" <<CONF
+[General]
+background=#1c1c1e
+foreground=#f5f5f7
+accent=#0a84ff
+viewBg=#26262a
+wallpaperPath=$SDDM_RUNTIME_DIR/wallpaper
+CONF
+        chmod 644 "$SDDM_RUNTIME_DIR/theme.conf.user"
+    fi
+
+    if [ ! -f "$SDDM_RUNTIME_DIR/wallpaper" ] && \
+       [ -f "$HOME/.config/current_wallpaper" ]; then
+        CURR_WP=$(cat "$HOME/.config/current_wallpaper")
+        if [ -f "$CURR_WP" ]; then
+            cp -f "$CURR_WP" "$SDDM_RUNTIME_DIR/wallpaper"
+            chmod 644 "$SDDM_RUNTIME_DIR/wallpaper"
+        fi
+    fi
+
+    sudo install -d -m 755 /etc/sddm.conf.d
+    sudo install -m 644 "$SCRIPT_DIR/sddm/sddm.conf.d/10-theme.conf" \
+        /etc/sddm.conf.d/10-theme.conf
+
+    echo -e "${GREEN}SDDM theme installed at $SDDM_THEME_DST${NC}"
+    echo -e "${BLUE}Run 'apply-theme <wallpaper>' (via set-wallpaper) to refresh greeter colors.${NC}"
+fi
 
 # 7. Enable Services
 echo -e "${GREEN}Enabling services...${NC}"

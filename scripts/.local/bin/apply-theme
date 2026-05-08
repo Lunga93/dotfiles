@@ -275,6 +275,42 @@ write_gtk_palette "$HOME/.config/gtk-3.0"
 write_gtk_palette "$HOME/.config/gtk-4.0"
 [ -f "$HOME/.config/gtk-4.0/gtk.css" ] && touch "$HOME/.config/gtk-4.0/gtk.css"
 
+# SDDM theme — pushes colors + wallpaper to /var/lib/sddm-theme so the greeter
+# (running as the sddm user, no access to ~) can read them. The directory is
+# created world-readable by install.sh; if it's missing we skip silently and
+# the SDDM theme falls back to its baked-in Apple defaults.
+SDDM_THEME_DIR="/var/lib/sddm-theme"
+if [ -d "$SDDM_THEME_DIR" ] && [ -w "$SDDM_THEME_DIR" ]; then
+    sddm_view_bg=$(python3 - "$BG" <<'PY'
+import sys
+h = sys.argv[1].lstrip('#')
+r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+def lighten(v): return min(255, v + 10)
+print(f"#{lighten(r):02x}{lighten(g):02x}{lighten(b):02x}")
+PY
+)
+    cat > "$SDDM_THEME_DIR/theme.conf.user" <<CONF
+[General]
+background=${BG}
+foreground=${FG}
+accent=${ACCENT}
+viewBg=${sddm_view_bg}
+wallpaperPath=${SDDM_THEME_DIR}/wallpaper
+CONF
+    if [ -f "$WALLPAPER" ]; then
+        cp -f -- "$WALLPAPER" "$SDDM_THEME_DIR/wallpaper.tmp"
+        mv -f -- "$SDDM_THEME_DIR/wallpaper.tmp" "$SDDM_THEME_DIR/wallpaper"
+    fi
+    chmod 644 "$SDDM_THEME_DIR/theme.conf.user" "$SDDM_THEME_DIR/wallpaper" 2>/dev/null || true
+    echo "SDDM theme refreshed at $SDDM_THEME_DIR"
+fi
+
+rm -rf "$HOME/.local/share/icons/pywal-folders" 2>/dev/null || true
+
+nautilus --quit 2>/dev/null || true
+sleep 0.3
+nautilus &>/dev/null & disown
+
 echo "Reloading UI components..."
 
 # quickshell auto-reloads palette via FileView watching ~/.cache/wal/colors.json.

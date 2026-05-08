@@ -1,0 +1,14 @@
+[SddmGreeterTheme]
+Name=Quickshell Pywal
+Description=Apple-inspired SDDM greeter that follows the pywal palette and Quickshell design tokens.
+Author=lunga
+License=MIT
+Type=sddm-theme
+Version=1.0
+Website=
+Screenshot=
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=
+Theme-Id=quickshell-pywal
+Theme-API=2.0
