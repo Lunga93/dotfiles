@@ -48,6 +48,12 @@ ColorSwatch 1.0 settings/components/ColorSwatch.qml
 singleton SettingsStore 1.0 settings/data/SettingsStore.qml
 singleton Categories 1.0 settings/data/Categories.qml
 
-# Legacy (keep until Phase D)
-FrequencyPicker 1.0 FrequencyPicker.qml
-SourceManager 1.0 SourceManager.qml
+# Mood browser components
+singleton MoodCatalog 1.0 settings/data/MoodCatalog.qml
+
+MoodGrid 1.0 settings/pages/wallpaper/MoodGrid.qml
+MoodTile 1.0 settings/pages/wallpaper/MoodTile.qml
+WallpaperHero 1.0 settings/pages/wallpaper/WallpaperHero.qml
+WallpaperGrid 1.0 settings/pages/wallpaper/WallpaperGrid.qml
+ScheduleCard 1.0 settings/pages/wallpaper/ScheduleCard.qml
+SourcesCard 1.0 settings/pages/wallpaper/SourcesCard.qml
