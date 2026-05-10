@@ -5,6 +5,19 @@ set -euo pipefail
 # Sets wallpaper using swww and applies theme via apply-theme.
 # Saves state for persistence on reboot.
 
+# Append-mode log shared with restore-wallpaper. The awk wrapper here is
+# only attached when not already inside one (keeps tags readable when called
+# from restore-wallpaper).
+if [[ -z "${WALLPAPER_LOG_PROXY:-}" ]]; then
+    LOG_FILE="$HOME/.local/share/dotfiles/wallpaper.log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    export WALLPAPER_LOG_PROXY=1
+    exec > >(awk -v p="set-wallpaper" '{ printf "[%s %s] %s\n", strftime("%Y-%m-%d %H:%M:%S"), p, $0; fflush() }' >>"$LOG_FILE") 2>&1
+fi
+
+trap 'echo "EXIT $? at line $LINENO (cmd: ${BASH_COMMAND})"' ERR
+echo "==== set-wallpaper $* ===="
+
 STATE_FILE="$HOME/.config/current_wallpaper"
 
 if [ "$#" -lt 1 ]; then
@@ -71,4 +84,9 @@ else
         # call via bash to avoid relying on the executable bit inside the repo
         bash "$SCRIPTS_DIR/apply-theme" "$IMG" || true
     fi
+fi
+
+# 4. Tag the new wallpaper for mood classification
+if command -v tag-wallpaper-moods >/dev/null 2>&1; then
+    tag-wallpaper-moods --file "$IMG" --quiet &>/dev/null &
 fi
