@@ -61,16 +61,37 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
-@test "tag-wallpaper-moods tags and stores moods list" {
+@test "tag-wallpaper-moods --file missing path exits with error" {
+    run "$TAGGER" --file "$FIXTURE_DIR/nonexistent.jpg"
+    [ "$status" -eq 1 ]
+}
+
+@test "tag-wallpaper-moods tags dark image with dark mood" {
     run "$TAGGER" --file "$FIXTURE_DIR/dark.jpg"
     [ "$status" -eq 0 ]
     run python3 -c "
 import json
 d=json.load(open('$SANDBOX_HOME/.cache/dotfiles/wallpaper-moods.json'))
-tags=list(d['tags'].values())[0]
-moods = tags['moods']
-assert len(moods) > 0, f'Expected at least one mood, got {moods}'
-print('moods:', moods)
+for path, entry in d['tags'].items():
+    if path.endswith('dark.jpg'):
+        assert 'dark' in entry['moods'], f'Expected dark mood for dark.jpg, got {entry[\"moods\"]}'
+        print('OK: dark.jpg has dark mood')
+        break
+"
+    [ "$status" -eq 0 ]
+}
+
+@test "tag-wallpaper-moods tags light image with light mood" {
+    run "$TAGGER" --file "$FIXTURE_DIR/light.jpg"
+    [ "$status" -eq 0 ]
+    run python3 -c "
+import json
+d=json.load(open('$SANDBOX_HOME/.cache/dotfiles/wallpaper-moods.json'))
+for path, entry in d['tags'].items():
+    if path.endswith('light.jpg'):
+        assert 'light' in entry['moods'], f'Expected light mood for light.jpg, got {entry[\"moods\"]}'
+        print('OK: light.jpg has light mood')
+        break
 "
     [ "$status" -eq 0 ]
 }
