@@ -28,7 +28,12 @@ validate_image() {
 # 2) If UNSPLASH_API_KEY exists at $CONFIG_DIR/unsplash_api_key use Unsplash
 # 3) Fallback to Lorem Picsum (no API key required)
 
-LOCAL_WALLPAPER_DIR="${LOCAL_WALLPAPER_DIR:-$HOME/Pictures/wallpapers/local}"
+CONFIG_FILE="$CONFIG_DIR/settings.json"
+LIBRARY_DIR=""
+if [ -f "$CONFIG_FILE" ]; then
+    LIBRARY_DIR=$(jq -r '.wallpaper.library_dir // empty' "$CONFIG_FILE" 2>/dev/null || true)
+fi
+LOCAL_WALLPAPER_DIR="${LIBRARY_DIR:-$HOME/Pictures/wallpapers}"
 UNSPLASH_KEY_FILE="$CONFIG_DIR/unsplash_api_key"
 
 choose_local() {
