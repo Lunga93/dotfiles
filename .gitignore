@@ -18,6 +18,9 @@ gtk/.config/gtk-4.0/colors-wal.css
 # Local AGS migration leftover (do not commit)
 ags/.config/ags.v1-old/
 
+# Brainstorm sessions (mockup HTML, server state)
+.superpowers/
+
 # systemctl --user enable/mask activation symlinks (machine-local state).
 # ~/.config/systemd is a symlink into the repo, so `systemctl --user enable`
 # creates *.target.wants/ symlinks here, and `systemctl --user mask` creates
