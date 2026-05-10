@@ -47,8 +47,11 @@ PanelWindow {
     // Window — solid layered surfaces, no glass
     Rectangle {
         id: container
+        readonly property int defaultHeight: 640
+        readonly property int expandedHeight: 900
         width: 1000
-        height: 640
+        height: SettingsStore.selectedMood ? expandedHeight : defaultHeight
+        Behavior on height { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.05 } }
         anchors.centerIn: parent
         radius: 16
         color: "#1a1611"

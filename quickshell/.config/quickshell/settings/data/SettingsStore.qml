@@ -8,6 +8,8 @@ QtObject {
 
     property string settingsPath: Quickshell.env("HOME") + "/.config/dotfiles/settings.json"
     property string currentWallpaper: ""
+    property string selectedMood: ""
+    property string moodCachePath: Quickshell.env("HOME") + "/.cache/dotfiles/wallpaper-moods.json"
 
     property var data: ({
         "wallpaper": {
@@ -25,7 +27,8 @@ QtObject {
             "unsplash_api_key": "",
             "recent": [],
             "favorites": [],
-            "library_dir": ""
+            "library_dir": "",
+            "selected_mood": null
         },
         "appearance": {
             "accent_mode": "dynamic",
@@ -49,6 +52,7 @@ QtObject {
                     }
                 }
                 store.changed();
+                store.loadSelectedMood();
             } catch (e) {
                 console.warn("SettingsStore: failed to parse settings, keeping defaults");
             }
@@ -83,6 +87,11 @@ QtObject {
         store.data[section][key] = value;
         save();
         store.changed();
+    }
+
+    function loadSelectedMood(): void {
+        const mood = store.get("wallpaper", "selected_mood");
+        store.selectedMood = mood || "";
     }
 
     function get(section: string, key: string): var {
