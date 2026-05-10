@@ -11,10 +11,13 @@ Rectangle {
     border.color: "#0e0a06"
     border.width: 1
 
+    signal frequencyChanged(string freq)
+
     readonly property string currentFrequency: SettingsStore.get("wallpaper", "frequency") || "daily"
 
     function applyFrequency(freq: string): void {
         SettingsStore.set("wallpaper", "frequency", freq);
+        root.frequencyChanged(freq);
         let cmd = "";
         if (freq === "off") {
             cmd = "systemctl --user disable --now daily-wallpaper.timer";

@@ -102,6 +102,5 @@ Item {
         }
     }
 
-    opacity: root.selected ? 1.0 : (card.state === "othersDim" ? 0.35 : 1.0)
     Behavior on opacity { NumberAnimation { duration: 200 } }
 }
