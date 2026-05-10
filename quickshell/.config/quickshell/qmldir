@@ -27,3 +27,27 @@ PowerButton 1.0 PowerButton.qml
 
 CalendarPopout 1.0 CalendarPopout.qml
 PowerMenuPopout 1.0 PowerMenuPopout.qml
+
+# Settings app
+SettingsWindow 1.0 settings/SettingsWindow.qml
+SettingsSidebar 1.0 settings/SettingsSidebar.qml
+SettingsContent 1.0 settings/SettingsContent.qml
+PlaceholderPage 1.0 settings/pages/PlaceholderPage.qml
+
+WallpaperPage 1.0 settings/pages/wallpaper/WallpaperPage.qml
+
+# Settings components
+PhosphorIcon 1.0 settings/components/PhosphorIcon.qml
+ToggleSwitch 1.0 settings/components/ToggleSwitch.qml
+SettingsRow 1.0 settings/components/SettingsRow.qml
+SettingsGroup 1.0 settings/components/SettingsGroup.qml
+PillSelector 1.0 settings/components/PillSelector.qml
+ColorSwatch 1.0 settings/components/ColorSwatch.qml
+
+# Settings data singletons
+singleton SettingsStore 1.0 settings/data/SettingsStore.qml
+singleton Categories 1.0 settings/data/Categories.qml
+
+# Legacy (keep until Phase D)
+FrequencyPicker 1.0 FrequencyPicker.qml
+SourceManager 1.0 SourceManager.qml
