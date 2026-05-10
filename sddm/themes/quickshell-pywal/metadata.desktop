@@ -12,3 +12,4 @@ ConfigFile=theme.conf
 TranslationsDirectory=
 Theme-Id=quickshell-pywal
 Theme-API=2.0
+QtVersion=6

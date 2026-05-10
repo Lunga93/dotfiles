@@ -1,0 +1,15 @@
+[Unit]
+Description=voice-tv microphone daemon (wake word + whisper)
+After=voice-tv-server.service sound.target
+Wants=voice-tv-server.service
+
+[Service]
+Type=simple
+ExecStart=%h/voice-tv/venv/bin/voice-tv-daemon
+Restart=on-failure
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+# Tune via drop-in: systemctl --user edit voice-tv-daemon.service
+
+[Install]
+WantedBy=default.target

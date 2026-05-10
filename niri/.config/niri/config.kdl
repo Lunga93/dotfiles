@@ -65,6 +65,7 @@ binds {
     MOD+V { spawn-sh "~/.local/bin/clipboard-manager"; }
     MOD+SHIFT+W { spawn-sh "~/.local/bin/wallpaper-control"; }
     MOD+SHIFT+I { spawn-sh "~/.local/bin/view-logs"; }
+    MOD+COMMA   hotkey-overlay-title="Settings" { spawn-sh "qs ipc call settings toggle"; }
     
     // Notifications (SwayNC)
     MOD+N { spawn-sh "swaync-client -t -sw"; }
@@ -222,8 +223,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#E1AC5D"
-            inactive-color "#E1AC5D"
+            active-color "#D4BD47"
+            inactive-color "#D4BD47"
         }
 
         shadow {

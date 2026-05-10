@@ -307,10 +307,6 @@ fi
 
 rm -rf "$HOME/.local/share/icons/pywal-folders" 2>/dev/null || true
 
-nautilus --quit 2>/dev/null || true
-sleep 0.3
-nautilus &>/dev/null & disown
-
 echo "Reloading UI components..."
 
 # quickshell auto-reloads palette via FileView watching ~/.cache/wal/colors.json.
@@ -318,10 +314,6 @@ echo "Reloading UI components..."
 if command -v niri >/dev/null; then
     echo "Signaling Niri..."
     niri msg action load-config-file || echo "Niri reload failed."
-fi
-
-if command -v notify-send >/dev/null; then
-    notify-send "Theme Updated" "New wallpaper and colors applied." -i "$WALLPAPER" -a "apply-theme" || true
 fi
 
 echo "--- Theme application complete ---"

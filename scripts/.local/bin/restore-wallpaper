@@ -5,19 +5,30 @@ set -euo pipefail
 # Restores the last set wallpaper from state file, or defaults to a preset.
 # Handles waiting for swww-daemon to be ready.
 
+LOG_FILE="$HOME/.local/share/dotfiles/wallpaper.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+exec > >(awk -v p="restore-wallpaper" '{ printf "[%s %s] %s\n", strftime("%Y-%m-%d %H:%M:%S"), p, $0; fflush() }' >>"$LOG_FILE") 2>&1
+
 STATE_FILE="$HOME/.config/current_wallpaper"
 DEFAULT_WALLPAPER="$HOME/Pictures/wallpapers/forest-train.gif"
 SET_WALLPAPER_SCRIPT="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/set-wallpaper"
 
-# 1. Wait for swww-daemon to be ready (max 10 seconds)
-echo "Waiting for swww-daemon..."
-for i in {1..20}; do
-    if swww query &>/dev/null; then
-        echo "swww is ready."
-        break
-    fi
-    sleep 0.5
-done
+trap 'echo "EXIT $? at line $LINENO (cmd: ${BASH_COMMAND})"' ERR
+echo "==== run start (pid=$$) ===="
+
+# Skip the wait entirely if swww isn't installed — set-wallpaper falls back
+# to swaybg in that case, no point burning 10s on a daemon that will never
+# come up.
+if command -v swww >/dev/null 2>&1; then
+    echo "Waiting for swww-daemon..."
+    for i in {1..20}; do
+        if swww query &>/dev/null; then
+            echo "swww is ready."
+            break
+        fi
+        sleep 0.5
+    done
+fi
 
 # 2. Determine which wallpaper to use
 if [ -f "$STATE_FILE" ]; then

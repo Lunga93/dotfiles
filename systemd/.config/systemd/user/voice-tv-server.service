@@ -1,0 +1,16 @@
+[Unit]
+Description=voice-tv agent server (FastAPI -> opencode)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/voice-tv/venv/bin/voice-tv-server
+Restart=on-failure
+RestartSec=2
+# Keep snapshots disabled for the home dir; opencode is invoked with --dir
+# pointing at the package's skills folder which is small.
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

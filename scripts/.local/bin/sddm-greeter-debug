@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# sddm-greeter-debug
+# Launches sddm-greeter-qt6 in --test-mode against the configured theme with
+# every QML/import diagnostic enabled, captures stdout+stderr to a log file,
+# and prints the path. Useful for reproducing "failed imports" or other QML
+# errors that the user sees on the real login screen but that disappear into
+# the system journal otherwise.
+#
+# Usage:
+#   sddm-greeter-debug                    # use theme from /etc/sddm.conf.d
+#   sddm-greeter-debug <theme-name>       # explicit theme under /usr/share/sddm/themes
+#   sddm-greeter-debug -p <theme-path>    # explicit absolute path
+#
+# Default duration is 5 seconds. Override with DURATION=N env var.
+
+LOG_DIR="$HOME/.local/share/dotfiles"
+LOG_FILE="$LOG_DIR/sddm-greeter-test.log"
+mkdir -p "$LOG_DIR"
+
+THEMES_DIR="/usr/share/sddm/themes"
+DURATION="${DURATION:-5}"
+THEME_PATH=""
+
+if [ "${1:-}" = "-p" ] && [ -n "${2:-}" ]; then
+    THEME_PATH="$2"
+elif [ -n "${1:-}" ]; then
+    THEME_PATH="$THEMES_DIR/$1"
+else
+    # Read Current= from the highest-numbered conf in /etc/sddm.conf.d.
+    cur=""
+    for f in /etc/sddm.conf.d/*.conf /etc/sddm.conf; do
+        [ -r "$f" ] || continue
+        v=$(awk -F= '/^[[:space:]]*Current[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2}' "$f" | tail -1)
+        [ -n "$v" ] && cur="$v"
+    done
+    [ -n "$cur" ] || cur="quickshell-pywal"
+    THEME_PATH="$THEMES_DIR/$cur"
+fi
+
+if [ ! -d "$THEME_PATH" ]; then
+    echo "Theme directory not found: $THEME_PATH" >&2
+    exit 2
+fi
+
+{
+    printf '\n==== %s | sddm-greeter-debug | theme=%s | duration=%ss ====\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" "$THEME_PATH" "$DURATION"
+
+    echo "-- env --"
+    echo "DISPLAY=${DISPLAY:-} WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-} XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}"
+    echo "qt6: $(pacman -Q qt6-declarative qt6-shadertools qt6-multimedia qt6-svg 2>/dev/null | tr '\n' ' ')"
+
+    echo "-- qmllint --"
+    if command -v qmllint >/dev/null 2>&1; then
+        for f in "$THEME_PATH"/*.qml; do
+            out=$(qmllint "$f" 2>&1) || true
+            if [ -n "$out" ]; then
+                printf '%s:\n%s\n' "${f##*/}" "$out"
+            fi
+        done
+        echo "(qmllint clean files omitted)"
+    else
+        echo "qmllint not installed"
+    fi
+
+    echo "-- greeter run (offscreen, $DURATION s) --"
+    QT_FORCE_STDERR_LOGGING=1 \
+    QT_ASSUME_STDERR_HAS_CONSOLE=1 \
+    QT_LOGGING_RULES="qt.qml*=true;js=true" \
+    QT_QPA_PLATFORM=offscreen \
+    stdbuf -o0 -e0 timeout "$DURATION" \
+        sddm-greeter-qt6 --test-mode --theme "$THEME_PATH" 2>&1 || true
+
+    echo "-- end ($(date '+%H:%M:%S')) --"
+} | tee -a "$LOG_FILE"
+
+echo
+echo "Log: $LOG_FILE"

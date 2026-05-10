@@ -15,6 +15,7 @@ ShellRoot {
     AudioPanel      { id: audioPanel }
     CalendarPopout  { id: calendarPopout }
     PowerMenuPopout { id: powerPopout }
+    SettingsWindow  { id: settingsWindow }
 
     Item {
         Component.onCompleted: {
@@ -39,5 +40,12 @@ ShellRoot {
     IpcHandler {
         target: "power"
         function toggle(): void { Globals.toggle(powerPopout) }
+    }
+
+    IpcHandler {
+        target: "settings"
+        function toggle(): void { settingsWindow.toggle() }
+        function show(): void   { settingsWindow.open() }
+        function hide(): void   { settingsWindow.close() }
     }
 }
