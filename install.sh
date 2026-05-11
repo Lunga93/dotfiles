@@ -1,213 +1,285 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-# Colors for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+readonly SCRIPT_DIR="$_script_dir"
 
-echo -e "${BLUE}Starting Dotfiles Installation...${NC}"
+readonly GREEN='\033[0;32m'
+readonly BLUE='\033[0;34m'
+readonly RED='\033[0;31m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m'
 
-# 1. Check for Arch Linux
-if [ ! -f /etc/arch-release ]; then
-    echo -e "${RED}Error: This script is designed for Arch Linux (or derivatives like CachyOS).${NC}"
-    exit 1
-fi
+DRY_RUN=false
+DO_UPDATE=false
 
-# 2. Update System
-echo -e "${GREEN}Updating system...${NC}"
-sudo pacman -Syu --noconfirm
-
-# 3. Install Official Repository Packages
-echo -e "${GREEN}Installing official packages...${NC}"
 OFFICIAL_PACKAGES=(
-    "niri"
-    "swaync"
-    "wofi"
     "alacritty"
-    "nautilus"
-    "swaylock"
+    "base-devel"
+    "bats-core"
     "bluez"
     "bluez-utils"
+    "cliphist"
+    "curl"
+    "git"
     "gnome-calendar"
+    "jq"
+    "nautilus"
+    "niri"
+    "ntfs-3g"
+    "otf-font-awesome"
+    "pavucontrol"
     "pipewire"
-    "wireplumber"
     "playerctl"
     "polkit-kde-agent"
-    "cliphist"
-    "wl-clipboard"
-    "ttf-fira-sans"
-    "otf-font-awesome"
-    "ttf-roboto"
-    "stow"
-    "git"
-    "base-devel"
+    "python-pillow"
     "python-pywal"
-    "curl"
-    "jq"
-    "quickshell"
-    "pavucontrol"
-    "ntfs-3g"
-    "sddm"
-    "qt6-svg"
     "qt6-declarative"
-)
-
-sudo pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
-
-# 3b. Evict mako if present.
-# Both mako and swaync ship D-Bus activation files for
-# org.freedesktop.Notifications. If mako is installed it tends to win the
-# race on boot, silently shadowing swaync and freezing notification colors
-# at mako's hard-coded config. Mako is not in OFFICIAL_PACKAGES, but may
-# be left over from a previous setup or pulled in as a dependency.
-if pacman -Q mako &> /dev/null; then
-    echo -e "${BLUE}Removing mako (conflicts with swaync for notifications)...${NC}"
-    sudo pacman -Rns --noconfirm mako || true
-fi
-rm -rf "$HOME/.config/mako"
-
-# 4. Install AUR Helper (yay) if missing
-if ! command -v yay &> /dev/null; then
-    echo -e "${BLUE}Installing yay (AUR helper)...${NC}"
-    git clone https://aur.archlinux.org/yay.git /tmp/yay
-    cd /tmp/yay
-    makepkg -si --noconfirm
-    cd -
-    rm -rf /tmp/yay
-fi
-
-# 5. Install AUR Packages
-echo -e "${GREEN}Installing AUR packages...${NC}"
-AUR_PACKAGES=(
-    "overskride"          # Bluetooth client
-    "swww"                # Wallpaper daemon
-    "xwayland-satellite"  # XWayland manager for Niri
-    "aylurs-gtk-shell"    # AGS
-    "zen-browser-bin"     # Zen Browser
-    "swaylock-effects-git" # Enhanced lock screen with blur
-)
-
-yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
-
-# 6. Apply Dotfiles using Stow
-echo -e "${GREEN}Stowing configurations...${NC}"
-# Ensure we are in the dotfiles directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-cd "$SCRIPT_DIR"
-
-# Directories to stow
-STOW_DIRS=(
-    "niri"
-    "swaync"
-    "wofi"
-    "ags"
-    "scripts"
-    "alacritty"
+    "qt6-svg"
     "quickshell"
-    "gtk"
-    "systemd"
+    "sddm"
+    "shellcheck"
+    "shfmt"
+    "stow"
+    "swaylock"
+    "swaync"
+    "ttf-fira-sans"
+    "ttf-roboto"
+    "wl-clipboard"
+    "wofi"
+    "wireplumber"
 )
 
-# Handle potential conflicts by backing up existing configs
-for dir in "${STOW_DIRS[@]}"; do
-    TARGET_DIR="$HOME/.config/$dir"
-    if [ -d "$TARGET_DIR" ] && [ ! -L "$TARGET_DIR" ]; then
-        echo -e "${BLUE}Backing up existing $TARGET_DIR to $TARGET_DIR.bak${NC}"
-        mv "$TARGET_DIR" "$TARGET_DIR.bak"
+AUR_PACKAGES=(
+    "aylurs-gtk-shell"
+    "overskride"
+    "swaylock-effects-git"
+    "swww"
+    "ttf-phosphor-icons"
+    "xwayland-satellite"
+    "zen-browser-bin"
+)
+
+STOW_DIRS=(
+    "ags"
+    "alacritty"
+    "gtk"
+    "niri"
+    "quickshell"
+    "scripts"
+    "swaync"
+    "systemd"
+    "wofi"
+)
+
+usage() {
+    cat <<EOF
+usage: install.sh [options]
+
+Options:
+  -n, --dry-run    Show what would be done without making changes
+  -u, --update     Run pacman -Syu before installing packages
+  -h, --help       Show this help and exit
+EOF
+    exit 0
+}
+
+info()  { echo -e "${BLUE}::${NC} $*"; }
+ok()    { echo -e "${GREEN}OK${NC}  $*"; }
+warn()  { echo -e "${YELLOW}!!${NC} $*"; }
+die()   { echo -e "${RED}!!${NC} $*" >&2; exit 1; }
+
+run() {
+    if $DRY_RUN; then
+        echo -e "${YELLOW}DRY${NC} $(IFS=' '; echo "$*")" >&2
+        return 0
     fi
-    
-    echo "Stowing $dir..."
-    stow -R "$dir"
-done
+    "$@"
+}
 
-# 6b. SDDM theme (quickshell-pywal)
-# Theme dir lives under /usr/share (root-owned). Runtime overrides go to
-# /var/lib/sddm-theme which is user-owned, so apply-theme writes colors and
-# wallpaper without sudo. theme.conf.user inside the theme dir is a symlink
-# into the runtime dir — SDDM merges it on top of theme.conf transparently.
-echo -e "${GREEN}Installing SDDM theme (quickshell-pywal)...${NC}"
-SDDM_THEME_NAME="quickshell-pywal"
-SDDM_THEME_SRC="$SCRIPT_DIR/sddm/themes/$SDDM_THEME_NAME"
-SDDM_THEME_DST="/usr/share/sddm/themes/$SDDM_THEME_NAME"
-SDDM_RUNTIME_DIR="/var/lib/sddm-theme"
-
-if [ ! -d "$SDDM_THEME_SRC" ]; then
-    echo -e "${RED}SDDM theme source missing at $SDDM_THEME_SRC, skipping.${NC}"
-else
-    TARGET_USER="${USER:-$(whoami)}"
-    TARGET_GROUP="$(id -gn "$TARGET_USER")"
-
-    sudo install -d -m 755 -o "$TARGET_USER" -g "$TARGET_GROUP" "$SDDM_RUNTIME_DIR"
-
-    if [ -d "$SDDM_THEME_DST" ]; then
-        TS=$(date +%Y%m%d-%H%M%S)
-        echo -e "${BLUE}Backing up existing theme to ${SDDM_THEME_DST}.bak.${TS}${NC}"
-        sudo mv "$SDDM_THEME_DST" "${SDDM_THEME_DST}.bak.${TS}"
+sudo_run() {
+    if $DRY_RUN; then
+        echo -e "${YELLOW}DRY${NC} sudo $(IFS=' '; echo "$*")" >&2
+        return 0
     fi
-    sudo cp -r "$SDDM_THEME_SRC" "$SDDM_THEME_DST"
+    sudo "$@"
+}
 
-    sudo ln -sfT "$SDDM_RUNTIME_DIR/theme.conf.user" \
-        "$SDDM_THEME_DST/theme.conf.user"
+check_arch() {
+    info "Checking system ..."
+    if [[ ! -f /etc/arch-release ]]; then
+        die "This installer is designed for Arch Linux (or derivatives like CachyOS)."
+    fi
+    ok "Arch Linux detected"
+}
 
-    if [ ! -f "$SDDM_RUNTIME_DIR/theme.conf.user" ]; then
-        cat > "$SDDM_RUNTIME_DIR/theme.conf.user" <<CONF
+update_system() {
+    if $DO_UPDATE; then
+        info "Updating system (--update) ..."
+        sudo_run pacman -Syu --noconfirm
+        ok "System updated"
+    else
+        info "Skipping system update (pass --update to run pacman -Syu)"
+    fi
+}
+
+install_official() {
+    info "Installing official packages ..."
+    sudo_run pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
+    ok "Official packages installed"
+}
+
+ensure_aur_helper() {
+    if command -v yay &>/dev/null; then
+        ok "yay already installed"
+        return 0
+    fi
+    info "Installing yay from AUR ..."
+    run git clone https://aur.archlinux.org/yay.git /tmp/yay
+    (cd /tmp/yay && run makepkg -si --noconfirm)
+    run rm -rf /tmp/yay
+    ok "yay installed"
+}
+
+install_aur() {
+    info "Installing AUR packages ..."
+    run yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
+    ok "AUR packages installed"
+}
+
+evict_mako() {
+    if pacman -Q mako &>/dev/null 2>&1; then
+        info "Removing mako (conflicts with swaync for notifications) ..."
+        sudo_run pacman -Rns --noconfirm mako || true
+    fi
+    run rm -rf "$HOME/.config/mako"
+}
+
+stow_all() {
+    info "Stowing dotfiles ..."
+    run cd "$SCRIPT_DIR"
+    for dir in "${STOW_DIRS[@]}"; do
+        local target="$HOME/.config/$dir"
+        if [[ -d "$target" && ! -L "$target" ]]; then
+            warn "Backing up $target -> $target.bak"
+            run mv "$target" "$target.bak"
+        fi
+        if $DRY_RUN; then
+            echo -e "${YELLOW}DRY${NC} stow -n -v $dir"
+        else
+            stow -R "$dir"
+        fi
+    done
+    ok "Dotfiles stowed"
+}
+
+install_sddm() {
+    local name="quickshell-pywal"
+    local src="$SCRIPT_DIR/sddm/themes/$name"
+    local dst="/usr/share/sddm/themes/$name"
+    local rundir="/var/lib/sddm-theme"
+
+    if [[ ! -d "$src" ]]; then
+        warn "SDDM theme source missing at $src, skipping"
+        return 0
+    fi
+
+    info "Installing SDDM theme ($name) ..."
+    local user="${USER:-$(whoami)}"
+    local group
+    group="$(id -gn "$user")"
+
+    sudo_run install -d -m 755 -o "$user" -g "$group" "$rundir"
+
+    if [[ -d "$dst" ]]; then
+        local ts
+        ts="$(date +%Y%m%d-%H%M%S)"
+        warn "Backing up existing theme -> ${dst}.bak.${ts}"
+        sudo_run mv "$dst" "${dst}.bak.${ts}"
+    fi
+    sudo_run cp -r "$src" "$dst"
+    sudo_run ln -sfT "$rundir/theme.conf.user" "$dst/theme.conf.user"
+
+    if [[ ! -f "$rundir/theme.conf.user" ]]; then
+        cat > "$rundir/theme.conf.user" <<CONF
 [General]
 background=#1c1c1e
 foreground=#f5f5f7
 accent=#0a84ff
 viewBg=#26262a
-wallpaperPath=$SDDM_RUNTIME_DIR/wallpaper
+wallpaperPath=$rundir/wallpaper
 CONF
-        chmod 644 "$SDDM_RUNTIME_DIR/theme.conf.user"
+        run chmod 644 "$rundir/theme.conf.user"
     fi
 
-    if [ ! -f "$SDDM_RUNTIME_DIR/wallpaper" ] && \
-       [ -f "$HOME/.config/current_wallpaper" ]; then
-        CURR_WP=$(cat "$HOME/.config/current_wallpaper")
-        if [ -f "$CURR_WP" ]; then
-            cp -f "$CURR_WP" "$SDDM_RUNTIME_DIR/wallpaper"
-            chmod 644 "$SDDM_RUNTIME_DIR/wallpaper"
+    if [[ ! -f "$rundir/wallpaper" && -f "$HOME/.config/current_wallpaper" ]]; then
+        local curr
+        curr="$(cat "$HOME/.config/current_wallpaper")"
+        if [[ -f "$curr" ]]; then
+            run cp -f "$curr" "$rundir/wallpaper"
+            run chmod 644 "$rundir/wallpaper"
         fi
     fi
 
-    sudo install -d -m 755 /etc/sddm.conf.d
-    sudo install -m 644 "$SCRIPT_DIR/sddm/sddm.conf.d/10-theme.conf" \
+    sudo_run install -d -m 755 /etc/sddm.conf.d
+    sudo_run install -m 644 "$SCRIPT_DIR/sddm/sddm.conf.d/10-theme.conf" \
         /etc/sddm.conf.d/10-theme.conf
+    ok "SDDM theme installed"
+}
 
-    echo -e "${GREEN}SDDM theme installed at $SDDM_THEME_DST${NC}"
-    echo -e "${BLUE}Run 'apply-theme <wallpaper>' (via set-wallpaper) to refresh greeter colors.${NC}"
-fi
+enable_services() {
+    info "Enabling services ..."
+    sudo_run systemctl enable --now bluetooth
+    run systemctl --user daemon-reload || true
 
-# 7. Enable Services
-echo -e "${GREEN}Enabling services...${NC}"
-sudo systemctl enable --now bluetooth
+    if [[ -f "$HOME/.config/systemd/user/daily-wallpaper.timer" ]]; then
+        info "Enabling daily-wallpaper.timer ..."
+        run systemctl --user enable --now daily-wallpaper.timer || \
+            warn "Could not enable daily-wallpaper.timer (enable manually after login)"
+    fi
 
-# Reload user units so freshly stowed unit files are visible to systemd --user.
-systemctl --user daemon-reload || true
+    if systemctl --user list-unit-files swaync.service &>/dev/null; then
+        info "Enabling swaync.service ..."
+        run systemctl --user enable --now swaync.service || \
+            warn "Could not enable swaync.service (enable manually after login)"
+    fi
+    ok "Services enabled"
+}
 
-# Enable user timers (the activation symlink under timers.target.wants/ is no
-# longer tracked in the repo — it's created by `systemctl --user enable`).
-if [ -f "$HOME/.config/systemd/user/daily-wallpaper.timer" ]; then
-    echo -e "${GREEN}Enabling daily-wallpaper.timer...${NC}"
-    systemctl --user enable --now daily-wallpaper.timer || \
-        echo -e "${RED}Could not enable daily-wallpaper.timer (run manually after login).${NC}"
-fi
+setup_wallpaper_dir() {
+    info "Setting up wallpaper directory ..."
+    run mkdir -p "$HOME/Pictures/wallpapers"
+    ok "Wallpaper directory ready"
+}
 
-# Enable swaync via its package-provided unit. We start it via systemd rather
-# than niri's spawn-at-startup so D-Bus activation ordering is correct and
-# Restart=on-failure handles crashes.
-if systemctl --user list-unit-files swaync.service &> /dev/null; then
-    echo -e "${GREEN}Enabling swaync.service...${NC}"
-    systemctl --user enable --now swaync.service || \
-        echo -e "${RED}Could not enable swaync.service (run manually after login).${NC}"
-fi
+main() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -n|--dry-run) DRY_RUN=true; shift ;;
+            -u|--update)  DO_UPDATE=true; shift ;;
+            -h|--help)    usage ;;
+            *) die "Unknown option: $1 (try --help)" ;;
+        esac
+    done
 
-# 8. Wallpaper Setup (Placeholder)
-echo -e "${BLUE}Setting up wallpaper directory...${NC}"
-mkdir -p ~/Pictures/wallpapers
-# Note: config references forest-train.gif. User needs to provide this.
+    echo -e "${BLUE}== lunga's dotfiles installer ==${NC}"
+    echo
 
-echo -e "${GREEN}Installation Complete!${NC}"
-echo -e "${BLUE}Please log out and log back in (or start niri) to see changes.${NC}"
-echo -e "${BLUE}Note: Make sure to add 'forest-train.gif' to ~/Pictures/wallpapers/ or update ~/.config/niri/config.kdl${NC}"
+    check_arch
+    update_system
+    install_official
+    ensure_aur_helper
+    install_aur
+    evict_mako
+    stow_all
+    install_sddm
+    enable_services
+    setup_wallpaper_dir
+
+    echo
+    echo -e "${GREEN}== Installation complete ==${NC}"
+    echo -e "${BLUE}Log out and back in (or start niri) to see changes.${NC}"
+}
+
+main "$@"
