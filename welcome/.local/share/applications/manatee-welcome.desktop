@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Manatee Welcome
+Comment=First-run greeter for the Manatee desktop
+Exec=manatee-welcome
+Terminal=false
+Categories=Utility;

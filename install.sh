@@ -72,6 +72,7 @@ STOW_DIRS=(
     "quickshell"
     "scripts"
     "swaync"
+    "welcome"
     "systemd"
     "wofi"
 )

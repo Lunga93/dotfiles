@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/manatee-welcome"
+FLAG="$STATE_DIR/shown"
+
+if [ -d "$HOME/.config/manatee-welcome" ]; then
+    CONFIG_DIR="$HOME/.config/manatee-welcome"
+elif [ -d "$HOME/Documents/WelcomeApp" ]; then
+    CONFIG_DIR="$HOME/Documents/WelcomeApp"
+else
+    echo "manatee-welcome: no config dir found" >&2
+    exit 1
+fi
+
+case "${1:-}" in
+    --force|-f) ;;
+    --help|-h)
+        cat <<EOF
+Usage: manatee-welcome [--force]
+
+  --force, -f   Open the welcome screen even if it has been seen before.
+  --help,  -h   Show this help.
+
+The welcome screen runs once on first login. To re-trigger automatically,
+delete $FLAG.
+EOF
+        exit 0
+        ;;
+    "")
+        if [ -f "$FLAG" ]; then
+            exit 0
+        fi
+        ;;
+    *)
+        echo "manatee-welcome: unknown argument: $1" >&2
+        exit 2
+        ;;
+esac
+
+mkdir -p "$STATE_DIR"
+
+KEYBINDS_OUT="$STATE_DIR/keybinds.json"
+PARSER="$CONFIG_DIR/scripts/parse-niri-keybinds.sh"
+if [ -x "$PARSER" ]; then
+    if ! "$PARSER" >"$KEYBINDS_OUT" 2>"$STATE_DIR/parse.err"; then
+        :
+    fi
+fi
+
+WALL_OUT="$STATE_DIR/wallpapers.json"
+WALL_DIR="$HOME/Pictures/wallpapers"
+if [ -d "$WALL_DIR" ]; then
+    find "$WALL_DIR" -maxdepth 1 -type f \
+        \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
+           -o -iname '*.webp' -o -iname '*.gif' \) \
+        -print 2>/dev/null \
+        | sort \
+        | jq -R -s 'split("\n") | map(select(length > 0))' \
+        >"$WALL_OUT" 2>/dev/null || echo '[]' >"$WALL_OUT"
+else
+    echo '[]' >"$WALL_OUT"
+fi
+
+exec qs -p "$CONFIG_DIR"
