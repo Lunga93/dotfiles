@@ -20,8 +20,10 @@ OFFICIAL_PACKAGES=(
     "bats-core"
     "bluez"
     "bluez-utils"
+    "chafa"
     "cliphist"
     "curl"
+    "fastfetch"
     "git"
     "gnome-calendar"
     "jq"
@@ -64,6 +66,7 @@ AUR_PACKAGES=(
 STOW_DIRS=(
     "ags"
     "alacritty"
+    "fastfetch"
     "gtk"
     "niri"
     "quickshell"
@@ -244,12 +247,36 @@ enable_services() {
         run systemctl --user enable --now swaync.service || \
             warn "Could not enable swaync.service (enable manually after login)"
     fi
+
+    if systemctl --user list-unit-files seed-wallpapers.timer &>/dev/null; then
+        info "Enabling seed-wallpapers.timer ..."
+        run systemctl --user enable --now seed-wallpapers.timer || \
+            warn "Could not enable seed-wallpapers.timer"
+    fi
+
+    if systemctl --user list-unit-files wallpaper-cleanup.timer &>/dev/null; then
+        info "Enabling wallpaper-cleanup.timer ..."
+        run systemctl --user enable --now wallpaper-cleanup.timer || \
+            warn "Could not enable wallpaper-cleanup.timer"
+    fi
+
+    info "Fetching first daily wallpaper ..."
+    run systemctl --user start daily-wallpaper.service || \
+        warn "Could not trigger initial wallpaper fetch"
     ok "Services enabled"
 }
 
 setup_wallpaper_dir() {
     info "Setting up wallpaper directory ..."
     run mkdir -p "$HOME/Pictures/wallpapers"
+
+    local bundled="$SCRIPT_DIR/assets/wallpapers/manatee-deep-dive.png"
+    if [[ -f "$bundled" ]]; then
+        run cp "$bundled" "$HOME/Pictures/wallpapers/manatee-deep-dive.png"
+        ok "Default manatee wallpaper installed"
+    else
+        warn "Bundled wallpaper not found at $bundled"
+    fi
     ok "Wallpaper directory ready"
 }
 
@@ -276,6 +303,12 @@ main() {
     install_sddm
     enable_services
     setup_wallpaper_dir
+
+    info "Seeding initial wallpaper library (~100 images) ..."
+    if command -v seed-wallpapers >/dev/null 2>&1; then
+        run seed-wallpapers --initial --quiet || \
+            warn "Initial seed failed (will retry on next seed-day via timer)"
+    fi
 
     echo
     echo -e "${GREEN}== Installation complete ==${NC}"

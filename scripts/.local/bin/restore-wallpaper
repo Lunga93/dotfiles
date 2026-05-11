@@ -10,7 +10,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 exec > >(awk -v p="restore-wallpaper" '{ printf "[%s %s] %s\n", strftime("%Y-%m-%d %H:%M:%S"), p, $0; fflush() }' >>"$LOG_FILE") 2>&1
 
 STATE_FILE="$HOME/.config/current_wallpaper"
-DEFAULT_WALLPAPER="$HOME/Pictures/wallpapers/forest-train.gif"
+DEFAULT_WALLPAPER="$HOME/Pictures/wallpapers/manatee-deep-dive.png"
 SET_WALLPAPER_SCRIPT="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/set-wallpaper"
 
 trap 'echo "EXIT $? at line $LINENO (cmd: ${BASH_COMMAND})"' ERR
@@ -21,7 +21,7 @@ echo "==== run start (pid=$$) ===="
 # come up.
 if command -v swww >/dev/null 2>&1; then
     echo "Waiting for swww-daemon..."
-    for i in {1..20}; do
+    for _ in {1..20}; do
         if swww query &>/dev/null; then
             echo "swww is ready."
             break
@@ -34,12 +34,21 @@ fi
 if [ -f "$STATE_FILE" ]; then
     TARGET_WALLPAPER="$(cat "$STATE_FILE")"
     if [ ! -f "$TARGET_WALLPAPER" ]; then
-        echo "Saved wallpaper not found: $TARGET_WALLPAPER. Using default."
-        TARGET_WALLPAPER="$DEFAULT_WALLPAPER"
+        echo "Saved wallpaper not found: $TARGET_WALLPAPER."
+        TARGET_WALLPAPER=""
     fi
-else
-    echo "No saved state. Using default."
-    TARGET_WALLPAPER="$DEFAULT_WALLPAPER"
+fi
+
+# No saved state and no default available — nothing to restore.
+# The daily-wallpaper timer will fetch one shortly.
+if [ -z "${TARGET_WALLPAPER:-}" ]; then
+    if [ -f "$DEFAULT_WALLPAPER" ]; then
+        TARGET_WALLPAPER="$DEFAULT_WALLPAPER"
+        echo "No saved state. Using default."
+    else
+        echo "No saved state and no default wallpaper; skipping restore."
+        exit 0
+    fi
 fi
 
 # 3. Apply it using the set-wallpaper script (which handles theming)
