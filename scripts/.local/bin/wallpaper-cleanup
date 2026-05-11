@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# wallpaper-cleanup
+#
+# Maintenance pass over ~/Pictures/wallpapers/archive — fetch-wallpaper's
+# rolling backup directory. It does two things:
+#
+#   1. Dedupe by content hash. When the same image was archived multiple times
+#      (which happens whenever the user fetches before the daily image changed),
+#      keep the oldest copy and unlink the rest.
+#   2. Age-prune. Anything older than RETAIN_DAYS is removed.
+#
+# Designed to be idempotent and safe to run from a systemd timer. Logs to
+# ~/.local/share/dotfiles/wallpaper-cleanup.log.
+#
+# Flags:
+#   --dry-run         Show what would be removed without touching the disk.
+#   --retain-days N   Override the default retention window (60 days).
+#   --quiet           Suppress stdout (still logs to the file).
+
+RETAIN_DAYS=60
+DRY_RUN=0
+QUIET=0
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --dry-run)        DRY_RUN=1 ;;
+        --retain-days)    RETAIN_DAYS="$2"; shift ;;
+        --retain-days=*)  RETAIN_DAYS="${1#--retain-days=}" ;;
+        --quiet)          QUIET=1 ;;
+        -h|--help)
+            sed -n '4,22p' "$0" | sed 's/^# \?//'
+            exit 0
+            ;;
+        *)
+            echo "Unknown flag: $1" >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+ARCHIVE_DIR="$HOME/Pictures/wallpapers/archive"
+LOG_DIR="$HOME/.local/share/dotfiles"
+LOG_FILE="$LOG_DIR/wallpaper-cleanup.log"
+CURRENT_POINTER="$HOME/.config/current_wallpaper"
+
+# Resolve the path the user is currently displaying so we never delete it,
+# even if it happens to be an archived daily older than RETAIN_DAYS or a
+# content-duplicate of another archive entry.
+PROTECTED_PATH=""
+if [ -r "$CURRENT_POINTER" ]; then
+    PROTECTED_PATH=$(head -n1 "$CURRENT_POINTER" | tr -d '[:space:]')
+fi
+
+mkdir -p "$LOG_DIR"
+
+log() {
+    local ts; ts=$(date --iso-8601=seconds)
+    printf '%s %s\n' "$ts" "$*" >>"$LOG_FILE"
+    if [ "$QUIET" -eq 0 ]; then
+        printf '%s\n' "$*"
+    fi
+}
+
+remove() {
+    local path="$1"
+    if [ -n "$PROTECTED_PATH" ] && [ "$path" = "$PROTECTED_PATH" ]; then
+        log "skipped (currently displayed): $path"
+        return
+    fi
+    if [ "$DRY_RUN" -eq 1 ]; then
+        log "would remove: $path"
+    else
+        rm -f -- "$path"
+        log "removed: $path"
+    fi
+}
+
+if [ ! -d "$ARCHIVE_DIR" ]; then
+    log "no archive directory at $ARCHIVE_DIR; nothing to do"
+    exit 0
+fi
+
+log "cleanup start (retain ${RETAIN_DAYS}d, dry-run=${DRY_RUN})"
+
+# 1. Dedup by content hash. Sort by mtime ascending so the FIRST hash we see
+# for any content is the oldest copy — that one we keep, every later copy
+# with the same hash gets removed.
+removed_dup=0
+declare -A seen_hash
+while IFS=$'\t' read -r _mtime path; do
+    [ -z "$path" ] && continue
+    [ -f "$path" ] || continue
+    hash=$(md5sum -- "$path" | awk '{print $1}')
+    if [ -n "${seen_hash[$hash]:-}" ]; then
+        remove "$path"
+        removed_dup=$((removed_dup + 1))
+    else
+        seen_hash[$hash]="$path"
+    fi
+done < <(find "$ARCHIVE_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -printf '%T@\t%p\n' | sort -n)
+
+log "deduped $removed_dup file(s)"
+
+# 2. Age-prune. -mtime +N is "modified more than N*24 hours ago".
+removed_old=0
+while IFS= read -r path; do
+    [ -z "$path" ] && continue
+    remove "$path"
+    removed_old=$((removed_old + 1))
+done < <(find "$ARCHIVE_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -mtime "+${RETAIN_DAYS}")
+
+log "age-pruned $removed_old file(s) older than ${RETAIN_DAYS}d"
+
+# 3. Refresh the mood tagger cache so it forgets the paths we just removed.
+# Skip in dry-run mode — there is nothing to forget.
+if [ "$DRY_RUN" -eq 0 ] && command -v tag-wallpaper-moods >/dev/null 2>&1; then
+    # --force re-walks the library; entries for deleted paths get dropped on the
+    # next save when their backing file no longer exists.
+    tag-wallpaper-moods --quiet >/dev/null 2>&1 || true
+    log "refreshed mood cache"
+fi
+
+remaining=$(find "$ARCHIVE_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | wc -l)
+log "cleanup done; $remaining file(s) remaining in archive"

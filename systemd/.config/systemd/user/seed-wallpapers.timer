@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily check for monthly wallpaper seed refresh
+
+[Timer]
+# Fires daily; seed-wallpapers exits immediately if today is not the stored
+# seed-day. Persistent=true means a missed run (e.g. machine off on seed-day)
+# triggers a catch-up on next boot.
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=2h
+
+[Install]
+WantedBy=timers.target

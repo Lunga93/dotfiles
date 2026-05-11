@@ -1,0 +1,510 @@
+#!/usr/bin/env python3
+"""seed-wallpapers — populate ~/Pictures/wallpapers/ with ~100 mood-balanced
+photos.
+
+Downloads candidates from Reddit (curated subreddits) and Picsum, classifies
+each with the same OKLab/OKLCH pipeline used by tag-wallpaper-moods, then
+greedily selects up to ~100 with reasonable per-mood balance. Tracks the
+selected files in ~/.local/share/dotfiles/seed-manifest.json so monthly
+refresh can wipe-and-replace its own seeds without touching user files.
+
+CLI:
+  seed-wallpapers                 # idempotent — runs only if today matches seed-day
+  seed-wallpapers --initial       # force first run, picks/keeps seed-day
+  seed-wallpapers --refresh       # force a refresh today
+  seed-wallpapers --dry-run       # log what would be done without downloading
+  seed-wallpapers --target N      # override default 100
+  seed-wallpapers --quiet
+"""
+import argparse
+import concurrent.futures
+import datetime as _dt
+import hashlib
+import json
+import os
+import random
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
+
+VERSION = "1.0.0"
+
+# --- Paths --------------------------------------------------------------------
+
+HOME = Path.home()
+LIBRARY_DIR = HOME / "Pictures" / "wallpapers"
+STATE_DIR = HOME / ".local" / "share" / "dotfiles"
+SEED_DAY_FILE = STATE_DIR / "seed-day"
+MANIFEST_FILE = STATE_DIR / "seed-manifest.json"
+LOG_FILE = STATE_DIR / "seed-wallpapers.log"
+SETTINGS_FILE = HOME / ".config" / "dotfiles" / "settings.json"
+
+# --- Tunables -----------------------------------------------------------------
+
+DEFAULT_TARGET = 100
+PER_MOOD_TARGET = 17       # initial per-mood quota
+PER_MOOD_CAP = 22          # never keep more than this of one mood
+CANDIDATE_OVER_RATIO = 1.6 # download CANDIDATE_OVER_RATIO * target candidates
+DOWNLOAD_PARALLELISM = 8
+HTTP_TIMEOUT_SEC = 30
+MIN_SUCCESS_RATIO = 0.4    # if fewer than this fraction download, bail out
+MOODS = ["dark", "light", "warm", "cool", "sky", "earth"]
+
+SUBREDDITS = [
+    "EarthPorn", "SkyPorn", "SpacePorn", "CityPorn",
+    "ArchitecturePorn", "MinimalWallpaper", "wallpapers", "wallpaper",
+]
+REDDIT_SORTS = ["hot", "top.json?t=month", "top.json?t=year", "top.json?t=all"]
+REDDIT_UA = "linux:dotfiles-seed:v1.0 (by /u/anonymous)"
+
+# --- Logging ------------------------------------------------------------------
+
+class Logger:
+    def __init__(self, quiet=False):
+        self.quiet = quiet
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        self.fh = open(LOG_FILE, "a", encoding="utf-8")
+
+    def __call__(self, *args):
+        ts = _dt.datetime.now().isoformat(timespec="seconds")
+        msg = " ".join(str(a) for a in args)
+        self.fh.write(f"{ts} {msg}\n")
+        self.fh.flush()
+        if not self.quiet:
+            print(msg)
+
+    def close(self):
+        try:
+            self.fh.close()
+        except Exception:
+            pass
+
+
+# --- OKLab/OKLCH classifier (mirrors tag-wallpaper-moods) ---------------------
+# Kept in-process to avoid forking a subprocess per candidate; the duplication
+# is small (~50 lines) and the mood rules are explicitly cross-referenced.
+
+def _linear_srgb_to_oklab(r, g, b):
+    l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
+    m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
+    s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
+    l, m, s = l ** (1/3), m ** (1/3), s ** (1/3)
+    return (
+        0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+        1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+        0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+    )
+
+def _oklab_to_oklch(L, a, b):
+    import math
+    C = math.sqrt(a * a + b * b)
+    h = math.degrees(math.atan2(b, a)) % 360
+    return L, C, h
+
+# Mirror of MOOD_RULES in tag-wallpaper-moods. Kept here to avoid importing
+# from a hyphenated filename.
+MOOD_RULES = {
+    "dark":  lambda s: s["L_avg"] < 0.40,
+    "light": lambda s: s["L_avg"] > 0.75,
+    "warm":  lambda s: 20 <= s["h_dom"] <= 95 and s["C_avg"] > 0.05,
+    "cool":  lambda s: 200 <= s["h_dom"] <= 290 and s["C_avg"] > 0.05,
+    "sky":   lambda s: (
+        any(220 <= h < 251 and L > 0.55 and C < 0.10 for (L, C, h) in s["colors"])
+        and s["C_avg"] < 0.08
+    ),
+    "earth": lambda s: (
+        any(120 <= h < 161 for (_, _, h) in s["colors"])
+        and any(50 <= h < 91 and C < 0.10 for (_, C, h) in s["colors"])
+    ),
+}
+
+def extract_palette(image_path, num_colors=8, size=(200, 200)):
+    from PIL import Image
+
+    img = Image.open(image_path).convert("RGB")
+    img.thumbnail(size, Image.LANCZOS)
+    pal_img = img.quantize(colors=num_colors, method=Image.MEDIANCUT)
+    palette = pal_img.getpalette()[:num_colors * 3]
+    palette = [(palette[i], palette[i+1], palette[i+2])
+               for i in range(0, len(palette), 3)]
+
+    px = list(pal_img.getdata())
+    counts = {i: px.count(i) for i in range(len(palette))}
+    total = max(sum(counts.values()), 1)
+    weights = [counts[i] / total for i in range(num_colors)]
+
+    L_sum = C_sum = 0.0
+    color_data = []
+    for (r, g, b), w in zip(palette, weights):
+        r_lin = (r / 255) ** 2.2
+        g_lin = (g / 255) ** 2.2
+        b_lin = (b / 255) ** 2.2
+        L, C, h = _oklab_to_oklch(*_linear_srgb_to_oklab(r_lin, g_lin, b_lin))
+        L_sum += L * w
+        C_sum += C * w
+        color_data.append((L, C, h, w))
+
+    sorted_colors = sorted(color_data, key=lambda c: c[2] * c[3], reverse=True)
+    h_dom = sorted_colors[0][2] if sorted_colors else 0.0
+
+    return {
+        "L_avg": L_sum,
+        "C_avg": C_sum,
+        "h_dom": h_dom,
+        "colors": [(L, C, h) for (L, C, h, _) in color_data],
+    }
+
+
+def classify(stats):
+    moods = []
+    for mood_id, rule in MOOD_RULES.items():
+        try:
+            if rule(stats):
+                moods.append(mood_id)
+        except Exception:
+            continue
+    return moods
+
+
+# --- HTTP helpers -------------------------------------------------------------
+
+def http_get(url, *, headers=None, timeout=HTTP_TIMEOUT_SEC):
+    req = Request(url, headers=headers or {})
+    with urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+def http_get_json(url, *, headers=None):
+    data = http_get(url, headers=headers)
+    return json.loads(data.decode("utf-8"))
+
+
+# --- Candidate URL collection -------------------------------------------------
+
+def collect_reddit_urls(log, want_total):
+    """Return a list of (url, source_label) tuples scraped from Reddit JSON.
+
+    Walks subreddits and sort modes round-robin so the resulting set has
+    coverage across all moods, not just whichever sub responds first.
+    """
+    urls = []
+    seen = set()
+
+    per_combo_cap = 18  # roughly: 8 subs × 4 sorts × 18 ≈ 576 max URLs
+
+    pairs = [(sub, sort) for sub in SUBREDDITS for sort in REDDIT_SORTS]
+    random.shuffle(pairs)
+
+    for sub, sort in pairs:
+        if len(urls) >= want_total:
+            break
+        if "?" in sort:
+            url = f"https://www.reddit.com/r/{sub}/{sort}&limit=75"
+        else:
+            url = f"https://www.reddit.com/r/{sub}/{sort}.json?limit=75"
+        try:
+            data = http_get_json(url, headers={"User-Agent": REDDIT_UA})
+        except (HTTPError, URLError, ValueError, TimeoutError) as e:
+            log(f"  reddit fetch failed: {sub}/{sort}: {e}")
+            continue
+
+        children = data.get("data", {}).get("children", []) or []
+        gathered = 0
+        for child in children:
+            if gathered >= per_combo_cap:
+                break
+            d = child.get("data", {}) or {}
+            preview = d.get("preview") or {}
+            images = preview.get("images") or []
+            img_url = None
+            if images:
+                src = (images[0].get("source") or {})
+                u = src.get("url")
+                w = src.get("width") or 0
+                h = src.get("height") or 0
+                if u and (w >= 1600 or h >= 900):
+                    img_url = u.replace("&amp;", "&")
+            if not img_url:
+                u = d.get("url") or ""
+                if u.lower().endswith((".jpg", ".jpeg", ".png")):
+                    img_url = u
+            if not img_url or img_url in seen:
+                continue
+            seen.add(img_url)
+            urls.append((img_url, f"reddit/{sub}"))
+            gathered += 1
+        log(f"  reddit {sub}/{sort}: gathered {gathered} (running total {len(urls)})")
+
+    return urls
+
+
+def picsum_urls(n, log):
+    """Picsum just gives random — request unique random IDs at fixed size."""
+    urls = []
+    seed_ids = set()
+    while len(urls) < n:
+        sid = random.randint(1, 1000)
+        if sid in seed_ids:
+            continue
+        seed_ids.add(sid)
+        urls.append((f"https://picsum.photos/seed/{sid}/1920/1080.jpg", "picsum"))
+    log(f"  picsum: prepared {len(urls)} random URLs")
+    return urls
+
+
+# --- Download + classify ------------------------------------------------------
+
+def download_one(url_pair, dest_dir):
+    """Download one URL to dest_dir/<sha1[:12]>.jpg, return path or None."""
+    url, source = url_pair
+    name = hashlib.sha1(url.encode("utf-8")).hexdigest()[:12]
+    dest = dest_dir / f"seed-{name}.jpg"
+    try:
+        data = http_get(url, timeout=HTTP_TIMEOUT_SEC)
+        if len(data) < 50_000:  # too small to be a wallpaper
+            return None
+        dest.write_bytes(data)
+        return (dest, source)
+    except Exception:
+        return None
+
+
+def classify_one(path):
+    try:
+        stats = extract_palette(path)
+        moods = classify(stats)
+        return moods, stats
+    except Exception:
+        return [], None
+
+
+# --- Selection ---------------------------------------------------------------
+
+def select_balanced(candidates, target, log):
+    """Greedy selection: prefer candidates that fill the rarest moods.
+
+    candidates: list of (path, source, moods, stats) tuples.
+    Returns the chosen subset of candidates.
+    """
+    chosen = []
+    mood_count = {m: 0 for m in MOODS}
+    untagged_keep_cap = max(5, target // 10)
+    untagged_kept = 0
+
+    def score(cand):
+        _, _, moods, _ = cand
+        if not moods:
+            return -1  # untagged — deprioritise
+        return min(mood_count[m] for m in moods) * -1  # pick rarest mood
+
+    remaining = list(candidates)
+    while remaining and len(chosen) < target:
+        remaining.sort(key=score)
+        cand = remaining.pop(0)
+        path, source, moods, stats = cand
+        if not moods:
+            if untagged_kept >= untagged_keep_cap:
+                continue
+            chosen.append(cand)
+            untagged_kept += 1
+            continue
+        if any(mood_count[m] >= PER_MOOD_CAP for m in moods):
+            continue
+        chosen.append(cand)
+        for m in moods:
+            mood_count[m] += 1
+
+    log(f"  selection: kept {len(chosen)} of {len(candidates)} candidates")
+    for m in MOODS:
+        log(f"    {m}: {mood_count[m]}")
+    log(f"    untagged: {untagged_kept}")
+    return chosen
+
+
+# --- Seed-day handling -------------------------------------------------------
+
+def get_or_pick_seed_day(log):
+    if SEED_DAY_FILE.exists():
+        try:
+            return int(SEED_DAY_FILE.read_text().strip())
+        except ValueError:
+            pass
+    day = random.randint(1, 28)
+    SEED_DAY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SEED_DAY_FILE.write_text(f"{day}\n")
+    log(f"picked seed-day = {day} (stored in {SEED_DAY_FILE})")
+    return day
+
+
+def today_day_of_month():
+    return _dt.date.today().day
+
+
+# --- Manifest ----------------------------------------------------------------
+
+def load_manifest():
+    if MANIFEST_FILE.exists():
+        try:
+            return json.loads(MANIFEST_FILE.read_text())
+        except Exception:
+            pass
+    return {"version": 1, "paths": []}
+
+
+def save_manifest(paths):
+    MANIFEST_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = MANIFEST_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"version": 1, "paths": sorted(paths)}, indent=2))
+    tmp.replace(MANIFEST_FILE)
+
+
+def wipe_existing_seed(log, dry_run):
+    manifest = load_manifest()
+    paths = manifest.get("paths", [])
+    if not paths:
+        return
+    removed = 0
+    for p in paths:
+        path = Path(p)
+        if path.exists():
+            if dry_run:
+                log(f"  would remove {path}")
+            else:
+                try:
+                    path.unlink()
+                    removed += 1
+                except OSError as e:
+                    log(f"  could not remove {path}: {e}")
+    log(f"wiped {removed} existing seed file(s)")
+    if not dry_run:
+        save_manifest([])
+
+
+# --- Main --------------------------------------------------------------------
+
+def run_seed(target, log, dry_run):
+    LIBRARY_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 1. Wipe previous seed
+    wipe_existing_seed(log, dry_run)
+
+    # 2. Gather candidate URLs
+    want_candidates = int(target * CANDIDATE_OVER_RATIO)
+    log(f"collecting up to {want_candidates} candidate URLs...")
+    reddit_share = int(want_candidates * 0.7)
+    reddit = collect_reddit_urls(log, reddit_share)
+    picsum_share = max(want_candidates - len(reddit), 30)
+    picsum = picsum_urls(picsum_share, log)
+    url_pairs = reddit + picsum
+    random.shuffle(url_pairs)
+    log(f"collected {len(url_pairs)} candidate URLs "
+        f"({len(reddit)} reddit + {len(picsum)} picsum)")
+
+    if dry_run:
+        for u, src in url_pairs[:10]:
+            log(f"  would download from {src}: {u[:80]}")
+        log(f"  ... and {max(0, len(url_pairs) - 10)} more (dry-run)")
+        return
+
+    # 3. Download in parallel into a temp dir
+    with tempfile.TemporaryDirectory(prefix="seed-wallpapers-") as tmp:
+        tmp_dir = Path(tmp)
+        log(f"downloading into {tmp_dir} with {DOWNLOAD_PARALLELISM} workers...")
+        downloaded = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=DOWNLOAD_PARALLELISM) as ex:
+            futures = {ex.submit(download_one, p, tmp_dir): p for p in url_pairs}
+            for fut in concurrent.futures.as_completed(futures):
+                res = fut.result()
+                if res is not None:
+                    downloaded.append(res)
+        log(f"downloaded {len(downloaded)} of {len(url_pairs)} candidates")
+
+        success_ratio = len(downloaded) / max(len(url_pairs), 1)
+        if success_ratio < MIN_SUCCESS_RATIO:
+            log(f"abort: only {success_ratio:.0%} of downloads succeeded — likely offline")
+            sys.exit(1)
+
+        # 4. Classify each
+        log("classifying candidates...")
+        candidates = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+            class_futures = {ex.submit(classify_one, p): (p, src) for (p, src) in downloaded}
+            for fut in concurrent.futures.as_completed(class_futures):
+                moods, _stats = fut.result()
+                p, src = class_futures[fut]
+                candidates.append((p, src, moods, _stats))
+
+        # 5. Mood-balanced greedy selection
+        chosen = select_balanced(candidates, target, log)
+
+        # 6. Move chosen into the library, write manifest
+        kept_paths = []
+        for (tmp_path, _src, _moods, _stats) in chosen:
+            dest = LIBRARY_DIR / tmp_path.name
+            # collide? skip — name is sha-derived so a collision means same URL
+            if dest.exists():
+                continue
+            shutil.move(str(tmp_path), str(dest))
+            kept_paths.append(str(dest))
+        log(f"moved {len(kept_paths)} files into {LIBRARY_DIR}")
+        save_manifest(kept_paths)
+
+    # 7. Refresh the mood-tag cache so MoodCatalog reflects the new files.
+    # PATH may not include ~/.local/bin when invoked from systemd, so fall back
+    # to the well-known location.
+    tagger = shutil.which("tag-wallpaper-moods") or str(HOME / ".local/bin/tag-wallpaper-moods")
+    if Path(tagger).exists():
+        try:
+            subprocess.run([tagger, "--quiet"], check=False, timeout=120)
+            log("refreshed mood-tag cache")
+        except subprocess.TimeoutExpired:
+            log("tag-wallpaper-moods timed out — cache may be stale")
+    else:
+        log(f"tag-wallpaper-moods not found at {tagger}; skip cache refresh")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Seed the wallpaper library")
+    parser.add_argument("--initial", action="store_true",
+                        help="Force first run (picks seed-day if missing, then seeds)")
+    parser.add_argument("--refresh", action="store_true",
+                        help="Force a refresh today regardless of seed-day")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Show what would be done without downloading")
+    parser.add_argument("--target", type=int, default=DEFAULT_TARGET,
+                        help=f"Target number of wallpapers (default {DEFAULT_TARGET})")
+    parser.add_argument("--quiet", action="store_true",
+                        help="Suppress stdout (always logs to file)")
+    parser.add_argument("--version", action="store_true")
+    args = parser.parse_args()
+
+    if args.version:
+        print(f"seed-wallpapers v{VERSION}")
+        return
+
+    log = Logger(quiet=args.quiet)
+    try:
+        log(f"=== seed-wallpapers start (target={args.target}, dry-run={args.dry_run}) ===")
+        day = get_or_pick_seed_day(log)
+        today = today_day_of_month()
+        log(f"seed-day={day}, today={today}")
+
+        should_run = args.initial or args.refresh or (today == day and not MANIFEST_FILE.exists())
+        if not should_run:
+            log(f"not seed-day (next refresh on day {day}); exiting cleanly")
+            return
+
+        run_seed(args.target, log, args.dry_run)
+        log("=== seed-wallpapers done ===")
+    finally:
+        log.close()
+
+
+if __name__ == "__main__":
+    main()

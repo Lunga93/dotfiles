@@ -1,5 +1,7 @@
 [Unit]
 Description=Fetch today's wallpaper and apply theme
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot

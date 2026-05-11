@@ -37,13 +37,15 @@ MOOD_RULES = {
     "light": lambda s: s["L_avg"] > 0.75,
     "warm":  lambda s: 20 <= s["h_dom"] <= 95 and s["C_avg"] > 0.05,
     "cool":  lambda s: 200 <= s["h_dom"] <= 290 and s["C_avg"] > 0.05,
+    # h is a float (math.atan2 result). `h in range(a, b)` only matches integer
+    # hues — explicit comparisons are required so the rule actually fires.
     "sky":   lambda s: (
-        any(h in range(220, 251) and L > 0.55 and C < 0.10 for (L, C, h) in s["colors"])
+        any(220 <= h < 251 and L > 0.55 and C < 0.10 for (L, C, h) in s["colors"])
         and s["C_avg"] < 0.08
     ),
     "earth": lambda s: (
-        any(h in range(120, 161) for (_, _, h) in s["colors"])
-        and any(h in range(50, 91) and C < 0.10 for (_, C, h) in s["colors"])
+        any(120 <= h < 161 for (_, _, h) in s["colors"])
+        and any(50 <= h < 91 and C < 0.10 for (_, C, h) in s["colors"])
     ),
 }
 
@@ -137,11 +139,14 @@ def get_library_dir():
     return default
 
 
-def process_file(filepath, cache, debug=False):
+def process_file(filepath, cache, debug=False, force=False):
     try:
         mtime = os.path.getmtime(filepath)
         entry = cache["tags"].get(filepath, {})
-        if entry.get("mtime") == mtime:
+        # Skip files whose mtime matches the cache unless force=True. Force
+        # re-runs classification (used when --force is passed at the CLI, e.g.,
+        # after mood rule changes).
+        if not force and entry.get("mtime") == mtime:
             return None
         stats = extract_palette(filepath)
         moods = classify(stats)
@@ -215,7 +220,7 @@ def main():
     errors = 0
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() or 1) as executor:
-        futures = {executor.submit(process_file, f, cache, args.debug_print): f for f in files}
+        futures = {executor.submit(process_file, f, cache, args.debug_print, args.force): f for f in files}
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result is None:
@@ -225,11 +230,21 @@ def main():
             cache["tags"][fpath] = entry
             changed += 1
 
+    # Drop cache entries for files that no longer exist on disk. Without this
+    # the cache grows forever and MoodCatalog.qml reports phantom matches.
+    existing = set(files)
+    dropped = 0
+    for path in list(cache["tags"].keys()):
+        if path not in existing and not os.path.exists(path):
+            del cache["tags"][path]
+            dropped += 1
+
     save_cache(cache)
     elapsed = time.time() - start
 
     if not args.quiet:
-        print(f"Done. {changed} tagged, {errors} errors in {elapsed:.1f}s.")
+        suffix = f", {dropped} dropped" if dropped else ""
+        print(f"Done. {changed} tagged, {errors} errors{suffix} in {elapsed:.1f}s.")
         mood_counts = {}
         for entry in cache["tags"].values():
             for m in entry.get("moods", []):

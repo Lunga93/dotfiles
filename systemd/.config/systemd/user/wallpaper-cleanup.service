@@ -1,0 +1,8 @@
+[Unit]
+Description=Dedupe and age-prune the wallpaper archive
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/wallpaper-cleanup --quiet
+Nice=15
+IOSchedulingClass=idle

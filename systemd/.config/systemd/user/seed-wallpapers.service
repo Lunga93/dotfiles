@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh the seeded wallpaper library
+After=network-online.target
+Wants=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=oneshot
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
+ExecStart=%h/.local/bin/seed-wallpapers --quiet
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=10m

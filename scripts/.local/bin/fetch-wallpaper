@@ -118,8 +118,12 @@ download_picsum() {
     # Determine size: prefer WALLPAPER_SIZE env var or detect from sway outputs
     local size="${WALLPAPER_SIZE:-}"
     if [ -z "$size" ]; then
-        if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-            size=$(swaymsg -t get_outputs 2>/dev/null | jq -r 'map(select(.active==true))[0].current_mode | "\(.width)x\(.height)"' 2>/dev/null || true)
+        if command -v niri >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+            local candidate
+            candidate=$(niri msg -j outputs 2>/dev/null | jq -r '[.[] | select(.is_current == true)][0] | "\(.current_mode.resolution.width)x\(.current_mode.resolution.height)"' 2>/dev/null || true)
+            if [ -n "$candidate" ] && [ "$candidate" != "x" ]; then
+                size="$candidate"
+            fi
         fi
     fi
     if [ -z "$size" ]; then
@@ -232,12 +236,27 @@ main() {
         return 1
     fi
 
-    # Archive previous wallpaper (if any) then move the new one into place
+    # Archive previous wallpaper (if any) then move the new one into place.
+    # Skip archiving when the current daily.jpg hashes identically to the most
+    # recent archive entry — that means fetch ran without daily.jpg actually
+    # changing (user clicked Fetch twice, source returned the same image, etc.)
+    # and re-archiving would just create another duplicate.
     if [ -f "$OUT_FILE" ]; then
         archive_dir="$OUT_DIR/archive"
         mkdir -p "$archive_dir"
-        ts=$(date +%Y%m%d%H%M%S)
-        cp -f "$OUT_FILE" "$archive_dir/daily-$ts.jpg" || true
+        current_hash=$(md5sum -- "$OUT_FILE" | awk '{print $1}')
+        latest_archive=$(find "$archive_dir" -maxdepth 1 -type f -name 'daily-*.jpg' -printf '%T@\t%p\n' 2>/dev/null \
+            | sort -rn | head -n1 | cut -f2-)
+        latest_hash=""
+        if [ -n "$latest_archive" ] && [ -f "$latest_archive" ]; then
+            latest_hash=$(md5sum -- "$latest_archive" | awk '{print $1}')
+        fi
+        if [ "$current_hash" != "$latest_hash" ]; then
+            ts=$(date +%Y%m%d%H%M%S)
+            cp -f "$OUT_FILE" "$archive_dir/daily-$ts.jpg" || true
+        else
+            logger "skipped archive: current daily.jpg matches latest archive"
+        fi
     fi
 
     mv -f "$OUT_TMP" "$OUT_FILE"
