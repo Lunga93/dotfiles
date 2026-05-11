@@ -6,99 +6,234 @@ import ".."
 
 PageContainer {
     id: root
-    headerTitle: "Pick a wallpaper \u2014 pick a palette"
-    headerSubtitle: "Every component on the desktop themes itself from your wallpaper. " +
-                    "Try one and watch this window change with it."
+    headerTitle: "Your wallpaper = your theme"
+    headerSubtitle: "Every component picks up colors from your wallpaper \u2014 the bar, terminal, buttons, everything."
     stepIndex: 3
     stepCount: 5
+    nextText: "Continue"
 
-    readonly property string wallpaperDir:
-        Quickshell.env("HOME") + "/Pictures/wallpapers"
+    readonly property string currentWallpaperPath:
+        Quickshell.env("HOME") + "/.config/current_wallpaper"
 
-    readonly property string indexPath:
-        (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state"))
-        + "/manatee-welcome/wallpapers.json"
-
-    property ListModel wallpapers: ListModel {}
-    property string statusText: "Loading wallpapers\u2026"
+    property string wallpaperPath: ""
+    property bool hasWallpaper: false
 
     FileView {
-        path: root.indexPath
+        path: root.currentWallpaperPath
         watchChanges: true
         preload: true
         onLoaded: {
-            root.wallpapers.clear();
-            try {
-                const arr = JSON.parse(text());
-                for (let i = 0; i < arr.length; i++) {
-                    root.wallpapers.append({ path: String(arr[i]) });
-                }
-                root.statusText = root.wallpapers.count === 0
-                    ? "No images in " + root.wallpaperDir
-                    : "";
-            } catch (e) {
-                root.statusText = "Could not read wallpaper index: " + e;
+            var p = text().trim();
+            if (p.length > 0) {
+                root.wallpaperPath = p;
+                root.hasWallpaper = true;
             }
         }
-        onLoadFailed: root.statusText = "No wallpaper index yet \u2014 run manatee-welcome to seed it."
+        onLoadFailed: root.hasWallpaper = false
     }
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 12
+        spacing: 16
 
-        Text {
-            visible: root.statusText.length > 0
-            text: root.statusText
-            color: Theme.textSecondary
-            font.family: Theme.fontFamily
-            font.pixelSize: 13
+        Rectangle {
+            id: previewCard
             Layout.fillWidth: true
-        }
-
-        GridView {
-            id: grid
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            cellWidth: 160
-            cellHeight: 110
-            model: root.wallpapers
+            Layout.preferredHeight: 180
+            radius: Theme.radiusControl
             clip: true
-            delegate: Item {
-                width: grid.cellWidth
-                height: grid.cellHeight
+            color: Theme.surfaceElev
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    radius: Theme.radiusControl
-                    color: Theme.surfaceElev
-                    border.color: hover.containsMouse ? Theme.primary : Theme.border
-                    border.width: hover.containsMouse ? 2 : 1
-                    clip: true
-                    Behavior on border.color { ColorAnimation { duration: Theme.durationFast } }
+            border.color: Theme.border
+            border.width: 1
 
-                    Image {
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        source: "file://" + model.path
-                        fillMode: Image.PreserveAspectCrop
-                        smooth: true
-                        asynchronous: true
-                        sourceSize.width: 320
+            Image {
+                anchors.fill: parent
+                source: root.hasWallpaper ? "file://" + root.wallpaperPath : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize.height: 360
+                visible: root.hasWallpaper && status === Image.Ready
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.40)
+                visible: root.hasWallpaper
+
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    Text {
+                        text: "Current Wallpaper"
+                        color: "#ffffff"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 14
+                        font.weight: Font.Medium
+                        Layout.alignment: Qt.AlignHCenter
+                        opacity: 0.9
                     }
 
-                    MouseArea {
-                        id: hover
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            Quickshell.execDetached(["set-wallpaper", model.path]);
-                            root.statusText = "Applying " + model.path.split("/").pop() + "\u2026";
+                    Text {
+                        text: {
+                            if (!root.hasWallpaper) return "";
+                            var parts = root.wallpaperPath.split("/");
+                            return parts[parts.length - 1];
                         }
+                        color: "#ffffff"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 12
+                        Layout.alignment: Qt.AlignHCenter
+                        opacity: 0.65
                     }
                 }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: "No wallpaper set"
+                color: Theme.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: 14
+                visible: !root.hasWallpaper
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 56
+            radius: Theme.radiusControl
+            color: Theme.surfaceElev
+            border.color: Theme.border
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 14
+                spacing: 12
+
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.primary
+                }
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.secondary
+                }
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.surface
+                    border.color: Theme.border
+                    border.width: 1
+                }
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.accentSoft
+                }
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.color1
+                }
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.color2
+                }
+                Rectangle {
+                    width: 28; height: 28
+                    radius: 6
+                    color: Theme.color3
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: "Live palette"
+                    color: Theme.textSecondary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 12
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 44
+            radius: Theme.radiusControl
+            color: Theme.surfaceElev
+            border.color: Theme.border
+            border.width: 1
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Qt.openUrlExternally("manatee-settings://wallpaper")
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 14
+                spacing: 10
+
+                Text {
+                    text: "\u2699"
+                    color: Theme.textSecondary
+                    font.pixelSize: 18
+                }
+
+                Column {
+                    spacing: 2
+                    Text {
+                        text: "Open Wallpaper Settings"
+                        color: Theme.textPrimary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                    }
+                    Text {
+                        text: "Mod + ,"
+                        color: Theme.textSecondary
+                        font.family: Theme.fontMono
+                        font.pixelSize: 11
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: "\u2192"
+                    color: Theme.textSecondary
+                    font.pixelSize: 16
+                }
+            }
+        }
+
+        ColumnLayout {
+            spacing: 4
+            Text {
+                text: "How it works"
+                color: Theme.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: 12
+                font.weight: Font.Medium
+            }
+            Text {
+                text: "Pick any wallpaper and pywal generates a palette from it. " +
+                      "The bar, terminal, notifications, and even this window " +
+                      "re-theme themselves on the fly \u2014 no restart needed."
+                color: Theme.textTertiary
+                font.family: Theme.fontFamily
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                lineHeight: 1.5
             }
         }
     }
