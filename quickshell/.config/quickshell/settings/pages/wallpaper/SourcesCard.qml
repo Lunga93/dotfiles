@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../../.." // qmldir types
 
 Rectangle {
     id: root
@@ -27,7 +28,7 @@ Rectangle {
     }
 
     function setEnabled(id: string, enabled: bool): void {
-        const en = {...(SettingsStore.get("wallpaper", "sources_enabled") || {})};
+        const en = Object.assign({}, SettingsStore.get("wallpaper", "sources_enabled") || {});
         en[id] = enabled;
         SettingsStore.set("wallpaper", "sources_enabled", en);
         root.sourcesChanged();

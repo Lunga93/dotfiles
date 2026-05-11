@@ -13,7 +13,8 @@ QtObject {
     property var palette: ({
         background: "#1c1c1e",
         foreground: "#f5f5f7",
-        accent:     "#0a84ff",
+        primary:    "#0a84ff",
+        secondary:  "#bf5af2",
         color0: "#1c1c1e", color1: "#ff453a", color2: "#0a84ff", color3: "#ffd60a",
         color4: "#0a84ff", color5: "#bf5af2", color6: "#64d2ff", color7: "#f5f5f7"
     })
@@ -28,10 +29,13 @@ QtObject {
                 const data = JSON.parse(text());
                 const s = data.special || {};
                 const c = data.colors  || {};
+                // primary_accent / secondary_accent are written by apply-theme.
+                // Fall back to color2/color5 for first run before apply-theme has touched the file.
                 root.palette = {
                     background: s.background || "#1c1c1e",
                     foreground: s.foreground || "#f5f5f7",
-                    accent:     c.color2     || "#0a84ff",
+                    primary:    c.primary_accent   || c.color2 || "#0a84ff",
+                    secondary:  c.secondary_accent || c.color5 || "#bf5af2",
                     color0: c.color0 || "#1c1c1e",
                     color1: c.color1 || "#ff453a",
                     color2: c.color2 || "#0a84ff",
@@ -53,7 +57,9 @@ QtObject {
 
     readonly property color background:    palette.background
     readonly property color foreground:    palette.foreground
-    readonly property color accent:        palette.accent
+    readonly property color primary:       palette.primary
+    readonly property color secondary:     palette.secondary
+    readonly property color accent:        palette.primary  // alias, backward-compat
 
     readonly property color color0: palette.color0
     readonly property color color1: palette.color1
@@ -75,8 +81,10 @@ QtObject {
     readonly property color textTertiary:   withAlpha(foreground, 0.40)
     readonly property color destructive:    "#ff453a"
 
-    readonly property color accentSoft:     withAlpha(accent, 0.18)
-    readonly property color accentMuted:    withAlpha(accent, 0.55)
+    readonly property color accentSoft:       withAlpha(primary, 0.18)
+    readonly property color accentMuted:      withAlpha(primary, 0.55)
+    readonly property color secondarySoft:    withAlpha(secondary, 0.18)
+    readonly property color secondaryMuted:   withAlpha(secondary, 0.55)
 
     readonly property int radiusCard:    18
     readonly property int radiusControl: 12

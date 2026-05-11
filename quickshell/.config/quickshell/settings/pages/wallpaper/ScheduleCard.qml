@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../../.." // qmldir types
 
 Rectangle {
     id: root
@@ -51,10 +52,9 @@ Rectangle {
         }
 
         Item {
-            width: parent.width
+            width: parent.width - 32
             height: 52
             x: 16
-            width: parent.width - 32
 
             Column {
                 anchors.left: parent.left

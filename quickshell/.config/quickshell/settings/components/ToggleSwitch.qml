@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../.." // qmldir types
 
 Item {
     id: root
@@ -14,8 +15,8 @@ Item {
         id: track
         anchors.fill: parent
         radius: 13
-        color: root.checked ? Theme.accent : "#2c2519"
-        border.color: root.checked ? Qt.darker(Theme.accent, 1.2) : "#0e0a06"
+        color: root.checked ? Theme.secondary : "#2c2519"
+        border.color: root.checked ? Qt.darker(Theme.secondary, 1.2) : "#0e0a06"
         border.width: 1
         Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
 

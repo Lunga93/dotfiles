@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../../.." // qmldir types
 
 Flickable {
     id: root
@@ -63,9 +64,6 @@ Flickable {
                 onBackToAll: {
                     root.selectedMood = "";
                     SettingsStore.set("wallpaper", "selected_mood", null);
-                }
-                onAccentSelected: function(hex) {
-                    SettingsStore.setManualAccent(hex);
                 }
             }
 

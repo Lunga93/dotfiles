@@ -1,42 +1,50 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../.." // qmldir types
 
 Item {
     id: root
     property color swatchColor: Theme.accent
     property bool selected: false
+    // When false the swatch is rendered dim, the cursor stays default and
+    // clicks are swallowed. Used by the dynamic-mode picker to display the
+    // auto-derived selection without letting the user override it.
+    property bool interactive: true
+    property int swatchSize: 36
+    readonly property int dotSize: Math.round(swatchSize * 0.72)
     signal clicked
 
-    width: 36
-    height: 36
+    width: swatchSize
+    height: swatchSize
 
-    // Outer ring (selection indicator)
     Rectangle {
+        id: ring
         anchors.fill: parent
         radius: width / 2
         color: "transparent"
-        border.color: root.swatchColor
-        border.width: root.selected ? 2 : 0
-        opacity: root.selected ? 1 : 0
+        border.color: Theme.foreground
+        border.width: 2
+        opacity: root.selected ? (root.interactive ? 1.0 : 0.65) : 0
         Behavior on opacity { NumberAnimation { duration: 160 } }
     }
 
-    // The swatch itself
     Rectangle {
         id: dot
         anchors.centerIn: parent
-        width: 26
-        height: 26
-        radius: 13
+        width: root.dotSize
+        height: root.dotSize
+        radius: width / 2
         color: root.swatchColor
+        opacity: root.interactive ? 1.0 : 0.55
         border.color: Qt.rgba(0, 0, 0, 0.3)
         border.width: 1
 
-        scale: swatchArea.pressed ? 0.85 : (swatchArea.containsMouse ? 1.1 : 1.0)
+        scale: root.interactive
+            ? (swatchArea.pressed ? 0.85 : (swatchArea.containsMouse ? 1.1 : 1.0))
+            : 1.0
         Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
 
-        // Inner highlight for sphere look
         Rectangle {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
@@ -50,9 +58,9 @@ Item {
         MouseArea {
             id: swatchArea
             anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.clicked()
+            hoverEnabled: root.interactive
+            cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: if (root.interactive) root.clicked()
         }
     }
 }

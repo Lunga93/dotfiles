@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../.." // qmldir types
 
 Rectangle {
     id: root
@@ -35,7 +36,7 @@ Rectangle {
                 height: 26
                 radius: 13
                 color: {
-                    if (isActive) return Theme.accent;
+                    if (isActive) return Theme.secondary;
                     if (pillArea.pressed) return Qt.rgba(1, 1, 1, 0.10);
                     if (pillArea.containsMouse) return Qt.rgba(1, 1, 1, 0.05);
                     return "transparent";

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import ".." // qmldir types
 
 Item {
     id: root

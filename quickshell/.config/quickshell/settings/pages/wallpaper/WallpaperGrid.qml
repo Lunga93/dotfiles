@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../../.." // qmldir types
 
 Item {
     id: root
@@ -156,7 +157,9 @@ Item {
                 radius: 10
                 color: "#0f0b07"
                 border.width: isCurrent ? 2 : 1
-                border.color: isCurrent ? Theme.accent : "#0e0a06"
+                border.color: isCurrent
+                    ? Theme.accent
+                    : (thumbArea.containsMouse ? Theme.secondary : "#0e0a06")
                 clip: true
                 Behavior on border.color { ColorAnimation { duration: 160 } }
 
@@ -167,10 +170,10 @@ Item {
                     PauseAnimation { duration: index * 40 }
                     NumberAnimation { to: 1.0; duration: 200; easing.type: Easing.OutCubic }
                 }
-                SequentialAnimation on stageTranslate.y {
+                SequentialAnimation {
                     running: true
                     PauseAnimation { duration: index * 40 }
-                    NumberAnimation { to: 0; duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: stageTranslate; property: "y"; to: 0; duration: 200; easing.type: Easing.OutCubic }
                 }
 
                 scale: thumbArea.pressed ? 0.94 : (thumbArea.containsMouse ? 1.04 : (isApplying ? 1.06 : 1.0))

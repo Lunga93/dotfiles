@@ -8,6 +8,7 @@ QtObject {
 
     property string settingsPath: Quickshell.env("HOME") + "/.config/dotfiles/settings.json"
     property string currentWallpaper: ""
+    property int wallpaperVersion: 0  // bumps on every reload to cache-bust Image{} sources
     property string selectedMood: ""
     property string moodCachePath: Quickshell.env("HOME") + "/.cache/dotfiles/wallpaper-moods.json"
 
@@ -32,7 +33,8 @@ QtObject {
         },
         "appearance": {
             "accent_mode": "dynamic",
-            "manual_accent": null
+            "manual_primary": null,
+            "manual_secondary": null
         }
     })
 
@@ -51,6 +53,7 @@ QtObject {
                         Object.assign(store.data[key], parsed[key]);
                     }
                 }
+                store.migrateAccentFields();
                 store.changed();
                 store.loadSelectedMood();
             } catch (e) {
@@ -67,6 +70,10 @@ QtObject {
         onFileChanged: reload()
         onLoaded: {
             store.currentWallpaper = text().trim();
+            // Bump even if path string is unchanged — fetch-wallpaper rewrites
+            // a fixed path (daily.jpg) in place, so the URL stays the same and
+            // Qt's image cache would otherwise serve stale pixels.
+            store.wallpaperVersion += 1;
         }
     }
 
@@ -120,16 +127,38 @@ QtObject {
         execScript("~/.local/bin/fetch-wallpaper");
     }
 
-    function setManualAccent(hex: string): void {
-        set("appearance", "manual_accent", hex);
+    function migrateAccentFields(): void {
+        const app = store.data.appearance || {};
+        if (app.manual_accent && !app.manual_primary) {
+            app.manual_primary = app.manual_accent;
+        }
+        if ("manual_accent" in app) delete app.manual_accent;
+        store.data.appearance = app;
+    }
+
+    function setManualPrimary(hex: string): void {
+        set("appearance", "manual_primary", hex);
         set("appearance", "accent_mode", "manual");
-        execScript("echo '" + hex + "' > ~/.local/share/dotfiles/last_accent && ~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\"");
+        reapplyTheme();
+    }
+
+    function setManualSecondary(hex: string): void {
+        set("appearance", "manual_secondary", hex);
+        set("appearance", "accent_mode", "manual");
+        reapplyTheme();
     }
 
     function setAccentMode(mode: string): void {
         set("appearance", "accent_mode", mode);
-        if (mode === "dynamic") {
-            execScript("~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\"");
-        }
+        reapplyTheme();
+    }
+
+    function reapplyTheme(): void {
+        execScript("~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\"");
+    }
+
+    // Kept for backward compat with any callers still using setManualAccent.
+    function setManualAccent(hex: string): void {
+        setManualPrimary(hex);
     }
 }

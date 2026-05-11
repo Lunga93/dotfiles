@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 
+import ".." // qmldir types
+
 PanelWindow {
     id: window
     visible: false

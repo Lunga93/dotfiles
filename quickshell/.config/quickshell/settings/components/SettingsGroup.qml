@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import "../.." // qmldir types
 
 Column {
     id: root
