@@ -4,13 +4,7 @@ set -euo pipefail
 # network-scan
 # One-shot scan of available wifi networks. Emits JSON.
 
-JQ="$(command -v jq || true)"
 NMCLI="$(command -v nmcli || true)"
-
-if [ -z "$JQ" ]; then
-    echo '{"error":"jq not found","networks":[]}'
-    exit 1
-fi
 
 if [ -z "$NMCLI" ]; then
     echo '{"error":"nmcli not found","networks":[]}'
@@ -18,7 +12,7 @@ if [ -z "$NMCLI" ]; then
 fi
 
 # Request a fresh scan
-"$NMCLI" device wifi list --rescan yes 2>/dev/null || true
+"$NMCLI" device wifi list --rescan yes >/dev/null 2>&1 || true
 
 # Parse list — deduplicate by SSID, keep strongest signal
 networks=$(
@@ -35,7 +29,8 @@ networks=$(
         }
     } END {
         for (i=1; i<=k; i++) {
-            s=keys[i]; sig=max[s]; bars=int(sig/25)+1
+            s=keys[i]; sig=max[s];             bars=int(sig/25)+1
+            if (sig <= 0) bars=0
             if (bars>4) bars=4
             sec=secs[s]
             is_sec="false"
