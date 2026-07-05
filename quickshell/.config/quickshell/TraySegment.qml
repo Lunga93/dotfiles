@@ -49,7 +49,10 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onClicked: (e) => {
-                        if (e.button === Qt.RightButton && item.modelData.hasMenu) {
+                        if (e.button === Qt.RightButton) {
+                            const pos = item.mapToItem(null, 0, item.height);
+                            menuAnchor.anchor.rect.x = pos ? pos.x : 0;
+                            menuAnchor.anchor.rect.y = pos ? pos.y : 0;
                             menuAnchor.open();
                         } else {
                             item.modelData.activate();
@@ -61,8 +64,6 @@ Item {
                     id: menuAnchor
                     menu: item.modelData ? item.modelData.menu : null
                     anchor.window: root.QsWindow.window
-                    anchor.rect.x: parent.x
-                    anchor.rect.y: parent.y + parent.height
                 }
             }
         }

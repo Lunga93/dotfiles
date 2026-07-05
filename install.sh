@@ -57,7 +57,7 @@ AUR_PACKAGES=(
     "aylurs-gtk-shell"
     "overskride"
     "swaylock-effects-git"
-    "swww"
+    "awww"
     "ttf-phosphor-icons"
     "xwayland-satellite"
     "zen-browser-bin"
@@ -121,7 +121,7 @@ check_arch() {
 update_system() {
     if $DO_UPDATE; then
         info "Updating system (--update) ..."
-        sudo_run pacman -Syu --noconfirm
+        sudo_run pacman -Syu
         ok "System updated"
     else
         info "Skipping system update (pass --update to run pacman -Syu)"
@@ -129,8 +129,23 @@ update_system() {
 }
 
 install_official() {
+    info "Checking for AUR-provided packages ..."
+    local filtered=()
+    for pkg in "${OFFICIAL_PACKAGES[@]}"; do
+        local skip=false
+        for aur in "${AUR_PACKAGES[@]}"; do
+            if pacman -Q "$aur" &>/dev/null 2>&1; then
+                if pacman -Qi "$aur" 2>/dev/null | grep -qE "^Provides[[:space:]]*:.*\b$pkg\b"; then
+                    warn "$aur provides $pkg — skipping official $pkg"
+                    skip=true
+                    break
+                fi
+            fi
+        done
+        $skip || filtered+=("$pkg")
+    done
     info "Installing official packages ..."
-    sudo_run pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
+    sudo_run pacman -S --needed --overwrite '*' "${filtered[@]}"
     ok "Official packages installed"
 }
 
@@ -148,14 +163,15 @@ ensure_aur_helper() {
 
 install_aur() {
     info "Installing AUR packages ..."
-    run yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
+    run yay -S --needed "${AUR_PACKAGES[@]}"
     ok "AUR packages installed"
 }
 
 evict_mako() {
     if pacman -Q mako &>/dev/null 2>&1; then
         info "Removing mako (conflicts with swaync for notifications) ..."
-        sudo_run pacman -Rns --noconfirm mako || true
+        sudo_run pacman -Rns --noconfirm mako 2>/dev/null || \
+            warn "Could not remove mako (required by other packages)"
     fi
     run rm -rf "$HOME/.config/mako"
 }

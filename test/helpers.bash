@@ -120,13 +120,13 @@ exit 0
 EOF
     chmod +x "$SANDBOX_ROOT/bin/wal"
 
-    # swww mock — log the invocation
-    cat > "$SANDBOX_ROOT/bin/swww" <<'EOF'
+    # awww mock — log the invocation
+    cat > "$SANDBOX_ROOT/bin/awww" <<'EOF'
 #!/usr/bin/env bash
-echo "[MOCK] swww $@" >> "$SANDBOX_ROOT/calls.log"
+echo "[MOCK] awww $@" >> "$SANDBOX_ROOT/calls.log"
 exit 0
 EOF
-    chmod +x "$SANDBOX_ROOT/bin/swww"
+    chmod +x "$SANDBOX_ROOT/bin/awww"
 
     # swaylock-effects and swaylock mocks
     cat > "$SANDBOX_ROOT/bin/swaylock-effects" <<'EOF'

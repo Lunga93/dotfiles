@@ -14,7 +14,7 @@ QtObject {
     readonly property int durationSlow:  320
     readonly property int durationXSlow: 600
 
-    readonly property string fontFamily: "Fira Sans"
+    readonly property string fontFamily: "Inter"
     readonly property string fontMono:   "MesloLGS Nerd Font Mono"
 
     readonly property real cardWidth:    380

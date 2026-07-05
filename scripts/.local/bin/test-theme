@@ -6,16 +6,16 @@ set -u
 
 STATE_FILE="$HOME/.config/current_wallpaper"
 WAL_CACHE="$HOME/.cache/wal/colors.json"
-SWWW_CMD="$(command -v swww || true)"
+AWWW_CMD="$(command -v awww || true)"
 
 echo "=== Theme System Diagnostics ==="
 echo "Timestamp: $(date)"
 
-# 1. Check swww-daemon
-if pgrep -x swww-daemon >/dev/null; then
-    echo "[PASS] swww-daemon is running."
+# 1. Check awww-daemon
+if pgrep -x awww-daemon >/dev/null; then
+    echo "[PASS] awww-daemon is running."
 else
-    echo "[FAIL] swww-daemon is NOT running."
+    echo "[FAIL] awww-daemon is NOT running."
 fi
 
 # 2. Check State File
@@ -27,18 +27,18 @@ else
     EXPECTED_IMG=""
 fi
 
-# 3. Verify Active Wallpaper (swww query)
-if [ -n "$SWWW_CMD" ] && pgrep -x swww-daemon >/dev/null; then
-    CURRENT_SWWW_IMG="$($SWWW_CMD query | awk -F 'image: ' '{print $2}' | head -n1)"
-    if [ "$CURRENT_SWWW_IMG" == "$EXPECTED_IMG" ]; then
+# 3. Verify Active Wallpaper (awww query)
+if [ -n "$AWWW_CMD" ] && pgrep -x awww-daemon >/dev/null; then
+    CURRENT_AWWW_IMG="$($AWWW_CMD query | awk -F 'image: ' '{print $2}' | head -n1)"
+    if [ "$CURRENT_AWWW_IMG" == "$EXPECTED_IMG" ]; then
          echo "[PASS] Active wallpaper matches state."
     else
          echo "[FAIL] Active wallpaper mismatch!"
          echo "       Expected: $EXPECTED_IMG"
-         echo "       Actual:   $CURRENT_SWWW_IMG"
+         echo "       Actual:   $CURRENT_AWWW_IMG"
     fi
 else
-    echo "[SKIP] Cannot query swww (daemon not running or tool missing)."
+    echo "[SKIP] Cannot query awww (daemon not running or tool missing)."
 fi
 
 # 4. Check Theme Generation (Freshness)

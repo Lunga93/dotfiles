@@ -3,7 +3,7 @@ set -euo pipefail
 
 # restore-wallpaper
 # Restores the last set wallpaper from state file, or defaults to a preset.
-# Handles waiting for swww-daemon to be ready.
+# Handles waiting for awww-daemon to be ready.
 
 LOG_FILE="$HOME/.local/share/dotfiles/wallpaper.log"
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -16,14 +16,14 @@ SET_WALLPAPER_SCRIPT="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/set-wallpa
 trap 'echo "EXIT $? at line $LINENO (cmd: ${BASH_COMMAND})"' ERR
 echo "==== run start (pid=$$) ===="
 
-# Skip the wait entirely if swww isn't installed — set-wallpaper falls back
+# Skip the wait entirely if awww isn't installed — set-wallpaper falls back
 # to swaybg in that case, no point burning 10s on a daemon that will never
 # come up.
-if command -v swww >/dev/null 2>&1; then
-    echo "Waiting for swww-daemon..."
+if command -v awww >/dev/null 2>&1; then
+    echo "Waiting for awww-daemon..."
     for _ in {1..20}; do
-        if swww query &>/dev/null; then
-            echo "swww is ready."
+        if awww query &>/dev/null; then
+            echo "awww is ready."
             break
         fi
         sleep 0.5

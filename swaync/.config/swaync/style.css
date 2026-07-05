@@ -115,7 +115,7 @@
 
 /* Text Styling */
 .summary {
-    font-family: "Fira Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 14px; /* Slightly larger header */
     font-weight: bold;
     color: #f0f0f0;
@@ -123,7 +123,7 @@
 }
 
 .time {
-    font-family: "Fira Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 11px;
     font-weight: bold;
     color: #a0a0a0;
@@ -132,7 +132,7 @@
 }
 
 .body {
-    font-family: "Fira Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 12px; /* Mako base size */
     font-weight: normal;
     color: #cccccc; /* Slightly darker than summary */
@@ -150,7 +150,7 @@
 
 .widget-title {
     color: #f0f0f0;
-    font-family: "Fira Sans", sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 1.5em;
     font-weight: bold;
     margin: 8px;
