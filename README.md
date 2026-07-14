@@ -16,10 +16,13 @@ Keybindings, startup programs, focus ring colors all live in
 ### Quickshell
 
 A single Qt6/QML shell daemon. One process renders the bar (one `PanelWindow`
-per screen via `Variants { model: Quickshell.screens }`) and the floating
-popouts: audio, calendar, power. Toggled from the bar or via
-`qs ipc call <target> toggle`. Live-themed by `Theme.qml` watching
-`~/.cache/wal/colors.json`.
+per screen via `Variants { model: Quickshell.screens }`), the floating
+popouts (audio, calendar, power), and the full-window **Settings app**
+(`MOD+,`). Toggled from the bar or via `qs ipc call <target> toggle`.
+Live-themed by `Theme.qml` watching `~/.cache/wal/colors.json`.
+
+The Settings app covers wallpaper, appearance (top bar tuning), icons,
+display, keybindings (niri rebind), network, sound, and system info.
 
 ### Wofi
 
