@@ -174,4 +174,36 @@ qs.ipc.set("your", yourPopout)  // now callable via:
 // qs ipc call your toggle
 ```
 
+## Settings App
+
+The settings app is a full-window configuration panel inside the `qs` daemon. It opens via `MOD+,` or `qs ipc call settings toggle`.
+
+### Pages (all active as of Beta)
+
+| Index | Category | Page file | Key file | Live data? |
+|-------|----------|-----------|----------|------------|
+| 0 | Wallpaper | `pages/wallpaper/WallpaperPage.qml` | `components/`, `data/` | Yes (pywal, mood cache) |
+| 1 | Appearance | `pages/top-bar/TopBarPage.qml` | `TopBarPreview.qml` | Yes (live preview) |
+| 2 | Icons | `pages/icons/IconsPage.qml` | — | No (writer only) |
+| 3 | Display | `pages/display/DisplayPage.qml` | — | No (writer only) |
+| 4 | Keybindings | `pages/keybindings/KeybindingsPage.qml` | `KeyCaptureDialog.qml`, `data/KeybindingsStore.qml` | Yes (niri-keybind) |
+| 5 | Network | `pages/network/NetworkPage.qml` | — | Yes (nmcli) |
+| 6 | Sound | `pages/sound/SoundPage.qml` | — | Yes (wpctl) |
+| 7 | System Info | `pages/sysinfo/SysInfoPage.qml` | — | Yes (read-only) |
+
+### Adding a page
+
+1. Create `pages/<category>/<Name>Page.qml`
+2. Add its entry in `SettingsContent.qml` at the matching `activeIndex`
+3. Register the type in root `qmldir`
+4. Update the category list in `data/Categories.qml`
+
+### Data layer
+
+- `data/SettingsStore.qml` — persistence singleton, reads/writes `~/.config/dotfiles/settings.json`
+- `data/Categories.qml` — sidebar category definitions
+- `data/KeybindingsStore.qml` — niri keybind query/rebind via `niri-keybind` script
+- `data/MoodCatalog.qml` — mood taxonomy for wallpaper tagging
+- `components/Toast.qml` — reusable toast notification (info/success/error)
+
 > [!WARNING] **Docs-update discipline**: changing Quickshell's bar layout, adding/removing segments, or modifying the IPC protocol means updating this page. See `AGENTS.md` section 11.
