@@ -62,8 +62,7 @@ PanelWindow {
         Behavior on height { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.05 } }
         anchors.centerIn: parent
         radius: 16
-        color: "#1a1611"
-        border.color: Qt.rgba(1, 1, 1, 0.06)
+        color: Theme.surfaceWindow        border.color: Qt.rgba(1, 1, 1, 0.06)
         border.width: 1
         clip: true
 
@@ -93,7 +92,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 42
-            color: "#231d16"
+            color: Theme.surfaceTitleBar
 
             Row {
                 anchors.left: parent.left
@@ -146,7 +145,7 @@ PanelWindow {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 height: 1
-                color: "#0e0a06"
+                color: Theme.dividerColor
             }
         }
 
@@ -157,7 +156,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             width: 232
-            color: "#15110c"
+            color: Theme.surfaceSidebar
             clip: true
 
             SettingsSidebar {
@@ -177,7 +176,7 @@ PanelWindow {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: 1
-                color: "#0e0a06"
+                color: Theme.dividerColor
             }
         }
 
@@ -187,7 +186,7 @@ PanelWindow {
             anchors.left: sidebarBg.right
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            color: "#1a1611"
+        color: Theme.surfaceWindow
 
             SettingsContent {
                 id: content
