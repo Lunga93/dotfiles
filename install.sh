@@ -28,6 +28,7 @@ OFFICIAL_PACKAGES=(
     "gnome-calendar"
     "jq"
     "nautilus"
+    "networkmanager"
     "niri"
     "ntfs-3g"
     "otf-font-awesome"
@@ -35,6 +36,7 @@ OFFICIAL_PACKAGES=(
     "pipewire"
     "playerctl"
     "polkit-kde-agent"
+    "python"
     "python-pillow"
     "python-pywal"
     "qt6-declarative"
@@ -49,6 +51,7 @@ OFFICIAL_PACKAGES=(
     "ttf-fira-sans"
     "ttf-roboto"
     "wl-clipboard"
+    "wlsunset"
     "wofi"
     "wireplumber"
 )
