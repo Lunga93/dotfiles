@@ -27,3 +27,9 @@ ags/.config/ags.v1-old/
 # unit-name symlinks pointing to /dev/null.
 systemd/.config/systemd/user/*.target.wants/
 systemd/.config/systemd/user/mako.service
+
+# wine filesystem artifacts
+**/drive_c/
+**/dosdevices/
+**/*.reg
+**/wine-extension-*.desktop

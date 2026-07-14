@@ -19,6 +19,7 @@ Item {
                 root.outputName = v || "Default output";
             }
         }
+        onExited: function(code) { if (code !== 0) root.outputName = "Unavailable" }
     }
 
     property Process _inputNameProc: Process {
@@ -30,6 +31,7 @@ Item {
                 root.inputName = v || "Default input";
             }
         }
+        onExited: function(code) { if (code !== 0) root.inputName = "Unavailable" }
     }
 
     component GroupShell: Column {

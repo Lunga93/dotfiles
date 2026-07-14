@@ -184,8 +184,8 @@ main() {
 
     logger "fetch-wallpaper: started"
 
-    # 1) Try local directory
-    if img=$(choose_local); then
+    # 1) Try local directory (only if user explicitly configured one)
+    if [ -n "$LIBRARY_DIR" ] && img=$(choose_local); then
         echo "Using local wallpaper: $img"
         cp "$img" "$OUT_TMP"
         logger "Using local wallpaper: $img"

@@ -35,6 +35,34 @@ QtObject {
             "accent_mode": "dynamic",
             "manual_primary": null,
             "manual_secondary": null
+        },
+        "top_bar": {
+            "gradient_style": "off",
+            "gradient_intensity": 0.5,
+            "background_opacity": 0.85,
+            "text_glow": 0.0,
+            "font_family": "",
+            "font_weight": "Regular"
+        },
+        "display": {
+            "scale": 1.0,
+            "night_light_enabled": false,
+            "night_light_temperature": 4000
+        },
+        "icons": {
+            "icon_theme": "Papirus",
+            "cursor_theme": "Capitaine",
+            "cursor_size": 24
+        },
+        "sound": {
+            "output_volume": 100,
+            "output_muted": false,
+            "input_volume": 100,
+            "input_muted": false,
+            "alert_sounds_enabled": true
+        },
+        "network": {
+            "wifi_enabled": true
         }
     })
 
@@ -161,4 +189,40 @@ QtObject {
     function setManualAccent(hex: string): void {
         setManualPrimary(hex);
     }
+
+    // ── Display ──
+    property var displayScale: get("display", "scale")
+    property var nightLightEnabled: get("display", "night_light_enabled")
+    property var nightLightTemperature: get("display", "night_light_temperature")
+
+    function setDisplayScale(scale: real): void { set("display", "scale", scale) }
+    function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
+    function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
+
+    // ── Icons ──
+    property var iconTheme: get("icons", "icon_theme")
+    property var cursorTheme: get("icons", "cursor_theme")
+    property var cursorSize: get("icons", "cursor_size")
+
+    function setIconTheme(theme: string): void { set("icons", "icon_theme", theme) }
+    function setCursorTheme(theme: string): void { set("icons", "cursor_theme", theme) }
+    function setCursorSize(size: int): void { set("icons", "cursor_size", size) }
+
+    // ── Sound ──
+    property var outputVolume: get("sound", "output_volume")
+    property var outputMuted: get("sound", "output_muted")
+    property var inputVolume: get("sound", "input_volume")
+    property var inputMuted: get("sound", "input_muted")
+    property var alertSoundsEnabled: get("sound", "alert_sounds_enabled")
+
+    function setOutputVolume(vol: int): void { set("sound", "output_volume", vol) }
+    function setOutputMuted(muted: bool): void { set("sound", "output_muted", muted) }
+    function setInputVolume(vol: int): void { set("sound", "input_volume", vol) }
+    function setInputMuted(muted: bool): void { set("sound", "input_muted", muted) }
+    function setAlertSoundsEnabled(enabled: bool): void { set("sound", "alert_sounds_enabled", enabled) }
+
+    // ── Network ──
+    property var wifiEnabled: get("network", "wifi_enabled")
+
+    function setWifiEnabled(enabled: bool): void { set("network", "wifi_enabled", enabled) }
 }

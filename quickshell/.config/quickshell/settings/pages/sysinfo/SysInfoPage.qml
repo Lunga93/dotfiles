@@ -26,36 +26,42 @@ Item {
                 }
             }
         }
+        onLoadFailed: root.osName = "Unknown"
     }
 
     property Process _kernelProc: Process {
         command: ["uname", "-r"]
         running: true
         stdout: StdioCollector { onStreamFinished: root.kernelVer = text.trim() }
+        onExited: function(code) { if (code !== 0) root.kernelVer = "Unknown" }
     }
 
     property Process _cpuProc: Process {
         command: ["bash", "-c", "grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs"]
         running: true
         stdout: StdioCollector { onStreamFinished: root.cpuModel = text.trim() }
+        onExited: function(code) { if (code !== 0) root.cpuModel = "Unknown" }
     }
 
     property Process _memProc: Process {
         command: ["bash", "-c", "free -h | awk '/^Mem:/ {print $3 \"/\" $2}'"]
         running: true
         stdout: StdioCollector { onStreamFinished: root.memoryTotal = text.trim() }
+        onExited: function(code) { if (code !== 0) root.memoryTotal = "Unknown" }
     }
 
     property Process _diskProc: Process {
         command: ["bash", "-c", "df -h / | awk 'NR==2 {print $3 \"/\" $2 \" (\" $5 \")\"}'"]
         running: true
         stdout: StdioCollector { onStreamFinished: root.diskTotal = text.trim() }
+        onExited: function(code) { if (code !== 0) root.diskTotal = "Unknown" }
     }
 
     property Process _uptimeProc: Process {
         command: ["bash", "-c", "uptime -p | sed 's/^up //'"]
         running: true
         stdout: StdioCollector { onStreamFinished: root.uptime = text.trim() }
+        onExited: function(code) { if (code !== 0) root.uptime = "Unknown" }
     }
 
     component GroupShell: Column {
@@ -205,7 +211,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Manatee Desktop · CachyOS · Niri"
+                        text: root.osName + " · Niri"
                         color: Theme.textTertiary
                         font.family: Theme.fontFamily
                         font.pixelSize: 12

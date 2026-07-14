@@ -31,6 +31,7 @@ Item {
                 else root.connectionType = t;
             }
         }
+        onExited: function(code) { if (code !== 0) root.activeConnection = "Unavailable" }
     }
 
     property Process _ipProc: Process {
@@ -39,6 +40,7 @@ Item {
         stdout: StdioCollector {
             onStreamFinished: root.ipAddress = text.trim() || "—"
         }
+        onExited: function(code) { if (code !== 0) root.ipAddress = "—" }
     }
 
     component GroupShell: Column {

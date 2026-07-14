@@ -12,37 +12,37 @@ Item {
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    TopBarPage {
         visible: activeIndex === 1
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    IconsPage {
         visible: activeIndex === 2
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    DisplayPage {
         visible: activeIndex === 3
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    KeybindingsPage {
         visible: activeIndex === 4
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    NetworkPage {
         visible: activeIndex === 5
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    SoundPage {
         visible: activeIndex === 6
         anchors.fill: parent
     }
 
-    PlaceholderPage {
+    SysInfoPage {
         visible: activeIndex === 7
         anchors.fill: parent
     }
