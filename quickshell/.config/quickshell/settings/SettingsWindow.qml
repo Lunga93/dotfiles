@@ -62,7 +62,8 @@ PanelWindow {
         Behavior on height { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.05 } }
         anchors.centerIn: parent
         radius: 16
-        color: Theme.surfaceWindow        border.color: Qt.rgba(1, 1, 1, 0.06)
+        color: Theme.surfaceWindow
+        border.color: Qt.rgba(1, 1, 1, 0.06)
         border.width: 1
         clip: true
 
