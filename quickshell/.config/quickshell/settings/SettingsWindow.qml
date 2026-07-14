@@ -18,11 +18,6 @@ PanelWindow {
     aboveWindows: true
     focusable: true
 
-    focus: true
-    Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_Escape) window.close()
-    }
-
     property int activeIndex: 0
     property bool windowExpanded: SettingsStore.selectedMood ? true : false
 
@@ -55,6 +50,8 @@ PanelWindow {
     // Window — solid layered surfaces, no glass
     Rectangle {
         id: container
+        focus: true
+        Keys.onPressed: function(event) { if (event.key === Qt.Key_Escape) window.close() }
         readonly property int defaultHeight: 640
         readonly property int expandedHeight: 900
         width: 1000

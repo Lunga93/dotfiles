@@ -53,6 +53,7 @@ singleton KeybindingsStore 1.0 settings/data/KeybindingsStore.qml
 
 # Settings pages
 TopBarPage 1.0 settings/pages/top-bar/TopBarPage.qml
+TopBarPreview 1.0 settings/pages/top-bar/TopBarPreview.qml
 IconsPage 1.0 settings/pages/icons/IconsPage.qml
 DisplayPage 1.0 settings/pages/display/DisplayPage.qml
 KeybindingsPage 1.0 settings/pages/keybindings/KeybindingsPage.qml
