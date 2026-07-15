@@ -55,6 +55,7 @@ OFFICIAL_PACKAGES=(
     "wlsunset"
     "wofi"
     "wireplumber"
+    "opencode"
 )
 
 AUR_PACKAGES=(
@@ -79,6 +80,7 @@ STOW_DIRS=(
     "welcome"
     "systemd"
     "wofi"
+    "opencode"
 )
 
 usage() {
