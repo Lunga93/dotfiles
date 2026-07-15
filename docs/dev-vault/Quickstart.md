@@ -5,8 +5,8 @@ Clone, install, and make your first change in under 5 minutes.
 ## Clone & Install
 
 ```bash
-git clone https://github.com/Lunga93/dotfiles ~/dotfiles
-cd ~/dotfiles
+git clone https://github.com/Lunga93/manatee-desktop ~/manatee-desktop
+cd ~/manatee-desktop
 ./install.sh
 ```
 

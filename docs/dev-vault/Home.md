@@ -1,6 +1,6 @@
 # Home
 
-Welcome, developer. This vault documents the architecture, conventions, and workflows for the Manatee dotfiles.
+Welcome, developer. This vault documents the architecture, conventions, and workflows for Manatee Desktop.
 
 > [!TIP] New here? Start with [[Quickstart]] to get set up.
 
