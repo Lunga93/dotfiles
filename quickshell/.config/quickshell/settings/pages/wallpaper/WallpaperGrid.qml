@@ -20,7 +20,7 @@ Item {
         return MoodCatalog.wallpapersForMood(root.moodFilter) || [];
     }
 
-    height: root.moodFilter !== "" ? (gridHeader.height + gridFlick.height + 8) : 0
+    height: root.moodFilter !== "" ? (gridHeader.height + Math.min(wallList.height, 400) + 8) : 0
     clip: true
 
     Process {
@@ -54,8 +54,7 @@ Item {
         height: childrenRect.height
 
         Item {
-            width: parent.width
-            height: 36
+            width: parent.width; height: 36
             Text {
                 anchors.left: parent.left; anchors.leftMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
@@ -66,8 +65,10 @@ Item {
             Text {
                 anchors.left: parent.left; anchors.leftMargin: 160
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.sourceWallpapers.length > 0 ? "(" + root.sourceWallpapers.length + ")" : ""
-                color: "#5a5249"
+                text: root.sourceWallpapers.length > 0
+                    ? "(" + root.sourceWallpapers.length + ")"
+                    : "EMPTY! mood:" + root.moodFilter + " scanned:" + root.wallpapers.length
+                color: root.sourceWallpapers.length > 0 ? "#5a5249" : "#ff4444"
                 font.family: Theme.fontFamily; font.pixelSize: 10
             }
         }
@@ -78,56 +79,55 @@ Item {
         anchors.top: gridHeader.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 400
+        height: Math.min(wallList.height + 16, 400)
         contentWidth: parent.width
-        contentHeight: innerColumn.height + 16
+        contentHeight: wallList.height + 16
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
         Column {
-            id: innerColumn
+            id: wallList
             anchors.left: parent.left
             anchors.leftMargin: 12
-            anchors.right: parent.right
-            anchors.rightMargin: 12
-            spacing: 8
             width: parent.width - 24
+            spacing: 8
 
             Repeater {
                 model: root.sourceWallpapers
 
                 delegate: Rectangle {
                     required property string modelData
-                    required property int index
-                    width: 156; height: 96
+                    width: parent.width - 24; height: 96
                     radius: 10
                     color: "#0f0b07"
                     border.width: modelData === SettingsStore.currentWallpaper ? 2 : 1
                     border.color: modelData === SettingsStore.currentWallpaper ? Theme.accent : "#0e0a06"
                     clip: true
 
-                    Image {
+                    Row {
                         anchors.fill: parent
-                        source: "file://" + modelData
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        sourceSize.width: 312
-                        sourceSize.height: 192
-                        smooth: true
-                        cache: true
-                    }
+                        anchors.margins: 4
+                        spacing: 8
 
-                    Rectangle {
-                        anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right
-                        height: 20
-                        color: Qt.rgba(0, 0, 0, 0.55)
+                        Image {
+                            width: 156; height: 88
+                            source: "file://" + modelData
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            sourceSize.width: 312
+                            sourceSize.height: 176
+                            smooth: true
+                            cache: true
+                        }
+
                         Text {
-                            anchors.centerIn: parent
+                            anchors.verticalCenter: parent.verticalCenter
                             text: root.basename(modelData)
                             color: "#f5ede0"
-                            font.family: Theme.fontFamily; font.pixelSize: 9
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
                             elide: Text.ElideMiddle
-                            width: parent.width - 12
+                            width: parent.width - 176
                         }
                     }
 
