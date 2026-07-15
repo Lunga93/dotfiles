@@ -28,7 +28,7 @@ Item {
                 Layout.preferredWidth: Theme.barHeight - 8
                 Layout.fillHeight: true
 
-                readonly property bool hasMenu: item.modelData && item.modelData.menu != null
+                readonly property bool hasMenu: item.modelData && item.modelData.menu !== null
 
                 Rectangle {
                     anchors.fill: parent
@@ -62,10 +62,15 @@ Item {
                         if (!item.modelData) return;
 
                         if (e.button === Qt.RightButton) {
-                            if (item.hasMenu) {
-                                const pos = item.mapToItem(null, 0, item.height);
-                                menuAnchor.anchor.rect.x = pos ? pos.x : 0;
-                                menuAnchor.anchor.rect.y = pos ? pos.y : 0;
+                            const menu = item.modelData.menu;
+                            if (menu) {
+                                const globalPos = item.mapToItem(null, 0, item.height);
+                                menuAnchor.anchor.rect = Qt.rect(
+                                    globalPos ? globalPos.x : 0,
+                                    globalPos ? globalPos.y : 0,
+                                    1, 1
+                                );
+                                menuAnchor.menu = menu;
                                 menuAnchor.open();
                             } else {
                                 item.modelData.activate();
@@ -78,7 +83,6 @@ Item {
 
                 QsMenuAnchor {
                     id: menuAnchor
-                    menu: item.modelData ? item.modelData.menu : null
                     anchor.window: root.QsWindow.window
                 }
             }
