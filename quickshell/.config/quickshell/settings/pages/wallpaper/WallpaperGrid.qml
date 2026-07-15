@@ -7,18 +7,13 @@ Item {
     id: root
 
     property string moodFilter: ""
+    property var wallpaperPaths: []
     property var wallpapers: []
     property string applyingPath: ""
 
     signal wallpaperSelected(string path)
 
-    readonly property int cellW: 156
-    readonly property int cellH: 96
-    readonly property int cols: Math.max(1, Math.floor((root.width - 24) / (cellW + 8)))
-    readonly property var sourceWallpapers: {
-        if (!root.moodFilter) return root.wallpapers;
-        return MoodCatalog.wallpapersForMood(root.moodFilter) || [];
-    }
+    readonly property var sourceWallpapers: root.moodFilter !== "" ? root.wallpaperPaths : root.wallpapers
 
     height: root.moodFilter !== "" ? (gridHeader.height + Math.min(wallList.height, 400) + 8) : 0
     clip: true
