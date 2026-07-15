@@ -198,7 +198,7 @@ stow_all() {
 }
 
 install_sddm() {
-    local name="quickshell-pywal"
+    local name="manatee"
     local src="$SCRIPT_DIR/sddm/themes/$name"
     local dst="/usr/share/sddm/themes/$name"
     local rundir="/var/lib/sddm-theme"
@@ -310,7 +310,12 @@ main() {
         esac
     done
 
-    echo -e "${BLUE}== lunga's dotfiles installer ==${NC}"
+    local logo="$SCRIPT_DIR/brand/logo.svg"
+    if command -v chafa &>/dev/null && [[ -f "$logo" ]]; then
+        chafa --size 40x20 "$logo" || true
+    fi
+    echo -e "${BLUE}Manatee Desktop installer${NC}"
+    echo -e "${BLUE}A gentle, glossy Wayland desktop for Arch.${NC}"
     echo
 
     check_arch
@@ -331,8 +336,13 @@ main() {
     fi
 
     echo
-    echo -e "${GREEN}== Installation complete ==${NC}"
-    echo -e "${BLUE}Log out and back in (or start niri) to see changes.${NC}"
+    echo -e "${GREEN}Manatee welcomes you.${NC}"
+    echo -e "${BLUE}Log out and back in (or start niri) to join the pod.${NC}"
+
+    local marker_dir="$HOME/.config/manatee"
+    run mkdir -p "$marker_dir"
+    run touch "$marker_dir/desktop-marker"
+    ok "Manatee desktop marker set"
 }
 
 main "$@"
