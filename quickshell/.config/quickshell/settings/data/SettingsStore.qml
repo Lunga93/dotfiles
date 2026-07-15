@@ -195,18 +195,35 @@ QtObject {
     property var nightLightEnabled: get("display", "night_light_enabled")
     property var nightLightTemperature: get("display", "night_light_temperature")
 
-    function setDisplayScale(scale: real): void { set("display", "scale", scale) }
+    function setDisplayScale(scale: string): void { set("display", "scale", scale) }
     function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
     function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
+
+    // ── Top Bar ──
+    property var topBarGradientIntensity: get("top_bar", "gradient_intensity")
+    property var topBarBgOpacity: get("top_bar", "background_opacity")
+    property var topBarTextGlow: get("top_bar", "text_glow")
+    property var topBarGradientStyle: get("top_bar", "gradient_style")
+    property var topBarFontFamily: get("top_bar", "font_family")
+    property var topBarFontWeight: get("top_bar", "font_weight")
 
     // ── Icons ──
     property var iconTheme: get("icons", "icon_theme")
     property var cursorTheme: get("icons", "cursor_theme")
     property var cursorSize: get("icons", "cursor_size")
 
-    function setIconTheme(theme: string): void { set("icons", "icon_theme", theme) }
-    function setCursorTheme(theme: string): void { set("icons", "cursor_theme", theme) }
-    function setCursorSize(size: int): void { set("icons", "cursor_size", size) }
+    function setIconTheme(theme: string): void {
+        set("icons", "icon_theme", theme);
+        execScript("gsettings set org.gnome.desktop.interface icon-theme '" + theme + "'");
+    }
+    function setCursorTheme(theme: string): void {
+        set("icons", "cursor_theme", theme);
+        execScript("gsettings set org.gnome.desktop.interface cursor-theme '" + theme + "'");
+    }
+    function setCursorSize(size: int): void {
+        set("icons", "cursor_size", size);
+        execScript("gsettings set org.gnome.desktop.interface cursor-size " + size);
+    }
 
     // ── Sound ──
     property var outputVolume: get("sound", "output_volume")

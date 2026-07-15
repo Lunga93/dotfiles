@@ -27,6 +27,7 @@ Item {
     }
 
     function fontInstalled(name) {
+        if (!name) return false;
         const fams = Qt.fontFamilies();
         for (let i = 0; i < fams.length; i++) {
             if (fams[i] === name || fams[i].toLowerCase() === name.toLowerCase()) return true;
