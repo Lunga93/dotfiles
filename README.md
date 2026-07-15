@@ -1,137 +1,95 @@
-# dotfiles
+<p align="center">
+  <img src="brand/logo-full.svg" alt="Manatee Desktop" width="320">
+</p>
 
-A Wayland desktop for Arch-based systems, distributed as GNU Stow packages.
-[Niri](https://github.com/YaLTeR/niri) compositor, [Quickshell](https://quickshell.outfoxxed.me/)
-bar, pywal-driven theming.
+<p align="center">
+  <strong>A gentle, glossy Wayland desktop for Arch.</strong><br>
+  Built on Niri and Quickshell, themed by your wallpaper.
+</p>
 
-## What's included
+<p align="center">
+  <img src="https://img.shields.io/badge/Arch-1793D1?logo=archlinux&logoColor=white" alt="Arch">
+  <img src="https://img.shields.io/badge/compositor-Niri-8b5cf6" alt="Niri">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
+</p>
 
-### Niri
+---
 
-Scrollable-tiling Wayland compositor. Vertical workspaces scroll with
-`Mod+Page_Up`/`Mod+Page_Down`; columns scroll horizontally with `Mod+Left`/`Mod+Right`.
-Keybindings, startup programs, focus ring colors all live in
-`niri/.config/niri/config.kdl`.
+## Why Manatee?
 
-### Quickshell
+Manatees are gentle giants — calm, deliberate, and perfectly at home in their
+environment. Your desktop should feel the same.
 
-A single Qt6/QML shell daemon. One process renders the bar (one `PanelWindow`
-per screen via `Variants { model: Quickshell.screens }`), the floating
-popouts (audio, calendar, power), and the full-window **Settings app**
-(`MOD+,`). Toggled from the bar or via `qs ipc call <target> toggle`.
-Live-themed by `Theme.qml` watching `~/.cache/wal/colors.json`.
+- **Gentle on your system** — Niri's scrollable tiling keeps everything flowing
+  without the jank. One workspace scrolls into the next. No reshuffling, no
+  surprises.
+- **Glossy out of the box** — Quickshell bar, notification center, app launcher,
+  lock screen, and SDDM greeter — all themed together. Looks good from the moment
+  you log in.
+- **Grows with your wallpaper** — pywal pulls a full palette from any image.
+  Every surface — bar, notifications, terminal, GTK apps, even the login screen —
+  follows along. Drop a new wallpaper, everything shifts to match.
 
-The Settings app covers wallpaper, appearance (top bar tuning), icons,
-display, keybindings (niri rebind), network, sound, and system info.
+## Quick Start
 
-### Wofi
-
-Fuzzy launcher bound to `Mod+Space`. The wallpaper-derived palette is written
-to `~/.config/wofi/colors-wal.css` on every theme change.
-
-### swaync
-
-D-Bus notification daemon with a slide-out control center. `colors.css` is
-rewritten and reloaded automatically on theme change. Default `timeout` is 3s.
-
-### Alacritty
-
-Terminal. `alacritty.toml` is regenerated from `alacritty/template.alacritty.toml`
-on every theme change; `test-alacritty.sh` validates the new file and rolls
-back to the template (writing a `.broken.<ts>` backup) if the TOML is invalid.
-
-### GTK / libadwaita
-
-`gtk/.config/gtk-{3,4}.0/colors-wal.css` is rewritten on theme change so
-Nautilus and other libadwaita apps pick up the new palette without restarting.
-
-### SDDM
-
-Quickshell-based greeter installed at `/usr/share/sddm/themes/quickshell-pywal`.
-Runtime colors and wallpaper are pushed to the user-writable
-`/var/lib/sddm-theme/`, so `apply-theme` updates the login screen without sudo.
-
-## Theming
-
-Wallpaper drives every palette via [pywal](https://github.com/dylanaraps/pywal).
-`set-wallpaper <image>` runs swww, then `apply-theme` regenerates colors and
-patches each component:
-
-| Component   | Output                                                              |
-|-------------|---------------------------------------------------------------------|
-| Alacritty   | `~/.config/alacritty/alacritty.toml` (rebuilt from template)        |
-| Niri        | focus ring `active-color` / `inactive-color` in `config.kdl`        |
-| Quickshell  | `Theme.qml` reads `~/.cache/wal/colors.json` via `FileView`         |
-| swaync      | `~/.config/swaync/colors.css` + `swaync-client -R` reload           |
-| Wofi        | `~/.config/wofi/colors-wal.css`                                     |
-| GTK 3/4     | `~/.config/gtk-{3,4}.0/colors-wal.css`                              |
-| SDDM        | `/var/lib/sddm-theme/{theme.conf.user,wallpaper}`                   |
-
-## Install
-
-```sh
-git clone https://github.com/Lunga93/dotfiles ~/dotfiles
-cd ~/dotfiles
+```bash
+git clone https://github.com/Lunga93/manatee-desktop.git
+cd manatee-desktop
 ./install.sh
 ```
 
-The installer requires Arch (`/etc/arch-release`), optionally runs `pacman -Syu`,
-installs the package lists baked into `install.sh` (`OFFICIAL_PACKAGES` and
-`AUR_PACKAGES`), then stows each entry in `STOW_DIRS`. Existing
-`~/.config/<pkg>` directories are renamed to `<pkg>.bak` before being replaced.
+Log out. Log back in with Niri. That's it — you're in the pod.
 
-After install, log out and start niri. Set a wallpaper to seed the palette:
+> **Arch-based distros only.** Tested on CachyOS. The installer checks
+> `/etc/arch-release` and will bail politely if it's not there.
 
-```sh
-set-wallpaper ~/Pictures/wallpapers/your-image.jpg
+See `./install.sh --help` for dry-run and update options.
+
+## What's in the box
+
+| Component   | What it does                                      | Keybinding       |
+|-------------|---------------------------------------------------|------------------|
+| **Niri**    | Scrollable-tiling compositor. Workspaces scroll vertically, columns horizontally. | `Mod+Shift+H/L`  |
+| **Quickshell** | Bar with workspaces, taskbar, tray, clock, power. Floating popouts for audio and calendar. | `Mod+,` for Settings |
+| **Wofi**    | Fuzzy app launcher. Type to find.                 | `Mod+Space`      |
+| **swaync**  | Notification daemon with slide-out control center. | `Mod+N`          |
+| **Alacritty** | GPU-accelerated terminal.                      | `Mod+Return`     |
+| **SDDM**    | Login greeter themed to match your desktop.       | —                |
+
+Plus: fastfetch system info, daily wallpaper rotation, Bluetooth and audio
+controls, clipboard history, and a first-run welcome wizard.
+
+## Theming
+
+Manatee is theme-native. Drop a wallpaper into `~/Pictures/wallpapers/` and
+`apply-theme` regenerates every color surface:
+
+```
+wallpaper → pywal → colors.json
+                        ├── Alacritty (terminal colors)
+                        ├── swaync (notification colors)
+                        ├── Wofi (launcher colors)
+                        ├── GTK3/4 (app colors)
+                        ├── Niri (focus rings)
+                        ├── SDDM (login screen)
+                        └── Quickshell (bar + popouts)
 ```
 
-## Stow workflow
+Use `Mod+Shift+W` to pick a new wallpaper and retheme instantly.
 
-Each top-level directory mirrors its install destination:
+## Contributing
 
-```
-quickshell/.config/quickshell/...  ->  ~/.config/quickshell/...
-scripts/.local/bin/...             ->  ~/.local/bin/...
-```
+Found a rough edge? Have an idea? Open an issue or PR. Manatee is a personal
+desktop that grew into something worth sharing — contributions that keep it
+gentle and glossy are welcome.
 
-Always dry-run before stowing:
+## Join the pod
 
-```sh
-stow -n -v <package>   # preview only
-stow -R <package>      # apply (idempotent re-stow)
-stow -D <package>      # unstow
-```
+- **Repo:** [github.com/Lunga93/manatee-desktop](https://github.com/Lunga93/manatee-desktop)
+- **Issues:** [open an issue](https://github.com/Lunga93/manatee-desktop/issues)
 
-## Packages
+---
 
-| Stow dir     | Target                          | Notes                                       |
-|--------------|---------------------------------|---------------------------------------------|
-| `niri`       | `~/.config/niri/`               | Compositor (KDL)                            |
-| `quickshell` | `~/.config/quickshell/`         | Bar + popouts (QML)                         |
-| `swaync`     | `~/.config/swaync/`             | Notifications                               |
-| `wofi`       | `~/.config/wofi/`               | Launcher                                    |
-| `alacritty`  | `~/.config/alacritty/`          | Terminal (TOML, generated)                  |
-| `gtk`        | `~/.config/gtk-{3,4}.0/`        | libadwaita palette                          |
-| `scripts`    | `~/.local/bin/`                 | `apply-theme`, `set-wallpaper`, menus       |
-| `systemd`    | `~/.config/systemd/user/`       | User services + timers                      |
-| `sddm/themes/quickshell-pywal/` | `/usr/share/sddm/themes/` | Greeter (installed by `install.sh`) |
-
-`ags/` is JS-based and being phased out in favour of Quickshell. `archive/`
-holds inactive packages and is excluded from `STOW_DIRS`.
-
-## Tests
-
-```sh
-sudo pacman -S shellcheck shfmt bats-core jq yq --noconfirm
-bats test/                              # all tests
-bats test/install.bats                  # one file
-shellcheck scripts/.local/bin/apply-theme
-shfmt -d -i 4 -ci scripts/.local/bin/apply-theme
-```
-
-## See also
-
-- [`AGENTS.md`](AGENTS.md) — architecture notes, build/test commands, code-style
-  rules for human and automated contributors.
-- [LICENSE](LICENSE) — MIT.
+<p align="center">
+  <sub>🐋 Manatee Desktop — gentle by nature, glossy by design.</sub>
+</p>
