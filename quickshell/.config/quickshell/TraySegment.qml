@@ -1,4 +1,6 @@
-// StatusNotifierItem tray. Empty when there are no items.
+// StatusNotifierItem tray. Shows running app indicators.
+// Left-click activates, right-click opens context menu with
+// activate() fallback when no menu is provided.
 
 import QtQuick
 import QtQuick.Layouts
@@ -26,11 +28,17 @@ Item {
                 Layout.preferredWidth: Theme.barHeight - 8
                 Layout.fillHeight: true
 
+                readonly property bool hasMenu: item.modelData && item.modelData.menu != null
+
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 4
                     radius: width / 2
-                    color: mouse.containsMouse ? Theme.surfaceHover : "transparent"
+                    color: {
+                        if (mouse.pressed) return Theme.surfacePressed;
+                        if (mouse.containsMouse) return Theme.surfaceHover;
+                        return "transparent";
+                    }
                     Behavior on color { ColorAnimation { duration: Theme.durationFast } }
                 }
 
@@ -38,8 +46,9 @@ Item {
                     anchors.centerIn: parent
                     width: Theme.barIconSize
                     height: Theme.barIconSize
-                    source: item.modelData ? item.modelData.icon : ""
+                    source: item.modelData ? item.modelData.icon || "" : ""
                     smooth: true
+                    asynchronous: true
                 }
 
                 MouseArea {
@@ -48,12 +57,19 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
+
                     onClicked: (e) => {
+                        if (!item.modelData) return;
+
                         if (e.button === Qt.RightButton) {
-                            const pos = item.mapToItem(null, 0, item.height);
-                            menuAnchor.anchor.rect.x = pos ? pos.x : 0;
-                            menuAnchor.anchor.rect.y = pos ? pos.y : 0;
-                            menuAnchor.open();
+                            if (item.hasMenu) {
+                                const pos = item.mapToItem(null, 0, item.height);
+                                menuAnchor.anchor.rect.x = pos ? pos.x : 0;
+                                menuAnchor.anchor.rect.y = pos ? pos.y : 0;
+                                menuAnchor.open();
+                            } else {
+                                item.modelData.activate();
+                            }
                         } else {
                             item.modelData.activate();
                         }
