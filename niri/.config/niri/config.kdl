@@ -223,8 +223,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#D15A22"
-            inactive-color "#D15A22"
+            active-color "#5A90C8"
+            inactive-color "#5A90C8"
         }
 
         shadow {
