@@ -32,6 +32,7 @@ OFFICIAL_PACKAGES=(
     "niri"
     "ntfs-3g"
     "otf-font-awesome"
+    "papirus-icon-theme"
     "pavucontrol"
     "pipewire"
     "playerctl"
