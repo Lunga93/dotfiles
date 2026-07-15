@@ -132,7 +132,7 @@ Item {
         anchors.top: gridHeader.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: contentHeight
+        height: root.rowCount * root.cellH + 16
         cellWidth: root.cellW
         cellHeight: root.cellH
         leftMargin: 12
