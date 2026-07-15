@@ -19,13 +19,15 @@ QtObject {
             "sources_enabled": {
                 "local": true,
                 "unsplash": true,
-                "reddit": true,
+                "wallhaven": true,
+                "pexels": true,
                 "bing": true,
                 "picsum": true
             },
-            "sources_order": ["local", "unsplash", "reddit", "bing", "picsum"],
-            "custom_subreddits": ["wallpapers", "earthporn", "minimalwallpaper"],
+            "sources_order": ["local", "unsplash", "wallhaven", "pexels", "bing", "picsum"],
             "unsplash_api_key": "",
+            "wallhaven_api_key": "",
+            "pexels_api_key": "",
             "recent": [],
             "favorites": [],
             "library_dir": "",
