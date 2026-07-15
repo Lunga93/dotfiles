@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "../../.." // qmldir types
@@ -16,11 +17,12 @@ Item {
     readonly property int cellH: 110
     readonly property var sourceWallpapers: {
         if (!root.moodFilter) return root.wallpapers;
-        return MoodCatalog.wallpapersForMood(root.moodFilter);
+        return MoodCatalog.wallpapersForMood(root.moodFilter) || [];
     }
     readonly property int rowCount: Math.max(1, Math.ceil(sourceWallpapers.length / Math.max(1, Math.floor((root.width - 24) / cellW))))
 
-    height: gridHeader.height + rowCount * cellH + 24
+    height: root.moodFilter !== "" ? (gridHeader.height + gridFlick.height + 8) : 0
+    clip: true
 
     Process {
         id: scanner
@@ -50,10 +52,6 @@ Item {
         return path.split("/").pop();
     }
 
-    function rescan(): void {
-        scanner.scan();
-    }
-
     Column {
         id: gridHeader
         width: parent.width
@@ -76,156 +74,115 @@ Item {
             }
 
             Text {
-                id: countText
                 anchors.left: parent.left
-                anchors.leftMargin: {
-                    const base = root.moodFilter ? root.moodFilter.length * 9 + 130 : 120;
-                    return Math.min(base, 250);
-                }
+                anchors.leftMargin: 160
                 anchors.verticalCenter: parent.verticalCenter
                 text: "(" + root.sourceWallpapers.length + ")"
                 color: "#5a5249"
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
             }
-
-            Row {
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
-
-                Repeater {
-                    model: ["Newest", "Random", "Most used"]
-                    delegate: Rectangle {
-                        required property string modelData
-
-                        height: 24
-                        width: sortText.width + 14
-                        radius: 12
-                        color: sortArea.containsMouse ? "#2c2519" : "transparent"
-
-                        Text {
-                            id: sortText
-                            anchors.centerIn: parent
-                            text: modelData
-                            color: "#a89e8e"
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                        }
-
-                        MouseArea {
-                            id: sortArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: { }
-                        }
-                    }
-                }
-            }
         }
     }
 
-    GridView {
-        id: gridView
+    Flickable {
+        id: gridFlick
         anchors.top: gridHeader.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: root.rowCount * root.cellH + 16
-        cellWidth: root.cellW
-        cellHeight: root.cellH
-        leftMargin: 12
-        rightMargin: 12
-        topMargin: 4
-        interactive: false
+        height: Math.min(root.rowCount * root.cellH + 16, 400)
+        contentWidth: parent.width
+        contentHeight: flow.implicitHeight + 16
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-        model: root.sourceWallpapers
+        Flow {
+            id: flow
+            anchors.left: parent.left
+            anchors.leftMargin: 12
+            anchors.right: parent.right
+            anchors.rightMargin: 12
+            spacing: 8
+            width: parent.width
 
-        delegate: Item {
-            required property string modelData
-            required property int index
+            Repeater {
+                model: root.sourceWallpapers
 
-            width: root.cellW
-            height: root.cellH
+                delegate: Item {
+                    required property string modelData
+                    required property int index
 
-            readonly property bool isCurrent: modelData === SettingsStore.currentWallpaper
-            readonly property bool isApplying: modelData === root.applyingPath
+                    width: 156
+                    height: 96
 
-            Rectangle {
-                id: card
-                anchors.centerIn: parent
-                width: 156
-                height: 96
-                radius: 10
-                color: "#0f0b07"
-                border.width: isCurrent ? 2 : 1
-                border.color: isCurrent
-                    ? Theme.accent
-                    : (thumbArea.containsMouse ? Theme.secondary : "#0e0a06")
-                clip: true
-                Behavior on border.color { ColorAnimation { duration: 160 } }
+                    readonly property bool isCurrent: modelData === SettingsStore.currentWallpaper
 
-                opacity: 0
-                transform: Translate { id: stageTranslate; y: 12 }
-                SequentialAnimation on opacity {
-                    running: true
-                    PauseAnimation { duration: index * 40 }
-                    NumberAnimation { to: 1.0; duration: 200; easing.type: Easing.OutCubic }
-                }
-                SequentialAnimation {
-                    running: true
-                    PauseAnimation { duration: index * 40 }
-                    NumberAnimation { target: stageTranslate; property: "y"; to: 0; duration: 200; easing.type: Easing.OutCubic }
-                }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 10
+                        color: "#0f0b07"
+                        border.width: isCurrent ? 2 : 1
+                        border.color: isCurrent
+                            ? Theme.accent
+                            : (thumbArea.containsMouse ? Theme.secondary : "#0e0a06")
+                        clip: true
+                        Behavior on border.color { ColorAnimation { duration: 160 } }
 
-                scale: thumbArea.pressed ? 0.94 : (thumbArea.containsMouse ? 1.04 : (isApplying ? 1.06 : 1.0))
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+                        opacity: 0
+                        SequentialAnimation on opacity {
+                            running: true
+                            PauseAnimation { duration: index * 30 }
+                            NumberAnimation { to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+                        }
 
-                Image {
-                    anchors.fill: parent
-                    source: "file://" + modelData
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: true
-                    sourceSize.width: 312
-                    sourceSize.height: 192
-                    smooth: true
-                }
+                        scale: thumbArea.pressed ? 0.94 : (thumbArea.containsMouse ? 1.04 : 1.0)
+                        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
 
-                Rectangle {
-                    anchors.top: parent.top; anchors.left: parent.left; anchors.margins: 6
-                    width: 8; height: 8; radius: 4
-                    color: Theme.accent
-                    visible: isCurrent
-                }
+                        Image {
+                            anchors.fill: parent
+                            source: "file://" + modelData
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            sourceSize.width: 312
+                            sourceSize.height: 192
+                            smooth: true
+                        }
 
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    height: 22
-                    color: Qt.rgba(0, 0, 0, 0.6)
-                    visible: thumbArea.containsMouse
+                        Rectangle {
+                            anchors.top: parent.top; anchors.left: parent.left; anchors.margins: 6
+                            width: 8; height: 8; radius: 4
+                            color: Theme.accent
+                            visible: isCurrent
+                        }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.basename(modelData)
-                        color: "#f5ede0"
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 10
-                        elide: Text.ElideMiddle
-                        width: parent.width - 12
-                        horizontalAlignment: Text.AlignHCenter
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 22
+                            color: Qt.rgba(0, 0, 0, 0.6)
+                            visible: thumbArea.containsMouse
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.basename(modelData)
+                                color: "#f5ede0"
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 10
+                                elide: Text.ElideMiddle
+                                width: parent.width - 12
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+
+                        MouseArea {
+                            id: thumbArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.wallpaperSelected(modelData)
+                        }
                     }
-                }
-
-                MouseArea {
-                    id: thumbArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.wallpaperSelected(modelData)
                 }
             }
         }
