@@ -1,10 +1,10 @@
 # SDDM
 
-Quickshell-based SDDM login greeter.
+Manatee SDDM login greeter.
 
 ## Location
 
-`sddm/themes/quickshell-pywal/` → `/usr/share/sddm/themes/quickshell-pywal/`
+`sddm/themes/manatee/` → `/usr/share/sddm/themes/manatee/`
 
 Installed by `install.sh` (not stowable — system path requires sudo).
 
@@ -19,7 +19,7 @@ Installed by `install.sh` (not stowable — system path requires sudo).
 ## Integration Points
 
 - **apply-theme** — pushes colors and wallpaper to `/var/lib/sddm-theme/` (user-writable)
-- **SDDM** — reads theme files from `/usr/share/sddm/themes/quickshell-pywal/`
+- **SDDM** — reads theme files from `/usr/share/sddm/themes/manatee/`
 - **sddm-greeter-debug** — script to test the greeter in a window without logging out
 
 ## Conventions
