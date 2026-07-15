@@ -12,7 +12,15 @@ Item {
 
     signal wallpaperSelected(string path)
 
-    height: gridHeader.height + gridView.contentHeight + 16
+    readonly property int cellW: 168
+    readonly property int cellH: 110
+    readonly property var sourceWallpapers: {
+        if (!root.moodFilter) return root.wallpapers;
+        return MoodCatalog.wallpapersForMood(root.moodFilter);
+    }
+    readonly property int rowCount: Math.max(1, Math.ceil(sourceWallpapers.length / Math.max(1, Math.floor((root.width - 24) / cellW))))
+
+    height: gridHeader.height + rowCount * cellH + 24
 
     Process {
         id: scanner
@@ -36,11 +44,6 @@ Item {
                 }
             }
         }
-    }
-
-    readonly property var sourceWallpapers: {
-        if (!root.moodFilter) return root.wallpapers;
-        return MoodCatalog.wallpapersForMood(root.moodFilter);
     }
 
     function basename(path: string): string {
@@ -130,8 +133,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         height: contentHeight
-        cellWidth: 168
-        cellHeight: 110
+        cellWidth: root.cellW
+        cellHeight: root.cellH
         leftMargin: 12
         rightMargin: 12
         topMargin: 4
@@ -143,8 +146,8 @@ Item {
             required property string modelData
             required property int index
 
-            width: gridView.cellWidth
-            height: gridView.cellHeight
+            width: root.cellW
+            height: root.cellH
 
             readonly property bool isCurrent: modelData === SettingsStore.currentWallpaper
             readonly property bool isApplying: modelData === root.applyingPath
