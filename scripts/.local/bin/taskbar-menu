@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ID="${APP_ID:-}"
+APP_TITLE="${APP_TITLE:-}"
+WOFI="$(command -v wofi || true)"
+
+die() { echo "$1" >&2; exit 0; }
+[ -z "$WOFI" ] && die "wofi not found"
+[ -z "$APP_ID" ] && die "no appId"
+
+lower_id="${APP_ID,,}"
+
+# ── Spotify ──────────────────────────────────────────────────────────────────
+if [[ "$lower_id" == *spotify* ]]; then
+    choice=$(printf '%s\n' \
+        "󰐊  Play / Pause" \
+        "󰒭  Next Track" \
+        "󰒮  Previous Track" \
+        "󰓇  Open Spotify" \
+        | "$WOFI" --dmenu --prompt "Spotify" 2>/dev/null || true)
+
+    case "${choice%%  *}" in
+        "󰐊") playerctl play-pause 2>/dev/null || true ;;
+        "󰒭") playerctl next 2>/dev/null || true ;;
+        "󰒮") playerctl previous 2>/dev/null || true ;;
+        "󰓇") niri msg action focus-window 2>/dev/null || true ;;
+    esac
+    exit 0
+fi
+
+# ── Steam ────────────────────────────────────────────────────────────────────
+if [[ "$lower_id" == *steam* ]]; then
+    choice=$(printf '%s\n' \
+        "󰓓  Open Steam" \
+        "󰙯  Friends List" \
+        "󰊴  Store" \
+        "󰎁  Library" \
+        | "$WOFI" --dmenu --prompt "Steam" 2>/dev/null || true)
+
+    case "${choice%%  *}" in
+        "󰓓")
+            niri msg action focus-window 2>/dev/null || true ;;
+        "󰙯")
+            setsid -f steam steam://open/friends 2>/dev/null || true ;;
+        "󰊴")
+            setsid -f steam steam://store 2>/dev/null || true ;;
+        "󰎁")
+            setsid -f steam steam://open/games 2>/dev/null || true ;;
+    esac
+    exit 0
+fi
+
+# ── Generic: just focus the window ──────────────────────────────────────────
+niri msg action focus-window 2>/dev/null || true

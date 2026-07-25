@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# network-scan
+# One-shot scan of available wifi networks. Emits JSON.
+
+NMCLI="$(command -v nmcli || true)"
+
+if [ -z "$NMCLI" ]; then
+    echo '{"error":"nmcli not found","networks":[]}'
+    exit 1
+fi
+
+# Request a fresh scan
+"$NMCLI" device wifi list --rescan yes >/dev/null 2>&1 || true
+
+# Parse list — deduplicate by SSID, keep strongest signal
+networks=$(
+    "$NMCLI" -t -f SSID,SIGNAL,SECURITY device wifi list 2>/dev/null \
+    | awk -F: '{
+        ssid=$1; signal=$2; sec=$3
+        if (ssid == "" || ssid == "--") next
+        if (ssid in max) {
+            if (signal > max[ssid]) {
+                max[ssid]=signal; secs[ssid]=sec
+            }
+        } else {
+            max[ssid]=signal; secs[ssid]=sec; keys[++k]=ssid
+        }
+    } END {
+        for (i=1; i<=k; i++) {
+            s=keys[i]; sig=max[s];             bars=int(sig/25)+1
+            if (sig <= 0) bars=0
+            if (bars>4) bars=4
+            sec=secs[s]
+            is_sec="false"
+            if (sec != "" && sec != "--") is_sec="true"
+            printf "%s{\"ssid\":\"%s\",\"signal\":%d,\"bars\":%d,\"secured\":%s}", (i==1?"":","), s, sig, bars, is_sec
+        }
+    }'
+)
+[ -z "$networks" ] && networks=""
+
+echo "{\"networks\":[$networks]}"

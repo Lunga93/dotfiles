@@ -9,24 +9,24 @@ QtObject {
         {
             section: "Personalization",
             items: [
-                { id: "wallpaper",  label: "Wallpaper",  icon: "image",  ship: 1 },
-                { id: "appearance", label: "Appearance", icon: "palette", ship: 2 },
-                { id: "icons",      label: "Icons",      icon: "shapes",  ship: 2 },
+                { id: "wallpaper",  label: "Wallpaper",  icon: "image" },
+                { id: "appearance", label: "Appearance", icon: "palette" },
+                { id: "icons",      label: "Icons",      icon: "shapes" },
             ]
         },
         {
             section: "System",
             items: [
-                { id: "display",    label: "Display",    icon: "monitor",      ship: 3 },
-                { id: "keybindings",label: "Keybindings",icon: "keyboard",     ship: 3 },
-                { id: "network",    label: "Network",    icon: "wifi-high",    ship: 4 },
-                { id: "sound",      label: "Sound",      icon: "speaker-high", ship: 4 },
+                { id: "display",    label: "Display",    icon: "monitor" },
+                { id: "keybindings",label: "Keybindings",icon: "keyboard" },
+                { id: "network",    label: "Network",    icon: "wifi-high" },
+                { id: "sound",      label: "Sound",      icon: "speaker-high" },
             ]
         },
         {
             section: "About",
             items: [
-                { id: "system-info", label: "System Info", icon: "info", ship: 4 },
+                { id: "system-info", label: "System Info", icon: "info" },
             ]
         }
     ]

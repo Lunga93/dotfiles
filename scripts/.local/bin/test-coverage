@@ -1,0 +1,524 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+TEST_DIR="$REPO_ROOT/test"
+BASELINE_FILE="$TEST_DIR/.coverage-baseline.json"
+OUT_DIR="${TMPDIR:-/tmp}/coverage"
+
+BASH_ONLY=0
+JSON_OUT=0
+CHECK_MODE=0
+THRESHOLD=0
+UPDATE_BASELINE=0
+COLOR=1
+
+usage() {
+    cat <<'EOF'
+test-coverage — run bats tests with kcov coverage tracking.
+
+Usage:
+  test-coverage [options] [-- <bats-args>]
+
+Options:
+  --json            Output coverage as JSON to stdout.
+  --check           Compare against baseline; exit 1 on regression.
+  --update-baseline Save current coverage as the new baseline.
+  --threshold N     Exit 1 if coverage < N% (implies --check).
+  --bash-only       Skip Python coverage (kcov only).
+  --no-color        Disable color output.
+  -h, --help        Show this help.
+EOF
+    exit 0
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --json)           JSON_OUT=1 ;;
+        --check)          CHECK_MODE=1 ;;
+        --update-baseline) UPDATE_BASELINE=1 ;;
+        --threshold)      THRESHOLD="$2"; shift ;;
+        --threshold=*)    THRESHOLD="${1#--threshold=}" ;;
+        --bash-only)      BASH_ONLY=1 ;;
+        --no-color)       COLOR=0 ;;
+        -h|--help)        usage ;;
+        --) shift; break ;;
+        *) break ;;
+    esac
+    shift
+done
+
+BATS_ARGS=("$@")
+
+# ── Color helpers ───────────────────────────────────────────────────────────
+c() {
+    [ "$COLOR" -eq 1 ] || { printf '%s' "$2"; return; }
+    printf '\033[%sm%s\033[0m' "$1" "$2"
+}
+red()    { c 31 "$1"; }
+green()  { c 32 "$1"; }
+yellow() { c 33 "$1"; }
+bold()   { c 1  "$1"; }
+
+# ── Detect available tools ──────────────────────────────────────────────────
+KCOV=$(command -v kcov || true)
+BATS=$(command -v bats || true)
+PYTHON=$(command -v python3 || true)
+COVERAGE_PY=$(command -v coverage || true)
+
+die() { printf '%s\n' "$1" >&2; exit "${2:-1}"; }
+
+# ── Run bash tests (kcov) ──────────────────────────────────────────────────
+run_bash_coverage() {
+    if [ -z "$KCOV" ] || [ -z "$BATS" ]; then
+        if [ "$JSON_OUT" -eq 1 ]; then
+            printf '{"error":"kcov or bats not installed","files":[]}\n'
+            exit 0
+        fi
+        "$BATS" "$TEST_DIR" "${BATS_ARGS[@]:-}"
+        return $?
+    fi
+
+    rm -rf "$OUT_DIR" 2>/dev/null || true
+    mkdir -p "$OUT_DIR"
+
+    echo "Collecting bash coverage..." >&2
+    "$KCOV" --bash-dont-parse-binary-dir "$OUT_DIR" "$BATS" "$TEST_DIR" "${BATS_ARGS[@]:-}" >&2
+
+    # Find the generated coverage.json (inside a bats.* subdir)
+    COV_JSON=$(find "$OUT_DIR" -name coverage.json -not -name codecov.json | head -1)
+    [ -n "$COV_JSON" ] || die "kcov did not produce coverage.json" 1
+    echo "$COV_JSON"
+}
+
+# ── Run Python coverage ─────────────────────────────────────────────────────
+run_python_coverage() {
+    if [ -z "$COVERAGE_PY" ] || [ -z "$PYTHON" ]; then
+        return 0
+    fi
+    local py_test_dir="$TEST_DIR"
+    local have_py_tests=0
+    shopt -s nullglob
+    for f in "$py_test_dir"/*.py; do
+        [ -f "$f" ] && have_py_tests=1 && break
+    done
+    shopt -u nullglob
+    local py_bats
+    py_bats=$(grep -l 'coverage run' "$py_test_dir"/*.bats 2>/dev/null || true)
+    if [ "$have_py_tests" -eq 0 ] && [ -z "$py_bats" ]; then
+        return 0
+    fi
+    echo "Collecting Python coverage..." >&2
+    pushd "$REPO_ROOT" >/dev/null
+    "$COVERAGE_PY" run --branch -m pytest "$py_test_dir" --tb=short -q 2>&1 >&2 || true
+    "$COVERAGE_PY" report -m --skip-covered --include='scripts/*' 2>&1 >&2 || true
+    popd >/dev/null
+}
+
+# ── Aggregate bash coverage from kcov JSON ──────────────────────────────────
+aggregate_coverage() {
+    local cov_json="$1"
+    "$PYTHON" << 'PYEOF'
+import json, sys, os, re
+from collections import defaultdict
+
+cov_file = sys.argv[1]
+with open(cov_file) as f:
+    data = json.load(f)
+
+sandbox_re = re.compile(r'/tmp/tmp\.[^/]+/repo/')
+orig_prefix = os.environ.get('REPO_ROOT', '') + '/scripts/.local/bin/'
+
+# Try to find REPO_ROOT from env or derive from this script's location
+if not os.environ.get('REPO_ROOT'):
+    orig_prefix = ''
+
+scripts = defaultdict(lambda: {"total_lines": 0, "covered_lines": 0, "file": ""})
+
+for f in data.get('files', []):
+    filepath = f['file']
+    lines = f.get('total_lines') or int(f.get('nbrLines', 0))
+    cov = f.get('covered_lines') or int(f.get('nbrCoveredLines', 0))
+    if isinstance(lines, str): lines = int(lines)
+    if isinstance(cov, str): cov = int(cov)
+    if lines == 0:
+        continue
+
+    # 1. Sandbox copy: /tmp/tmp.XXXX/repo/scripts/.local/bin/NAME
+    m = sandbox_re.search(filepath)
+    if m:
+        rest = filepath[m.end():]
+        # Only care about scripts
+        if not rest.startswith('scripts/.local/bin/'):
+            continue
+        script = rest[len('scripts/.local/bin/'):]
+        if cov > scripts[script]['covered_lines']:
+            scripts[script]['covered_lines'] = cov
+            scripts[script]['total_lines'] = lines
+            scripts[script]['file'] = rest
+        continue
+
+    # 2. Direct path to a script under the repo
+    if '/scripts/.local/bin/' in filepath:
+        script = filepath.split('/scripts/.local/bin/')[-1]
+        if cov > scripts[script]['covered_lines']:
+            scripts[script]['covered_lines'] = cov
+            scripts[script]['total_lines'] = lines
+            scripts[script]['file'] = filepath
+        continue
+
+    # 3. install.sh directly
+    if filepath.endswith('/install.sh') and '/dotfiles/install.sh' in filepath:
+        if cov > scripts['install.sh']['covered_lines']:
+            scripts['install.sh']['covered_lines'] = cov
+            scripts['install.sh']['total_lines'] = lines
+            scripts['install.sh']['file'] = filepath
+
+    # 4. test helpers
+    if '/test/helpers.bash' in filepath:
+        if cov > scripts['test/helpers.bash']['covered_lines']:
+            scripts['test/helpers.bash']['covered_lines'] = cov
+            scripts['test/helpers.bash']['total_lines'] = lines
+            scripts['test/helpers.bash']['file'] = filepath
+
+# Build output
+total = 0
+total_covered = 0
+rows = []
+for script in sorted(scripts.keys()):
+    info = scripts[script]
+    total += info['total_lines']
+    total_covered += info['covered_lines']
+    pct = info['covered_lines'] / max(info['total_lines'], 1) * 100
+    rows.append({
+        'script': script,
+        'covered_lines': info['covered_lines'],
+        'total_lines': info['total_lines'],
+        'percent': round(pct, 1),
+        'file': info['file']
+    })
+
+overall = round(total_covered / max(total, 1) * 100, 1)
+
+result = {
+    'overall_percent': overall,
+    'total_lines': total,
+    'covered_lines': total_covered,
+    'files': rows
+}
+output = sys.argv[2] if len(sys.argv) > 2 else ''
+if output == '--json':
+    print(json.dumps(result, indent=2))
+else:
+    print(f"OVERALL={overall}")
+    print(f"TOTAL_LINES={total}")
+    print(f"COVERED_LINES={total_covered}")
+    for r in rows:
+        print(f"FILE|{r['script']}|{r['percent']}|{r['covered_lines']}|{r['total_lines']}|{r['file']}")
+PYEOF
+}
+
+# ── Main ────────────────────────────────────────────────────────────────────
+
+if [ -z "$BATS" ]; then
+    die "bats is not installed. Install with: sudo pacman -S bats-core" 2
+fi
+
+COV_JSON=$(run_bash_coverage)
+
+if [ "$JSON_OUT" -eq 1 ]; then
+    REPO_ROOT="$REPO_ROOT" "$PYTHON" - "$COV_JSON" --json << 'PYEOF'
+import json, sys, os, re
+from collections import defaultdict
+
+cov_file = sys.argv[1]
+repo_root = os.environ['REPO_ROOT']
+with open(cov_file) as f:
+    data = json.load(f)
+
+sandbox_re = re.compile(r'/tmp/tmp\.[^/]+/repo/')
+scripts = defaultdict(lambda: {"total_lines": 0, "covered_lines": 0})
+
+for f in data.get('files', []):
+    filepath = f['file']
+    lines = f.get('total_lines') or int(f.get('nbrLines', 0))
+    cov = f.get('covered_lines') or int(f.get('nbrCoveredLines', 0))
+    if isinstance(lines, str): lines = int(lines)
+    if isinstance(cov, str): cov = int(cov)
+    if lines == 0:
+        continue
+
+    script = None
+    m = sandbox_re.search(filepath)
+    if m:
+        rest = filepath[m.end():]
+        if rest.startswith('scripts/.local/bin/'):
+            script = rest[len('scripts/.local/bin/'):]
+    elif '/scripts/.local/bin/' in filepath:
+        script = filepath.split('/scripts/.local/bin/')[-1]
+    elif filepath.endswith('/install.sh') and '/dotfiles/install.sh' in filepath:
+        script = 'install.sh'
+    elif '/test/helpers.bash' in filepath:
+        script = 'test/helpers.bash'
+
+    if script and cov > scripts[script]['covered_lines']:
+        scripts[script] = {'covered_lines': cov, 'total_lines': lines}
+
+total = sum(s['total_lines'] for s in scripts.values())
+covered = sum(s['covered_lines'] for s in scripts.values())
+pct = round(covered / max(total, 1) * 100, 1)
+files = [{
+    'script': name,
+    'percent': round(s['covered_lines'] / max(s['total_lines'], 1) * 100, 1),
+    'covered_lines': s['covered_lines'],
+    'total_lines': s['total_lines']
+} for name, s in sorted(scripts.items())]
+
+print(json.dumps({'overall_percent': pct, 'total_lines': total, 'covered_lines': covered, 'files': files}, indent=2))
+PYEOF
+    exit $?
+fi
+
+# Parse the aggregated output
+COV_DATA=$("$PYTHON" - "$COV_JSON" << 'PYEOF'
+import json, sys, os, re
+from collections import defaultdict
+
+cov_file = sys.argv[1]
+repo_root = os.environ.get('REPO_ROOT', '')
+with open(cov_file) as f:
+    data = json.load(f)
+
+sandbox_re = re.compile(r'/tmp/tmp\.[^/]+/repo/')
+scripts = defaultdict(lambda: {"total_lines": 0, "covered_lines": 0})
+
+for f in data.get('files', []):
+    filepath = f['file']
+    lines = f.get('total_lines') or int(f.get('nbrLines', 0))
+    cov = f.get('covered_lines') or int(f.get('nbrCoveredLines', 0))
+    if isinstance(lines, str): lines = int(lines)
+    if isinstance(cov, str): cov = int(cov)
+    if lines == 0:
+        continue
+
+    script = None
+    m = sandbox_re.search(filepath)
+    if m:
+        rest = filepath[m.end():]
+        if rest.startswith('scripts/.local/bin/'):
+            script = rest[len('scripts/.local/bin/'):]
+    elif '/scripts/.local/bin/' in filepath:
+        script = filepath.split('/scripts/.local/bin/')[-1]
+    elif filepath.endswith('/install.sh') and '/dotfiles/install.sh' in filepath:
+        script = 'install.sh'
+    elif '/test/helpers.bash' in filepath:
+        script = 'test/helpers.bash'
+
+    if script and cov > scripts[script]['covered_lines']:
+        scripts[script] = {'covered_lines': cov, 'total_lines': lines}
+
+total = sum(s['total_lines'] for s in scripts.values())
+covered = sum(s['covered_lines'] for s in scripts.values())
+pct = round(covered / max(total, 1) * 100, 1)
+
+print(f"OVERALL={pct}")
+print(f"TOTAL_LINES={total}")
+print(f"COVERED_LINES={covered}")
+for name, s in sorted(scripts.items()):
+    fpct = round(s['covered_lines'] / max(s['total_lines'], 1) * 100, 1)
+    print(f"FILE|{name}|{fpct}|{s['covered_lines']}|{s['total_lines']}")
+PYEOF
+)
+
+# Parse COV_DATA
+OVERALL_PCT=""
+declare -A FILE_PCT FILE_COV FILE_LINES
+while IFS= read -r line; do
+    case "$line" in
+        OVERALL=*) OVERALL_PCT="${line#OVERALL=}" ;;
+        FILE\|*)
+            IFS='|' read -r _ script pct cov lines <<< "$line"
+            FILE_PCT["$script"]="$pct"
+            FILE_COV["$script"]="$cov"
+            FILE_LINES["$script"]="$lines"
+            ;;
+    esac
+done <<< "$COV_DATA"
+
+# ── Print report ────────────────────────────────────────────────────────────
+echo ""
+echo "$(bold "Code Coverage Report")"
+echo "============================================================"
+echo ""
+
+for script in $(printf '%s\n' "${!FILE_PCT[@]}" | sort); do
+    pct="${FILE_PCT[$script]}"
+    cov="${FILE_COV[$script]}"
+    lines="${FILE_LINES[$script]}"
+
+    ipct=${pct%.*}
+    if [ "$ipct" -ge 80 ]; then
+        color_fn=green
+    elif [ "$ipct" -ge 50 ]; then
+        color_fn=yellow
+    else
+        color_fn=red
+    fi
+
+    bar=""
+    for ((i=0; i<10; i++)); do
+        [ "$i" -lt $((ipct / 10)) ] && bar+="█" || bar+="░"
+    done
+    printf "  %s  %s  (%s/%s)  %s\n" \
+        "$bar" \
+        "$("$color_fn" "$(printf '%5.1f%%' "$pct")")" \
+        "$cov" "$lines" \
+        "$script"
+done
+
+echo ""
+TOTAL="$(echo "$COV_DATA" | grep '^TOTAL_LINES=' | cut -d= -f2)"
+COVERED="$(echo "$COV_DATA" | grep '^COVERED_LINES=' | cut -d= -f2)"
+printf "Overall: %s  (%s/%s lines)\n" \
+    "$(bold "$(printf '%.1f%%' "$OVERALL_PCT")")" \
+    "$COVERED" "$TOTAL"
+
+# ── Python coverage (if coverage.py is installed and data exists) ───────────
+PY_COV=0
+if [ "$BASH_ONLY" -eq 0 ] && command -v coverage >/dev/null 2>&1; then
+    if [ -f "$REPO_ROOT/.coverage" ]; then
+        echo ""
+        echo "$(bold "Python Coverage (coverage.py)")"
+        PY_COV=1
+        coverage report -m --include='scripts/*' --skip-covered 2>&1 || true
+    fi
+fi
+
+# ── Check / threshold ───────────────────────────────────────────────────────
+if [ "$CHECK_MODE" -eq 1 ] || [ "$THRESHOLD" -gt 0 ]; then
+    echo ""
+    REGRESSIONS=0
+    if [ -f "$BASELINE_FILE" ] && [ -n "$PYTHON" ]; then
+        "$PYTHON" - "$BASELINE_FILE" "$COV_JSON" "$REPO_ROOT" << 'PYEOF'
+import json, sys, os, re
+
+baseline_file = sys.argv[1]
+cov_file = sys.argv[2]
+
+with open(baseline_file) as f:
+    baseline = json.load(f)
+
+# Recompute current
+with open(cov_file) as f:
+    data = json.load(f)
+
+sandbox_re = re.compile(r'/tmp/tmp\.[^/]+/repo/')
+scripts = {}
+for f in data.get('files', []):
+    filepath = f['file']
+    lines = f.get('total_lines') or int(f.get('nbrLines', 0))
+    cov = f.get('covered_lines') or int(f.get('nbrCoveredLines', 0))
+    if isinstance(lines, str): lines = int(lines)
+    if isinstance(cov, str): cov = int(cov)
+    if lines == 0:
+        continue
+
+    script = None
+    m = sandbox_re.search(filepath)
+    if m:
+        rest = filepath[m.end():]
+        if rest.startswith('scripts/.local/bin/'):
+            script = rest[len('scripts/.local/bin/'):]
+    elif '/scripts/.local/bin/' in filepath:
+        script = filepath.split('/scripts/.local/bin/')[-1]
+    elif filepath.endswith('/install.sh') and '/dotfiles/install.sh' in filepath:
+        script = 'install.sh'
+
+    if script and (script not in scripts or cov > scripts[script]['covered']):
+        scripts[script] = {'covered': cov, 'total': lines}
+
+baseline_map = {f['script']: f for f in baseline.get('files', [])}
+regressions = 0
+for script, info in sorted(scripts.items()):
+    cur_pct = round(info['covered'] / max(info['total'], 1) * 100, 1)
+    if script in baseline_map:
+        base = baseline_map[script]
+        base_pct = float(base.get('percent', 0))
+        delta = cur_pct - base_pct
+        if delta < -2:
+            print(f"  REGRESSION: {script} dropped from {base_pct}% to {cur_pct}% ({delta:+.1f}%)")
+            regressions += 1
+    # else: new file, no baseline
+
+if regressions > 0:
+    sys.exit(1)
+PYEOF
+        REGRESSIONS=$?
+    fi
+
+    if [ "$THRESHOLD" -gt 0 ]; then
+        if [ "${OVERALL_PCT%.*}" -lt "$THRESHOLD" ]; then
+            echo "  $(red "THRESHOLD FAIL") Coverage ${OVERALL_PCT}% is below threshold ${THRESHOLD}%"
+            REGRESSIONS=1
+        fi
+    fi
+
+    if [ "$REGRESSIONS" -ne 0 ]; then
+        exit 1
+    fi
+fi
+
+# ── Update baseline ─────────────────────────────────────────────────────────
+if [ "$UPDATE_BASELINE" -eq 1 ]; then
+    mkdir -p "$(dirname "$BASELINE_FILE")"
+    REPO_ROOT="$REPO_ROOT" "$PYTHON" - "$COV_JSON" "$BASELINE_FILE" << 'PYEOF'
+import json, sys, os, re
+from collections import defaultdict
+
+cov_file = sys.argv[1]
+baseline_path = sys.argv[2]
+with open(cov_file) as f:
+    data = json.load(f)
+
+sandbox_re = re.compile(r'/tmp/tmp\.[^/]+/repo/')
+scripts = defaultdict(lambda: {"total_lines": 0, "covered_lines": 0})
+
+for f in data.get('files', []):
+    filepath = f['file']
+    lines = f.get('total_lines') or int(f.get('nbrLines', 0))
+    cov = f.get('covered_lines') or int(f.get('nbrCoveredLines', 0))
+    if isinstance(lines, str): lines = int(lines)
+    if isinstance(cov, str): cov = int(cov)
+    if lines == 0:
+        continue
+
+    script = None
+    m = sandbox_re.search(filepath)
+    if m:
+        rest = filepath[m.end():]
+        if rest.startswith('scripts/.local/bin/'):
+            script = rest[len('scripts/.local/bin/'):]
+    elif '/scripts/.local/bin/' in filepath:
+        script = filepath.split('/scripts/.local/bin/')[-1]
+    elif filepath.endswith('/install.sh') and '/dotfiles/install.sh' in filepath:
+        script = 'install.sh'
+
+    if script and cov > scripts[script]['covered_lines']:
+        scripts[script] = {'covered_lines': cov, 'total_lines': lines}
+
+total = sum(s['total_lines'] for s in scripts.values())
+covered = sum(s['covered_lines'] for s in scripts.values())
+pct = round(covered / max(total, 1) * 100, 1)
+files = [{
+    'script': name,
+    'percent': round(s['covered_lines'] / max(s['total_lines'], 1) * 100, 1),
+    'covered_lines': s['covered_lines'],
+    'total_lines': s['total_lines']
+} for name, s in sorted(scripts.items())]
+
+with open(baseline_path, 'w') as f:
+    json.dump({'overall_percent': pct, 'total_lines': total, 'covered_lines': covered, 'files': files}, f, indent=2)
+print(f"Baseline saved to {baseline_path}")
+PYEOF
+    echo "Baseline updated."
+fi

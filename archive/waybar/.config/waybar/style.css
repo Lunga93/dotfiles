@@ -1,7 +1,7 @@
 @import "colors-wal.css";
 
 * {
-    font-family: "Fira Sans Semibold", "Symbols Nerd Font", "MesloLGS Nerd Font", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Inter", "Symbols Nerd Font", "MesloLGS Nerd Font", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
     color: #e0e0e0;
 }

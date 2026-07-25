@@ -7,8 +7,8 @@ QtObject {
     readonly property string tagline:  "A gentle, glossy Wayland desktop for Arch."
     readonly property string summary:  "Built on Niri and Quickshell, themed by your wallpaper."
 
-    readonly property string repoUrl:  "https://github.com/Lunga93/dotfiles"
-    readonly property string docsUrl:  "https://github.com/Lunga93/dotfiles/blob/main/README.md"
+    readonly property string repoUrl:  "https://github.com/Lunga93/manatee-desktop"
+    readonly property string docsUrl:  "https://github.com/Lunga93/manatee-desktop/blob/main/README.md"
 
     readonly property var components: [
         {

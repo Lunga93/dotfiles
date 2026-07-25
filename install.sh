@@ -18,6 +18,8 @@ OFFICIAL_PACKAGES=(
     "alacritty"
     "base-devel"
     "bats-core"
+    "kcov"
+    "python-coverage"
     "bluez"
     "bluez-utils"
     "chafa"
@@ -28,13 +30,16 @@ OFFICIAL_PACKAGES=(
     "gnome-calendar"
     "jq"
     "nautilus"
+    "networkmanager"
     "niri"
     "ntfs-3g"
     "otf-font-awesome"
+    "papirus-icon-theme"
     "pavucontrol"
     "pipewire"
     "playerctl"
     "polkit-kde-agent"
+    "python"
     "python-pillow"
     "python-pywal"
     "qt6-declarative"
@@ -49,15 +54,17 @@ OFFICIAL_PACKAGES=(
     "ttf-fira-sans"
     "ttf-roboto"
     "wl-clipboard"
+    "wlsunset"
     "wofi"
     "wireplumber"
+    "opencode"
 )
 
 AUR_PACKAGES=(
     "aylurs-gtk-shell"
     "overskride"
     "swaylock-effects-git"
-    "swww"
+    "awww"
     "ttf-phosphor-icons"
     "xwayland-satellite"
     "zen-browser-bin"
@@ -75,6 +82,7 @@ STOW_DIRS=(
     "welcome"
     "systemd"
     "wofi"
+    "opencode"
 )
 
 usage() {
@@ -121,7 +129,7 @@ check_arch() {
 update_system() {
     if $DO_UPDATE; then
         info "Updating system (--update) ..."
-        sudo_run pacman -Syu --noconfirm
+        sudo_run pacman -Syu
         ok "System updated"
     else
         info "Skipping system update (pass --update to run pacman -Syu)"
@@ -129,8 +137,23 @@ update_system() {
 }
 
 install_official() {
+    info "Checking for AUR-provided packages ..."
+    local filtered=()
+    for pkg in "${OFFICIAL_PACKAGES[@]}"; do
+        local skip=false
+        for aur in "${AUR_PACKAGES[@]}"; do
+            if pacman -Q "$aur" &>/dev/null 2>&1; then
+                if pacman -Qi "$aur" 2>/dev/null | grep -qE "^Provides[[:space:]]*:.*\b$pkg\b"; then
+                    warn "$aur provides $pkg — skipping official $pkg"
+                    skip=true
+                    break
+                fi
+            fi
+        done
+        $skip || filtered+=("$pkg")
+    done
     info "Installing official packages ..."
-    sudo_run pacman -S --needed --noconfirm "${OFFICIAL_PACKAGES[@]}"
+    sudo_run pacman -S --needed --overwrite '*' "${filtered[@]}"
     ok "Official packages installed"
 }
 
@@ -148,14 +171,15 @@ ensure_aur_helper() {
 
 install_aur() {
     info "Installing AUR packages ..."
-    run yay -S --needed --noconfirm "${AUR_PACKAGES[@]}"
+    run yay -S --needed "${AUR_PACKAGES[@]}"
     ok "AUR packages installed"
 }
 
 evict_mako() {
     if pacman -Q mako &>/dev/null 2>&1; then
         info "Removing mako (conflicts with swaync for notifications) ..."
-        sudo_run pacman -Rns --noconfirm mako || true
+        sudo_run pacman -Rns --noconfirm mako 2>/dev/null || \
+            warn "Could not remove mako (required by other packages)"
     fi
     run rm -rf "$HOME/.config/mako"
 }
@@ -179,7 +203,7 @@ stow_all() {
 }
 
 install_sddm() {
-    local name="quickshell-pywal"
+    local name="manatee"
     local src="$SCRIPT_DIR/sddm/themes/$name"
     local dst="/usr/share/sddm/themes/$name"
     local rundir="/var/lib/sddm-theme"
@@ -291,7 +315,12 @@ main() {
         esac
     done
 
-    echo -e "${BLUE}== lunga's dotfiles installer ==${NC}"
+    local logo="$SCRIPT_DIR/brand/logo.svg"
+    if command -v chafa &>/dev/null && [[ -f "$logo" ]]; then
+        chafa --size 40x20 "$logo" || true
+    fi
+    echo -e "${BLUE}Manatee Desktop installer${NC}"
+    echo -e "${BLUE}A gentle, glossy Wayland desktop for Arch.${NC}"
     echo
 
     check_arch
@@ -312,8 +341,13 @@ main() {
     fi
 
     echo
-    echo -e "${GREEN}== Installation complete ==${NC}"
-    echo -e "${BLUE}Log out and back in (or start niri) to see changes.${NC}"
+    echo -e "${GREEN}Manatee welcomes you.${NC}"
+    echo -e "${BLUE}Log out and back in (or start niri) to join the pod.${NC}"
+
+    local marker_dir="$HOME/.config/manatee"
+    run mkdir -p "$marker_dir"
+    run touch "$marker_dir/desktop-marker"
+    ok "Manatee desktop marker set"
 }
 
 main "$@"

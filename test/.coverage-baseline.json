@@ -1,0 +1,37 @@
+{
+  "overall_percent": 48.9,
+  "total_lines": 630,
+  "covered_lines": 308,
+  "files": [
+    {
+      "script": "audio-set",
+      "percent": 82.9,
+      "covered_lines": 34,
+      "total_lines": 41
+    },
+    {
+      "script": "audio-status",
+      "percent": 51.0,
+      "covered_lines": 75,
+      "total_lines": 147
+    },
+    {
+      "script": "bluetooth-status",
+      "percent": 46.0,
+      "covered_lines": 23,
+      "total_lines": 50
+    },
+    {
+      "script": "fetch-wallpaper",
+      "percent": 32.5,
+      "covered_lines": 54,
+      "total_lines": 166
+    },
+    {
+      "script": "install.sh",
+      "percent": 54.0,
+      "covered_lines": 122,
+      "total_lines": 226
+    }
+  ]
+}

@@ -35,6 +35,10 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: Globals.toggle(Globals.calendarPopout)
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: (e) => {
+            if (e.button === Qt.RightButton) Globals.toggle(Globals.calendarPopout);
+            else Globals.toggle(Globals.calendarPopout);
+        }
     }
 }

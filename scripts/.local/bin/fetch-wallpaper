@@ -26,7 +26,10 @@ validate_image() {
 # Priority order for wallpaper source:
 # 1) If $LOCAL_WALLPAPER_DIR is set and contains files, pick a random local file
 # 2) If UNSPLASH_API_KEY exists at $CONFIG_DIR/unsplash_api_key use Unsplash
-# 3) Fallback to Lorem Picsum (no API key required)
+# 3) If WALLHAVEN_API_KEY exists at $CONFIG_DIR/wallhaven_api_key use Wallhaven
+# 4) If PEXELS_API_KEY exists at $CONFIG_DIR/pexels_api_key use Pexels
+# 5) Fallback to Bing Photo of the Day
+# 6) Fallback to Lorem Picsum (no API key required)
 
 CONFIG_FILE="$CONFIG_DIR/settings.json"
 LIBRARY_DIR=""
@@ -35,6 +38,8 @@ if [ -f "$CONFIG_FILE" ]; then
 fi
 LOCAL_WALLPAPER_DIR="${LIBRARY_DIR:-$HOME/Pictures/wallpapers}"
 UNSPLASH_KEY_FILE="$CONFIG_DIR/unsplash_api_key"
+WALLHAVEN_KEY_FILE="$CONFIG_DIR/wallhaven_api_key"
+PEXELS_KEY_FILE="$CONFIG_DIR/pexels_api_key"
 
 choose_local() {
     if [ -d "$LOCAL_WALLPAPER_DIR" ]; then
@@ -50,47 +55,56 @@ choose_local() {
     return 1
 }
 
-download_reddit() {
-    SUBREDDITS=("EarthPorn" "CityPorn" "SpacePorn" "ArchitecturePorn" "wallpapers" "SkyPorn" "MinimalWallpaper" "HighRes" "InfrastructurePorn")
-    # Pick random subreddit
-    SUB=${SUBREDDITS[$RANDOM % ${#SUBREDDITS[@]}]}
+USER_AGENT="manatee-desktop/1.0"
 
-    # Pick random sort method to increase variety
-    # Weighted slightly towards top/week or top/month for quality, but include hot/new/random
-    SORT_MODES=("hot" "new" "top-day" "top-week" "top-month" "top-year" "top-all")
-    MODE=${SORT_MODES[$RANDOM % ${#SORT_MODES[@]}]}
+download_wallhaven() {
+    local apikey="$1"
+    local size="${WALLPAPER_SIZE:-1920x1080}"
+    local queries=("anime landscape" "digital art" "minimal" "nature" "abstract" "space" "city" "cyberpunk" "fantasy" "mountain" "ocean")
+    local query=${queries[$RANDOM % ${#queries[@]}]}
 
-    case "$MODE" in
-        "hot") URL_SUFFIX="hot.json?limit=75" ;;
-        "new") URL_SUFFIX="new.json?limit=75" ;;
-        "top-day") URL_SUFFIX="top.json?t=day&limit=75" ;;
-        "top-week") URL_SUFFIX="top.json?t=week&limit=75" ;;
-        "top-month") URL_SUFFIX="top.json?t=month&limit=75" ;;
-        "top-year") URL_SUFFIX="top.json?t=year&limit=75" ;;
-        "top-all") URL_SUFFIX="top.json?t=all&limit=75" ;;
-    esac
-
-    echo "Fetching wallpaper from r/$SUB ($MODE)..."
-
-    # Fetch JSON (User-Agent is required for Reddit API)
-    JSON=$(curl -f -s -A "linux:dotfiles:v1.0 (by /u/anonymous)" "https://www.reddit.com/r/$SUB/$URL_SUFFIX") || return 1
-
-    # Prefer high-resolution images: check reddit preview metadata for >=1920x1080
-    IMG_URL=$(echo "$JSON" | \
-        jq -r '.data.children[]?.data | select(.preview != null) | .preview.images[0].source.url as $u | .preview.images[0].source.width as $w | .preview.images[0].source.height as $h | {url:$u, w:$w, h:$h} | select(.w >= 1920 or .h >= 1080) | .url' | sed 's/\\&amp;/\&/g' | shuf -n 1)
-
-    # Fallback: plain url fields (some posts don't include preview metadata)
-    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
-        IMG_URL=$(echo "$JSON" | jq -r '.data.children[].data.url | select(endswith(".jpg") or endswith(".png") or endswith(".jpeg"))' | shuf -n 1)
-    fi
-
-    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
-        echo "No valid images found in r/$SUB"
+    echo "Fetching from Wallhaven (query: $query)..."
+    local API_URL="https://wallhaven.cc/api/v1/search?q=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$query'))")&categories=111&purity=110&sorting=toplist&page=1&apikey=$apikey"
+    local JSON
+    JSON=$(curl -fsSL "$API_URL") || return 1
+    local COUNT
+    COUNT=$(echo "$JSON" | jq '.data | length' 2>/dev/null || echo 0)
+    if [ "$COUNT" -eq 0 ]; then
         return 1
     fi
+    local idx=$((RANDOM % COUNT))
+    local IMG_URL
+    IMG_URL=$(echo "$JSON" | jq -r ".data[$idx].path" 2>/dev/null)
+    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
+        return 1
+    fi
+    echo "Downloading from Wallhaven..."
+    curl -fsSL -A "$USER_AGENT" -o "$OUT_TMP" "$IMG_URL" || return 1
+    validate_image || return 1
+}
 
-    echo "Downloading image from r/$SUB ($IMG_URL)..."
-    curl -f -sSL -o "$OUT_TMP" "$IMG_URL" || return 1
+download_pexels() {
+    local apikey="$1"
+    local queries=("nature" "city" "minimal" "abstract" "mountain" "ocean" "night sky" "architecture" "sunset")
+    local query=${queries[$RANDOM % ${#queries[@]}]}
+
+    echo "Fetching from Pexels (query: $query)..."
+    local JSON
+    JSON=$(curl -fsSL -H "Authorization: $apikey" \
+        "https://api.pexels.com/v1/search?query=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$query'))")&per_page=15&orientation=landscape&size=large") || return 1
+    local COUNT
+    COUNT=$(echo "$JSON" | jq '.photos | length' 2>/dev/null || echo 0)
+    if [ "$COUNT" -eq 0 ]; then
+        return 1
+    fi
+    local idx=$((RANDOM % COUNT))
+    local IMG_URL
+    IMG_URL=$(echo "$JSON" | jq -r ".photos[$idx].src.original // .photos[$idx].src.large2x // .photos[$idx].src.large" 2>/dev/null)
+    if [ -z "$IMG_URL" ] || [ "$IMG_URL" = "null" ]; then
+        return 1
+    fi
+    echo "Downloading from Pexels..."
+    curl -fsSL -A "$USER_AGENT" -o "$OUT_TMP" "$IMG_URL" || return 1
     validate_image || return 1
 }
 
@@ -184,8 +198,8 @@ main() {
 
     logger "fetch-wallpaper: started"
 
-    # 1) Try local directory
-    if img=$(choose_local); then
+    # 1) Try local directory (only if user explicitly configured one)
+    if [ -n "$LIBRARY_DIR" ] && img=$(choose_local); then
         echo "Using local wallpaper: $img"
         cp "$img" "$OUT_TMP"
         logger "Using local wallpaper: $img"
@@ -205,19 +219,35 @@ main() {
             fi
         fi
 
-        # 3) Try Reddit
-        if [ -z "$src" ] && command -v jq >/dev/null 2>&1 && command -v shuf >/dev/null 2>&1 && download_reddit; then
-            src="Reddit"
-            logger "Downloaded from Reddit"
+        # 3) Try Wallhaven (anime, digital art, niche) if API key is present
+        if [ -z "$src" ] && [ -f "$WALLHAVEN_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
+            KEY=$(tr -d '\n\r ' < "$WALLHAVEN_KEY_FILE")
+            if [ -n "$KEY" ] && download_wallhaven "$KEY"; then
+                src="Wallhaven"
+                logger "Downloaded from Wallhaven"
+            else
+                logger "Wallhaven fetch failed; trying other sources"
+            fi
         fi
 
-        # 4) Try Bing
+        # 4) Try Pexels (photography) if API key is present
+        if [ -z "$src" ] && [ -f "$PEXELS_KEY_FILE" ] && command -v jq >/dev/null 2>&1; then
+            KEY=$(tr -d '\n\r ' < "$PEXELS_KEY_FILE")
+            if [ -n "$KEY" ] && download_pexels "$KEY"; then
+                src="Pexels"
+                logger "Downloaded from Pexels"
+            else
+                logger "Pexels fetch failed; trying other sources"
+            fi
+        fi
+
+        # 5) Try Bing
         if [ -z "$src" ] && command -v jq >/dev/null 2>&1 && download_bing; then
             src="Bing"
             logger "Downloaded from Bing"
         fi
 
-        # 5) Fallback to picsum
+        # 6) Fallback to picsum
         if [ -z "$src" ]; then
             logger "Falling back to Picsum"
             download_picsum && src="Picsum"

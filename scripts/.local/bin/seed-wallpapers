@@ -56,12 +56,29 @@ HTTP_TIMEOUT_SEC = 30
 MIN_SUCCESS_RATIO = 0.4    # if fewer than this fraction download, bail out
 MOODS = ["dark", "light", "warm", "cool", "sky", "earth"]
 
-SUBREDDITS = [
-    "EarthPorn", "SkyPorn", "SpacePorn", "CityPorn",
-    "ArchitecturePorn", "MinimalWallpaper", "wallpapers", "wallpaper",
+WALLHAVEN_KEY_FILE = HOME / ".config" / "dotfiles" / "wallhaven_api_key"
+PEXELS_KEY_FILE = HOME / ".config" / "dotfiles" / "pexels_api_key"
+
+def load_api_key(path):
+    if path.exists():
+        return path.read_text().strip()
+    return None
+
+WALLHAVEN_KEY = load_api_key(WALLHAVEN_KEY_FILE)
+PEXELS_KEY = load_api_key(PEXELS_KEY_FILE)
+
+# Wallhaven search queries — curated for variety across anime, digital art, landscapes, and minimal
+WALLHAVEN_QUERIES = [
+    "anime landscape", "digital art", "minimal", "nature", "abstract",
+    "space", "city", "cyberpunk", "fantasy", "mountain", "ocean",
+    "pixel art", "vaporwave", "landscape painting", "scenery",
 ]
-REDDIT_SORTS = ["hot", "top.json?t=month", "top.json?t=year", "top.json?t=all"]
-REDDIT_UA = "linux:dotfiles-seed:v1.0 (by /u/anonymous)"
+
+# Pexels curated queries — photography-focused, diverse
+PEXELS_QUERIES = [
+    "nature", "city", "minimal", "abstract", "mountain", "ocean",
+    "forest", "desert", "night sky", "architecture", "sunset", "aerial",
+]
 
 # --- Logging ------------------------------------------------------------------
 
@@ -175,7 +192,10 @@ def classify(stats):
 # --- HTTP helpers -------------------------------------------------------------
 
 def http_get(url, *, headers=None, timeout=HTTP_TIMEOUT_SEC):
-    req = Request(url, headers=headers or {})
+    hdrs = {"User-Agent": "manatee-desktop/1.0"}
+    if headers:
+        hdrs.update(headers)
+    req = Request(url, headers=hdrs)
     with urlopen(req, timeout=timeout) as resp:
         return resp.read()
 
@@ -187,60 +207,103 @@ def http_get_json(url, *, headers=None):
 
 # --- Candidate URL collection -------------------------------------------------
 
-def collect_reddit_urls(log, want_total):
-    """Return a list of (url, source_label) tuples scraped from Reddit JSON.
+def collect_wallhaven_urls(log, want_total):
+    """Return (url, source_label) tuples from Wallhaven API search results."""
+    if not WALLHAVEN_KEY:
+        log("  wallhaven: no API key, skipping")
+        return []
 
-    Walks subreddits and sort modes round-robin so the resulting set has
-    coverage across all moods, not just whichever sub responds first.
-    """
     urls = []
     seen = set()
+    per_query = max(want_total // len(WALLHAVEN_QUERIES), 5)
 
-    per_combo_cap = 18  # roughly: 8 subs × 4 sorts × 18 ≈ 576 max URLs
-
-    pairs = [(sub, sort) for sub in SUBREDDITS for sort in REDDIT_SORTS]
-    random.shuffle(pairs)
-
-    for sub, sort in pairs:
+    for query in WALLHAVEN_QUERIES:
         if len(urls) >= want_total:
             break
-        if "?" in sort:
-            url = f"https://www.reddit.com/r/{sub}/{sort}&limit=75"
-        else:
-            url = f"https://www.reddit.com/r/{sub}/{sort}.json?limit=75"
-        try:
-            data = http_get_json(url, headers={"User-Agent": REDDIT_UA})
-        except (HTTPError, URLError, ValueError, TimeoutError) as e:
-            log(f"  reddit fetch failed: {sub}/{sort}: {e}")
-            continue
-
-        children = data.get("data", {}).get("children", []) or []
+        page = 1
         gathered = 0
-        for child in children:
-            if gathered >= per_combo_cap:
+        while gathered < per_query and page <= 3:
+            url = (
+                f"https://wallhaven.cc/api/v1/search"
+                f"?q={quote(query)}&categories=111&purity=110"
+                f"&sorting=toplist&page={page}&apikey={WALLHAVEN_KEY}"
+            )
+            try:
+                data = http_get_json(url)
+            except (HTTPError, URLError, ValueError, TimeoutError) as e:
+                log(f"  wallhaven query '{query}' p{page}: {e}")
                 break
-            d = child.get("data", {}) or {}
-            preview = d.get("preview") or {}
-            images = preview.get("images") or []
-            img_url = None
-            if images:
-                src = (images[0].get("source") or {})
-                u = src.get("url")
-                w = src.get("width") or 0
-                h = src.get("height") or 0
-                if u and (w >= 1600 or h >= 900):
-                    img_url = u.replace("&amp;", "&")
-            if not img_url:
-                u = d.get("url") or ""
-                if u.lower().endswith((".jpg", ".jpeg", ".png")):
-                    img_url = u
-            if not img_url or img_url in seen:
-                continue
-            seen.add(img_url)
-            urls.append((img_url, f"reddit/{sub}"))
-            gathered += 1
-        log(f"  reddit {sub}/{sort}: gathered {gathered} (running total {len(urls)})")
+            items = data.get("data", []) or []
+            if not items:
+                break
+            for item in items:
+                img_url = item.get("path")
+                if not img_url or img_url in seen:
+                    continue
+                res = item.get("resolution", "")
+                try:
+                    w, h = res.split("x")
+                    if int(w) < 1200 or int(h) < 800:
+                        continue
+                except Exception:
+                    pass
+                seen.add(img_url)
+                urls.append((img_url, f"wallhaven/{query}"))
+                gathered += 1
+                if len(urls) >= want_total:
+                    break
+            page += 1
+        log(f"  wallhaven '{query}': gathered {gathered}")
+    return urls
 
+
+def collect_pexels_urls(log, want_total):
+    """Return (url, source_label) tuples from Pexels API search results."""
+    if not PEXELS_KEY:
+        log("  pexels: no API key, skipping")
+        return []
+
+    urls = []
+    seen = set()
+    per_query = max(want_total // len(PEXELS_QUERIES), 5)
+
+    for query in PEXELS_QUERIES:
+        if len(urls) >= want_total:
+            break
+        page = 1
+        gathered = 0
+        while gathered < per_query and page <= 2:
+            url = (
+                f"https://api.pexels.com/v1/search"
+                f"?query={quote(query)}&per_page=40&page={page}"
+                f"&orientation=landscape&size=large"
+            )
+            try:
+                data = http_get_json(
+                    url, headers={"Authorization": PEXELS_KEY}
+                )
+            except (HTTPError, URLError, ValueError, TimeoutError) as e:
+                log(f"  pexels query '{query}' p{page}: {e}")
+                break
+            photos = data.get("photos", []) or []
+            if not photos:
+                break
+            for photo in photos:
+                src = photo.get("src", {})
+                img_url = src.get("original") or src.get("large2x") or src.get("large")
+                if not img_url or img_url in seen:
+                    continue
+                w = photo.get("width", 0)
+                h = photo.get("height", 0)
+                if w < 1200 or h < 800:
+                    continue
+                seen.add(img_url)
+                urls.append((img_url, f"pexels/{query}"))
+                gathered += 1
+                if len(urls) >= want_total:
+                    break
+            page += 1
+        log(f"  pexels '{query}': gathered {gathered}")
     return urls
 
 
@@ -394,17 +457,39 @@ def run_seed(target, log, dry_run):
     # 1. Wipe previous seed
     wipe_existing_seed(log, dry_run)
 
-    # 2. Gather candidate URLs
+    # 2. Gather candidate URLs from all available sources
     want_candidates = int(target * CANDIDATE_OVER_RATIO)
     log(f"collecting up to {want_candidates} candidate URLs...")
-    reddit_share = int(want_candidates * 0.7)
-    reddit = collect_reddit_urls(log, reddit_share)
-    picsum_share = max(want_candidates - len(reddit), 30)
+
+    sources_req = []
+    source_names = []
+    if WALLHAVEN_KEY:
+        sources_req.append(min(want_candidates // 3, 60))
+        source_names.append("wallhaven")
+    if PEXELS_KEY:
+        sources_req.append(min(want_candidates // 3, 60))
+        source_names.append("pexels")
+
+    # Picsum always available as fallback — fill remaining quota
+    api_total = sum(sources_req) if sources_req else 0
+    picsum_share = max(want_candidates - api_total, 40)
+    sources_req.append(picsum_share)
+    source_names.append("picsum")
+
+    url_pairs = []
+    if WALLHAVEN_KEY:
+        wh = collect_wallhaven_urls(log, sources_req[source_names.index("wallhaven")])
+        url_pairs.extend(wh)
+        log(f"  wallhaven collected {len(wh)} URLs")
+    if PEXELS_KEY:
+        px = collect_pexels_urls(log, sources_req[source_names.index("pexels")])
+        url_pairs.extend(px)
+        log(f"  pexels collected {len(px)} URLs")
     picsum = picsum_urls(picsum_share, log)
-    url_pairs = reddit + picsum
+    url_pairs.extend(picsum)
     random.shuffle(url_pairs)
     log(f"collected {len(url_pairs)} candidate URLs "
-        f"({len(reddit)} reddit + {len(picsum)} picsum)")
+        f"({' + '.join(f'{source_names[i]}:{len([u for u in url_pairs if u[1].startswith(source_names[i])])}' for i in range(len(source_names)))})")
 
     if dry_run:
         for u, src in url_pairs[:10]:

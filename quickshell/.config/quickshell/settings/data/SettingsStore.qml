@@ -19,13 +19,15 @@ QtObject {
             "sources_enabled": {
                 "local": true,
                 "unsplash": true,
-                "reddit": true,
+                "wallhaven": true,
+                "pexels": true,
                 "bing": true,
                 "picsum": true
             },
-            "sources_order": ["local", "unsplash", "reddit", "bing", "picsum"],
-            "custom_subreddits": ["wallpapers", "earthporn", "minimalwallpaper"],
+            "sources_order": ["local", "unsplash", "wallhaven", "pexels", "bing", "picsum"],
             "unsplash_api_key": "",
+            "wallhaven_api_key": "",
+            "pexels_api_key": "",
             "recent": [],
             "favorites": [],
             "library_dir": "",
@@ -35,6 +37,34 @@ QtObject {
             "accent_mode": "dynamic",
             "manual_primary": null,
             "manual_secondary": null
+        },
+        "top_bar": {
+            "gradient_style": "off",
+            "gradient_intensity": 0.5,
+            "background_opacity": 0.85,
+            "text_glow": 0.0,
+            "font_family": "",
+            "font_weight": "Regular"
+        },
+        "display": {
+            "scale": 1.0,
+            "night_light_enabled": false,
+            "night_light_temperature": 4000
+        },
+        "icons": {
+            "icon_theme": "Papirus",
+            "cursor_theme": "Capitaine",
+            "cursor_size": 24
+        },
+        "sound": {
+            "output_volume": 100,
+            "output_muted": false,
+            "input_volume": 100,
+            "input_muted": false,
+            "alert_sounds_enabled": true
+        },
+        "network": {
+            "wifi_enabled": true
         }
     })
 
@@ -161,4 +191,57 @@ QtObject {
     function setManualAccent(hex: string): void {
         setManualPrimary(hex);
     }
+
+    // ── Display ──
+    property var displayScale: get("display", "scale")
+    property var nightLightEnabled: get("display", "night_light_enabled")
+    property var nightLightTemperature: get("display", "night_light_temperature")
+
+    function setDisplayScale(scale: string): void { set("display", "scale", scale) }
+    function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
+    function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
+
+    // ── Top Bar ──
+    property var topBarGradientIntensity: get("top_bar", "gradient_intensity")
+    property var topBarBgOpacity: get("top_bar", "background_opacity")
+    property var topBarTextGlow: get("top_bar", "text_glow")
+    property var topBarGradientStyle: get("top_bar", "gradient_style")
+    property var topBarFontFamily: get("top_bar", "font_family")
+    property var topBarFontWeight: get("top_bar", "font_weight")
+
+    // ── Icons ──
+    property var iconTheme: get("icons", "icon_theme")
+    property var cursorTheme: get("icons", "cursor_theme")
+    property var cursorSize: get("icons", "cursor_size")
+
+    function setIconTheme(theme: string): void {
+        set("icons", "icon_theme", theme);
+        execScript("gsettings set org.gnome.desktop.interface icon-theme '" + theme + "'");
+    }
+    function setCursorTheme(theme: string): void {
+        set("icons", "cursor_theme", theme);
+        execScript("gsettings set org.gnome.desktop.interface cursor-theme '" + theme + "'");
+    }
+    function setCursorSize(size: int): void {
+        set("icons", "cursor_size", size);
+        execScript("gsettings set org.gnome.desktop.interface cursor-size " + size);
+    }
+
+    // ── Sound ──
+    property var outputVolume: get("sound", "output_volume")
+    property var outputMuted: get("sound", "output_muted")
+    property var inputVolume: get("sound", "input_volume")
+    property var inputMuted: get("sound", "input_muted")
+    property var alertSoundsEnabled: get("sound", "alert_sounds_enabled")
+
+    function setOutputVolume(vol: int): void { set("sound", "output_volume", vol) }
+    function setOutputMuted(muted: bool): void { set("sound", "output_muted", muted) }
+    function setInputVolume(vol: int): void { set("sound", "input_volume", vol) }
+    function setInputMuted(muted: bool): void { set("sound", "input_muted", muted) }
+    function setAlertSoundsEnabled(enabled: bool): void { set("sound", "alert_sounds_enabled", enabled) }
+
+    // ── Network ──
+    property var wifiEnabled: get("network", "wifi_enabled")
+
+    function setWifiEnabled(enabled: bool): void { set("network", "wifi_enabled", enabled) }
 }

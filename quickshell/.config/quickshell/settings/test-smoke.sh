@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo ""
 echo "=== Settings App Smoke Test ==="
 
 echo "Checking qmldir paths..."
@@ -19,6 +20,29 @@ while IFS= read -r line; do
     fi
 done < qmldir
 echo "All qmldir paths OK."
+
+echo "Checking all page files exist..."
+PAGES_DIR="settings/pages"
+for page in top-bar/TopBarPage icons/IconsPage display/DisplayPage \
+    keybindings/KeybindingsPage keybindings/KeyCaptureDialog \
+    network/NetworkPage sound/SoundPage sysinfo/SysInfoPage \
+    wallpaper/WallpaperPage; do
+    if [ ! -f "$PAGES_DIR/$page.qml" ]; then
+        echo "MISSING: $PAGES_DIR/$page.qml"
+        exit 1
+    fi
+done
+echo "All page files present."
+
+echo "Checking SettingsContent routes all pages..."
+SETTINGS_CONTENT="settings/SettingsContent.qml"
+for name in TopBarPage IconsPage DisplayPage KeybindingsPage NetworkPage SoundPage SysInfoPage WallpaperPage; do
+    if ! grep -q "$name" "$SETTINGS_CONTENT"; then
+        echo "MISSING: $name not in SettingsContent.qml"
+        exit 1
+    fi
+done
+echo "SettingsContent routes OK."
 
 SCRIPTS_DIR="$(cd "$REPO_DIR/../../.." && pwd)/scripts/.local/bin"
 

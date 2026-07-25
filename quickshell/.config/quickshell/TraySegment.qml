@@ -1,4 +1,6 @@
-// StatusNotifierItem tray. Empty when there are no items.
+// StatusNotifierItem tray. Shows running app indicators.
+// Left-click activates. Right-click shows platform menu via display().
+// Requires //@ pragma UseQApplication in shell.qml.
 
 import QtQuick
 import QtQuick.Layouts
@@ -30,7 +32,11 @@ Item {
                     anchors.fill: parent
                     anchors.margins: 4
                     radius: width / 2
-                    color: mouse.containsMouse ? Theme.surfaceHover : "transparent"
+                    color: {
+                        if (mouse.pressed) return Theme.surfacePressed;
+                        if (mouse.containsMouse) return Theme.surfaceHover;
+                        return "transparent";
+                    }
                     Behavior on color { ColorAnimation { duration: Theme.durationFast } }
                 }
 
@@ -38,8 +44,9 @@ Item {
                     anchors.centerIn: parent
                     width: Theme.barIconSize
                     height: Theme.barIconSize
-                    source: item.modelData ? item.modelData.icon : ""
+                    source: item.modelData ? item.modelData.icon || "" : ""
                     smooth: true
+                    asynchronous: true
                 }
 
                 MouseArea {
@@ -47,22 +54,28 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+
                     onClicked: (e) => {
-                        if (e.button === Qt.RightButton && item.modelData.hasMenu) {
-                            menuAnchor.open();
+                        if (!item.modelData) return;
+
+                        if (e.button === Qt.RightButton) {
+                            if (item.modelData.hasMenu) {
+                                const pos = root.QsWindow.mapFromItem(item, mouse.x, mouse.y);
+                                item.modelData.display(
+                                    root.QsWindow.window,
+                                    Math.round(pos.x),
+                                    Math.round(pos.y + item.height + 4)
+                                );
+                            } else {
+                                item.modelData.secondaryActivate();
+                            }
+                        } else if (e.button === Qt.MiddleButton) {
+                            item.modelData.secondaryActivate();
                         } else {
                             item.modelData.activate();
                         }
                     }
-                }
-
-                QsMenuAnchor {
-                    id: menuAnchor
-                    menu: item.modelData ? item.modelData.menu : null
-                    anchor.window: root.QsWindow.window
-                    anchor.rect.x: parent.x
-                    anchor.rect.y: parent.y + parent.height
                 }
             }
         }

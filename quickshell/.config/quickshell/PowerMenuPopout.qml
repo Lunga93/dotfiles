@@ -28,7 +28,8 @@ Popout {
                 { icon: "󰗽", label: "Logout",   cmd: ["niri", "msg", "action", "quit", "--skip-confirmation"], destructive: false },
                 { icon: "󰒲", label: "Suspend",  cmd: ["systemctl", "suspend"],     destructive: false },
                 { icon: "󰜉", label: "Reboot",   cmd: ["systemctl", "reboot"],      destructive: true  },
-                { icon: "󰐥", label: "Shutdown", cmd: ["systemctl", "poweroff"],    destructive: true  }
+                { icon: "󰐥", label: "Shutdown", cmd: ["systemctl", "poweroff"],    destructive: true  },
+                { icon: "󰑐", label: "Reload Desktop", cmd: ["sh", "-c", "~/.local/bin/reload-desktop"], destructive: false }
             ]
 
             delegate: Item {

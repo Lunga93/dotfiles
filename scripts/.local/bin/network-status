@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# network-status [--watch]
+# Emits current network state as JSON. --watch polls every 5s.
+
+JQ="$(command -v jq || true)"
+
+if [ -z "$JQ" ]; then
+    echo '{"error":"jq not found","state":"unavailable"}'
+    exit 0
+fi
+
+NMCLI="$(command -v nmcli || true)"
+if [ -z "$NMCLI" ]; then
+    echo '{"error":"nmcli not found","state":"unavailable","type":"","ssid":"","signal":0,"ip":"","wifi_enabled":false,"wifi_powered":false,"devices":[]}'
+    exit 0
+fi
+
+snapshot() {
+    local wifi_enabled wifi_powered type ssid signal ip state conn_name devices_json
+
+    wifi_enabled=false; wifi_powered=false
+    local radio
+    radio=$("$NMCLI" radio wifi 2>/dev/null || true)
+    [ "$radio" = "enabled" ] && wifi_enabled=true
+
+    devices_json="[]"
+    local line
+    while IFS=: read -r dev type state conn; do
+        [ -z "$dev" ] && continue
+        devices_json=$(echo "$devices_json" | "$JQ" -c \
+            --arg dev "$dev" --arg type "$type" --arg state "$state" --arg conn "$conn" \
+            '. + [{"interface": $dev, "type": $type, "state": $state, "connection": $conn}]')
+    done < <("$NMCLI" -t -f DEVICE,TYPE,STATE,CONNECTION device status 2>/dev/null || true)
+
+    local wifi_dev
+    wifi_dev=$(echo "$devices_json" | "$JQ" -r '[.[] | select(.type == "wifi") | .interface] | first // ""')
+
+    if [ -n "$wifi_dev" ]; then
+        local wifi_state
+        wifi_state=$(echo "$devices_json" | "$JQ" -r --arg d "$wifi_dev" '.[] | select(.interface == $d) | .state')
+        [ "$wifi_state" = "connected" ] && wifi_powered=true
+    fi
+
+    # Find primary connection (first connected device)
+    local primary_dev
+    primary_dev=$(echo "$devices_json" | "$JQ" -r '[.[] | select(.state == "connected")] | first // empty')
+    if [ -n "$primary_dev" ]; then
+        type=$(echo "$primary_dev" | "$JQ" -r '.type')
+        conn_name=$(echo "$primary_dev" | "$JQ" -r '.connection')
+        state="connected"
+
+        if [ "$type" = "wifi" ]; then
+            local wifi_ssid signal
+            wifi_ssid=$("$NMCLI" -t -f 802-11-wireless.ssid connection show "$conn_name" 2>/dev/null | cut -d: -f2-)
+            ssid="${wifi_ssid:-$conn_name}"
+            signal=$("$NMCLI" -t -f SSID,SIGNAL device wifi list 2>/dev/null | awk -F: -v s="$ssid" 'BEGIN{IGNORECASE=1} $1 == s {print $2; exit}')
+            [ -z "$signal" ] && signal=0
+        else
+            # ethernet or other — use connection name as display label
+            ssid="$conn_name"; signal=0
+        fi
+
+        local ip
+        ip=$("$NMCLI" -t -f IP4.ADDRESS device show "$(echo "$primary_dev" | "$JQ" -r '.interface')" 2>/dev/null | head -1 | cut -d: -f2- | tr -d '[:space:]')
+        [ -n "$ip" ] && ip="${ip%%/*}"
+
+        "$JQ" -nc \
+            --arg type "${type:-unknown}" \
+            --arg ssid "${ssid:-}" \
+            --argjson signal "${signal:-0}" \
+            --arg ip "${ip:-}" \
+            --arg state "$state" \
+            --argjson wifi_enabled "$wifi_enabled" \
+            --argjson wifi_powered "$wifi_powered" \
+            --argjson devices "$devices_json" \
+            '{type: $type, ssid: $ssid, signal: $signal, ip: $ip, state: $state, wifi_enabled: $wifi_enabled, wifi_powered: $wifi_powered, devices: $devices}'
+    else
+        local has_powered
+        has_powered=$(echo "$devices_json" | "$JQ" '[.[] | select(.type == "wifi" and .state != "unavailable")] | length')
+        [ "$has_powered" -gt 0 ] && wifi_powered=true
+
+        "$JQ" -nc \
+            --arg state "disconnected" \
+            --argjson wifi_enabled "$wifi_enabled" \
+            --argjson wifi_powered "$wifi_powered" \
+            --argjson devices "$devices_json" \
+            '{state: $state, type: "", ssid: "", signal: 0, ip: "", wifi_enabled: $wifi_enabled, wifi_powered: $wifi_powered, devices: $devices}'
+    fi
+}
+
+watch() {
+    snapshot
+    while sleep 5; do snapshot; done
+}
+
+case "${1:-}" in
+    --watch)  watch ;;
+    --pretty) snapshot | "$JQ" . ;;
+    "")       snapshot ;;
+    -h|--help)
+        echo "network-status [--watch|--pretty]"
+        ;;
+    *) echo "Unknown: $1" >&2; exit 2 ;;
+esac

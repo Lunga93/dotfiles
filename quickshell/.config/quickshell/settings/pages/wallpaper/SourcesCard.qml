@@ -14,9 +14,10 @@ Rectangle {
 
     readonly property var allSources: [
         { id: "local",    label: "Local Folder", icon: "folder" },
-        { id: "unsplash", label: "Unsplash",     icon: "image" },
-        { id: "reddit",   label: "Reddit",       icon: "image" },
-        { id: "bing",     label: "Bing",         icon: "image" },
+        { id: "unsplash",  label: "Unsplash",     icon: "image" },
+        { id: "wallhaven", label: "Wallhaven",    icon: "image" },
+        { id: "pexels",    label: "Pexels",       icon: "image" },
+        { id: "bing",      label: "Bing",         icon: "image" },
         { id: "picsum",   label: "Picsum",       icon: "image" }
     ]
 

@@ -263,6 +263,39 @@ fi
 QS_DIR="$HOME/.config/quickshell"
 if [ -d "$QS_DIR" ]; then
     : "Theme.qml watches ~/.cache/wal/colors.json directly via FileView; no regen needed."
+    MENU_BORDER=$(python3 - "$ACCENT" <<'PY'
+import sys
+h = sys.argv[1].lstrip('#')
+r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+def dim(v): return max(0, v - 60)
+print(f"#{dim(r):02x}{dim(g):02x}{dim(b):02x}")
+PY
+)
+    cat > "$QS_DIR/menu.qss" <<QSS
+QMenu {
+    background-color: ${BG};
+    color: ${FG};
+    border: 1px solid ${MENU_BORDER};
+    padding: 4px;
+    border-radius: 8px;
+}
+
+QMenu::item {
+    padding: 6px 24px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background-color: ${ACCENT};
+    color: ${BG};
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: ${MENU_BORDER};
+    margin: 4px 12px;
+}
+QSS
 fi
 
 WOFI_DIR="$HOME/.config/wofi"

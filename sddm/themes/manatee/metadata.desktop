@@ -1,6 +1,6 @@
 [SddmGreeterTheme]
-Name=Quickshell Pywal
-Description=Apple-inspired SDDM greeter that follows the pywal palette and Quickshell design tokens.
+Name=Manatee
+Description=A gentle SDDM greeter that follows the pywal palette.
 Author=lunga
 License=MIT
 Type=sddm-theme
@@ -10,6 +10,6 @@ Screenshot=
 MainScript=Main.qml
 ConfigFile=theme.conf
 TranslationsDirectory=
-Theme-Id=quickshell-pywal
+Theme-Id=manatee
 Theme-API=2.0
 QtVersion=6

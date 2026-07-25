@@ -11,49 +11,49 @@ teardown() {
 }
 
 @test "sddm theme dir has the expected files" {
-    [ -d "$REPO/sddm/themes/quickshell-pywal" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/Main.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/Theme.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/Colors.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/LoginCard.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/PasswordField.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/PowerControls.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/SessionSelector.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/ClockDisplay.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/IconButton.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/Avatar.qml" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/qmldir" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/metadata.desktop" ]
-    [ -f "$REPO/sddm/themes/quickshell-pywal/theme.conf" ]
+    [ -d "$REPO/sddm/themes/manatee" ]
+    [ -f "$REPO/sddm/themes/manatee/Main.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/Theme.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/Colors.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/LoginCard.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/PasswordField.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/PowerControls.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/SessionSelector.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/ClockDisplay.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/IconButton.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/Avatar.qml" ]
+    [ -f "$REPO/sddm/themes/manatee/qmldir" ]
+    [ -f "$REPO/sddm/themes/manatee/metadata.desktop" ]
+    [ -f "$REPO/sddm/themes/manatee/theme.conf" ]
 }
 
-@test "sddm.conf.d/10-theme.conf exists and selects quickshell-pywal" {
+@test "sddm.conf.d/10-theme.conf exists and selects manatee" {
     [ -f "$REPO/sddm/sddm.conf.d/10-theme.conf" ]
-    grep -q "Current=quickshell-pywal" "$REPO/sddm/sddm.conf.d/10-theme.conf"
+    grep -q "Current=manatee" "$REPO/sddm/sddm.conf.d/10-theme.conf"
 }
 
 @test "theme.conf has all required color keys" {
-    grep -q "^background=" "$REPO/sddm/themes/quickshell-pywal/theme.conf"
-    grep -q "^foreground=" "$REPO/sddm/themes/quickshell-pywal/theme.conf"
-    grep -q "^accent="     "$REPO/sddm/themes/quickshell-pywal/theme.conf"
-    grep -q "^viewBg="     "$REPO/sddm/themes/quickshell-pywal/theme.conf"
-    grep -q "^wallpaperPath=" "$REPO/sddm/themes/quickshell-pywal/theme.conf"
+    grep -q "^background=" "$REPO/sddm/themes/manatee/theme.conf"
+    grep -q "^foreground=" "$REPO/sddm/themes/manatee/theme.conf"
+    grep -q "^accent="     "$REPO/sddm/themes/manatee/theme.conf"
+    grep -q "^viewBg="     "$REPO/sddm/themes/manatee/theme.conf"
+    grep -q "^wallpaperPath=" "$REPO/sddm/themes/manatee/theme.conf"
 }
 
 @test "metadata.desktop points at Main.qml and theme.conf" {
-    grep -q "^MainScript=Main.qml"   "$REPO/sddm/themes/quickshell-pywal/metadata.desktop"
-    grep -q "^ConfigFile=theme.conf" "$REPO/sddm/themes/quickshell-pywal/metadata.desktop"
+    grep -q "^MainScript=Main.qml"   "$REPO/sddm/themes/manatee/metadata.desktop"
+    grep -q "^ConfigFile=theme.conf" "$REPO/sddm/themes/manatee/metadata.desktop"
 }
 
 @test "qmldir registers Theme as a singleton" {
-    grep -q "^singleton Theme" "$REPO/sddm/themes/quickshell-pywal/qmldir"
+    grep -q "^singleton Theme" "$REPO/sddm/themes/manatee/qmldir"
 }
 
 @test "qmllint passes on every Main.qml" {
     if ! command -v qmllint >/dev/null 2>&1; then
         skip "qmllint not installed"
     fi
-    cd "$REPO/sddm/themes/quickshell-pywal"
+    cd "$REPO/sddm/themes/manatee"
     for f in *.qml; do
         run qmllint "$f"
         [ "$status" -eq 0 ] || {
@@ -72,7 +72,7 @@ teardown() {
 
 @test "install.sh references the SDDM theme runtime dir" {
     grep -q "/var/lib/sddm-theme" "$REPO/install.sh"
-    grep -q "quickshell-pywal"    "$REPO/install.sh"
+    grep -q "manatee"    "$REPO/install.sh"
 }
 
 @test "apply-theme writes runtime config when dir exists" {

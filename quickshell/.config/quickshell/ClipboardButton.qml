@@ -7,6 +7,7 @@ BarIconButton {
     icon: "󰅌"
     tooltip: "Clipboard history"
     onClicked: proc.startDetached()
+    onRightClicked: proc.startDetached()
 
     Process {
         id: proc

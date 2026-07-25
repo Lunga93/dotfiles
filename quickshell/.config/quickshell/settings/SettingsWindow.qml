@@ -19,6 +19,7 @@ PanelWindow {
     focusable: true
 
     property int activeIndex: 0
+    property bool windowExpanded: SettingsStore.selectedMood ? true : false
 
     function open(): void {
         window.visible = true;
@@ -49,14 +50,16 @@ PanelWindow {
     // Window — solid layered surfaces, no glass
     Rectangle {
         id: container
+        focus: true
+        Keys.onPressed: function(event) { if (event.key === Qt.Key_Escape) window.close() }
         readonly property int defaultHeight: 640
         readonly property int expandedHeight: 900
         width: 1000
-        height: SettingsStore.selectedMood ? expandedHeight : defaultHeight
+        height: window.windowExpanded ? expandedHeight : defaultHeight
         Behavior on height { NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 1.05 } }
         anchors.centerIn: parent
         radius: 16
-        color: "#1a1611"
+        color: Theme.surfaceWindow
         border.color: Qt.rgba(1, 1, 1, 0.06)
         border.width: 1
         clip: true
@@ -87,7 +90,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 42
-            color: "#231d16"
+            color: Theme.surfaceTitleBar
 
             Row {
                 anchors.left: parent.left
@@ -115,14 +118,14 @@ PanelWindow {
                     color: minArea.containsMouse ? Theme.color5 : Qt.darker(Theme.color5, 1.3)
                     border.color: Qt.rgba(0, 0, 0, 0.2); border.width: 1
                     Behavior on color { ColorAnimation { duration: 120 } }
-                    MouseArea { id: minArea; anchors.fill: parent; hoverEnabled: true }
+                    MouseArea { id: minArea; anchors.fill: parent; anchors.margins: -4; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: window.close() }
                 }
                 Rectangle {
                     width: 13; height: 13; radius: 6.5
                     color: maxArea.containsMouse ? Theme.color2 : Qt.darker(Theme.color2, 1.3)
                     border.color: Qt.rgba(0, 0, 0, 0.2); border.width: 1
                     Behavior on color { ColorAnimation { duration: 120 } }
-                    MouseArea { id: maxArea; anchors.fill: parent; hoverEnabled: true }
+                    MouseArea { id: maxArea; anchors.fill: parent; anchors.margins: -4; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: window.windowExpanded = !window.windowExpanded }
                 }
             }
 
@@ -140,7 +143,7 @@ PanelWindow {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 height: 1
-                color: "#0e0a06"
+                color: Theme.dividerColor
             }
         }
 
@@ -151,7 +154,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             width: 232
-            color: "#15110c"
+            color: Theme.surfaceSidebar
             clip: true
 
             SettingsSidebar {
@@ -171,7 +174,7 @@ PanelWindow {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: 1
-                color: "#0e0a06"
+                color: Theme.dividerColor
             }
         }
 
@@ -181,7 +184,7 @@ PanelWindow {
             anchors.left: sidebarBg.right
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            color: "#1a1611"
+        color: Theme.surfaceWindow
 
             SettingsContent {
                 id: content

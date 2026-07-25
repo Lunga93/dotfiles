@@ -1,4 +1,4 @@
-// Entry point for the quickshell-pywal SDDM theme. Reads runtime colors and
+// Entry point for the Manatee SDDM theme. Reads runtime colors and
 // wallpaper through SDDM's config system (theme.conf merged with
 // theme.conf.user, which apply-theme writes via /var/lib/sddm-theme).
 

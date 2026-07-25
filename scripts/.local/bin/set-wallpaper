@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # set-wallpaper <image-path>
-# Sets wallpaper using swww and applies theme via apply-theme.
+# Sets wallpaper using awww and applies theme via apply-theme.
 # Saves state for persistence on reboot.
 
 # Append-mode log shared with restore-wallpaper. The awk wrapper here is
@@ -26,14 +26,14 @@ if [ "$#" -lt 1 ]; then
 fi
 
 IMG="$(readlink -f "$1")"
-SWWW_CMD="$(command -v swww || true)"
+SWWW_CMD="$(command -v awww || true)"
 APPLY_THEME_CMD="$(command -v apply-theme || true)"
 
 # 1. Save state immediately
 echo "$IMG" > "$STATE_FILE"
 
 # 2. Set Wallpaper
-# Prefer swww (if available and responding). If the swww daemon isn't
+# Prefer awww (if available and responding). If the awww daemon isn't
 # available fall back to a simpler wallpaper setter (swaybg) where possible.
 fallback_set_wallpaper() {
     if command -v swaybg >/dev/null 2>&1; then
@@ -48,7 +48,7 @@ fallback_set_wallpaper() {
 }
 
 if [ -n "$SWWW_CMD" ]; then
-    # Ensure swww daemon is ready before trying to set (up to ~5s)
+    # Ensure awww daemon is ready before trying to set (up to ~5s)
     SWWW_READY=0
     for i in {1..10}; do
         if "$SWWW_CMD" query &>/dev/null; then
@@ -59,15 +59,10 @@ if [ -n "$SWWW_CMD" ]; then
     done
 
     if [ "$SWWW_READY" -eq 1 ]; then
-        # Slick, fast transition: grow from center, 120fps, 0.5s
         "$SWWW_CMD" img "$IMG" \
-            --transition-type grow \
-            --transition-pos 0.5,0.5 \
-            --transition-fps 120 \
-            --transition-step 90 \
-            --transition-duration 0.5 || true
+            --transition-type none || true
     else
-        echo "swww found but daemon not responding; falling back." >&2
+        echo "awww found but daemon not responding; falling back." >&2
         fallback_set_wallpaper || true
     fi
 else

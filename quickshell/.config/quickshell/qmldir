@@ -43,10 +43,24 @@ SettingsRow 1.0 settings/components/SettingsRow.qml
 SettingsGroup 1.0 settings/components/SettingsGroup.qml
 PillSelector 1.0 settings/components/PillSelector.qml
 ColorSwatch 1.0 settings/components/ColorSwatch.qml
+SettingsSlider 1.0 settings/components/SettingsSlider.qml
+Toast 1.0 settings/components/Toast.qml
 
 # Settings data singletons
 singleton SettingsStore 1.0 settings/data/SettingsStore.qml
 singleton Categories 1.0 settings/data/Categories.qml
+singleton KeybindingsStore 1.0 settings/data/KeybindingsStore.qml
+
+# Settings pages
+TopBarPage 1.0 settings/pages/top-bar/TopBarPage.qml
+TopBarPreview 1.0 settings/pages/top-bar/TopBarPreview.qml
+IconsPage 1.0 settings/pages/icons/IconsPage.qml
+DisplayPage 1.0 settings/pages/display/DisplayPage.qml
+KeybindingsPage 1.0 settings/pages/keybindings/KeybindingsPage.qml
+KeyCaptureDialog 1.0 settings/pages/keybindings/KeyCaptureDialog.qml
+NetworkPage 1.0 settings/pages/network/NetworkPage.qml
+SoundPage 1.0 settings/pages/sound/SoundPage.qml
+SysInfoPage 1.0 settings/pages/sysinfo/SysInfoPage.qml
 
 # Mood browser components
 singleton MoodCatalog 1.0 settings/data/MoodCatalog.qml

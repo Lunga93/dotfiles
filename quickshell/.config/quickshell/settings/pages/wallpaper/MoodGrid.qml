@@ -11,37 +11,46 @@ Item {
 
     height: 140
 
-    Row {
-        anchors.centerIn: parent
+    ListView {
+        id: listView
+        anchors.fill: parent
+        orientation: ListView.Horizontal
         spacing: 12
+        leftMargin: 0
+        rightMargin: 0
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        flickDeceleration: 6000
+        maximumFlickVelocity: 3000
+        snapMode: ListView.SnapToItem
+        highlightRangeMode: ListView.NoHighlightRange
 
-        Repeater {
-            model: MoodCatalog.moods
+        model: MoodCatalog.moods
 
-            delegate: MoodTile {
-                required property var modelData
+        delegate: MoodTile {
+            required property var modelData
 
-                moodId: modelData.id
-                moodLabel: modelData.label
-                gradientStart: modelData.gradientStart
-                gradientEnd: modelData.gradientEnd
-                wallpaperCount: MoodCatalog.moodCount(modelData.id)
-                selected: root.selectedMood === modelData.id
+            width: 140
+            height: 120
+            y: 10
 
-                Binding {
-                    target: parent
-                    property: "opacity"
-                    value: root.selectedMood === "" || root.selectedMood === modelData.id ? 1.0 : 0.35
-                }
+            moodId: modelData.id
+            moodLabel: modelData.label
+            gradientStart: modelData.gradientStart
+            gradientEnd: modelData.gradientEnd
+            wallpaperCount: MoodCatalog.moodCount(modelData.id)
+            selected: root.selectedMood === modelData.id
 
-                onClicked: {
-                    if (root.selectedMood === modelData.id) {
-                        root.selectedMood = "";
-                        root.moodDeselected();
-                    } else {
-                        root.selectedMood = modelData.id;
-                        root.moodSelected(modelData.id);
-                    }
+            opacity: root.selectedMood === "" || root.selectedMood === modelData.id ? 1.0 : 0.35
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+
+            onClicked: {
+                if (root.selectedMood === modelData.id) {
+                    root.selectedMood = "";
+                    root.moodDeselected();
+                } else {
+                    root.selectedMood = modelData.id;
+                    root.moodSelected(modelData.id);
                 }
             }
         }

@@ -85,8 +85,10 @@ Flickable {
                 id: wallpaperGrid
                 width: parent.width
                 moodFilter: root.selectedMood
-                visible: root.selectedMood !== ""
-                height: visible ? implicitHeight : 0
+                wallpaperPaths: root.selectedMood !== "" ? (MoodCatalog.wallpapersForMood(root.selectedMood) || []) : []
+                visible: true
+                height: root.selectedMood !== "" ? implicitHeight : 0
+                clip: true
                 onWallpaperSelected: function(path) {
                     SettingsStore.setWallpaper(path);
                     root.selectedMood = "";

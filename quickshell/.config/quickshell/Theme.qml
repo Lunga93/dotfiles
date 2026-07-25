@@ -81,6 +81,16 @@ QtObject {
     readonly property color textTertiary:   withAlpha(foreground, 0.40)
     readonly property color destructive:    "#ff453a"
 
+    readonly property color surfaceWindow:   "#1a1611"
+    readonly property color surfaceTitleBar: "#231d16"
+    readonly property color surfaceSidebar:  "#15110c"
+    readonly property color dividerColor:    "#0e0a06"
+    readonly property color textHeader:      "#f5ede0"
+    readonly property color textSubtitle:    "#8a8175"
+    readonly property color sliderTrack:     "#1a1510"
+    readonly property color successColor:    "#22c55e"
+    readonly property color errorColor:      "#ef4444"
+
     readonly property color accentSoft:       withAlpha(primary, 0.18)
     readonly property color accentMuted:      withAlpha(primary, 0.55)
     readonly property color secondarySoft:    withAlpha(secondary, 0.18)

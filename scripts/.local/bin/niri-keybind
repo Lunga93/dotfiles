@@ -1,0 +1,462 @@
+#!/usr/bin/env python3
+"""niri-keybind: query and rewrite niri keybindings in ~/.config/niri/config.kdl.
+
+Used by the Quickshell settings app so users can rebind shortcuts from the UI
+instead of editing the config file by hand. Niri hot-reloads config.kdl on
+change, so a successful rewrite takes effect immediately.
+
+Subcommands:
+  list                 Emit JSON: [{key, action, props}, ...] from binds block
+  get KEY              Emit JSON for the single binding currently using KEY
+  set OLD_KEY NEW_KEY  Rebind OLD_KEY to NEW_KEY (atomic, preserves alignment)
+  validate KEY         Exit 0 iff KEY is a syntactically valid niri key combo
+  selftest             Run built-in unit tests against synthetic configs
+
+Exit codes:
+  0  success
+  1  generic error
+  2  conflict (NEW_KEY already bound to a different action)
+  3  not-found / ambiguous match for OLD_KEY
+  4  invalid key syntax
+"""
+
+import argparse
+import json
+import os
+import re
+import sys
+import tempfile
+
+DEFAULT_CONFIG = os.path.expanduser("~/.config/niri/config.kdl")
+
+# Modifier tokens accepted by niri (case sensitive — niri itself is permissive
+# but we normalise the UI to uppercase).
+MODIFIERS = {"MOD", "SHIFT", "CTRL", "ALT", "SUPER"}
+
+# Final-key tokens we recognise. Niri accepts more (any xkb keysym), so this is
+# advisory — anything not matched here still passes validation if it looks like
+# a single non-modifier token of safe characters.
+KEY_TOKEN_RE = re.compile(r"^[A-Za-z0-9_]+$")
+
+# A binding header line inside `binds {}`: indent + key + whitespace + rest.
+# We only consume the key; "rest" may carry properties and `{ ... }` (possibly
+# spanning multiple lines).
+BIND_LINE_RE = re.compile(r"^(\s+)(\S+)(\s+)(\S.*)$")
+
+
+def find_binds_range(text):
+    """Return (start_offset, end_offset) of the content *inside* `binds { ... }`.
+
+    Offsets are character indices into `text`. Returns None if not found.
+    """
+    m = re.search(r"(^|\n)\s*binds\s*\{", text)
+    if not m:
+        return None
+    start = m.end()
+    depth = 1
+    i = start
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return (start, i)
+        i += 1
+    return None
+
+
+def iter_bind_lines(text):
+    """Yield (line_start_offset, line_text_no_newline, key, sep_ws, rest) for
+    every binding header line inside the binds block. Skips blank lines and
+    comments. Multi-line binding bodies are not yielded again for continuation
+    lines.
+    """
+    rng = find_binds_range(text)
+    if rng is None:
+        return
+    start, end = rng
+    block = text[start:end]
+    base_offset = start
+
+    pos = 0
+    depth = 0  # track nested braces inside the binds block so we only treat
+               # outer-most lines as binding headers.
+    while pos < len(block):
+        nl = block.find("\n", pos)
+        line_end = len(block) if nl == -1 else nl
+        line = block[pos:line_end]
+
+        if depth == 0:
+            stripped = line.lstrip()
+            if stripped and not stripped.startswith("//"):
+                m = BIND_LINE_RE.match(line)
+                if m:
+                    yield (
+                        base_offset + pos,
+                        line,
+                        m.group(2),       # key
+                        m.group(3),       # whitespace separator
+                        m.group(4),       # rest
+                    )
+
+        for ch in line:
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth = max(0, depth - 1)
+
+        if nl == -1:
+            break
+        pos = nl + 1
+
+
+def parse_action_body(rest):
+    """Given the part after the key (e.g. `cooldown-ms=150 { focus-workspace-down; }`),
+    return (props_string, action_string). Both stripped. action_string is the
+    content between the first `{` and matching `}`, semicolons trimmed."""
+    brace_idx = rest.find("{")
+    if brace_idx == -1:
+        return (rest.strip(), "")
+    props = rest[:brace_idx].strip()
+    # Find matching close brace
+    depth = 0
+    for i in range(brace_idx, len(rest)):
+        c = rest[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                body = rest[brace_idx + 1 : i].strip().rstrip(";").strip()
+                return (props, body)
+    # Unterminated — body extends past this line (multi-line). Take everything
+    # after `{` and let the caller treat the action as opaque.
+    return (props, rest[brace_idx + 1 :].strip())
+
+
+def list_bindings(text):
+    out = []
+    for _, _, key, _, rest in iter_bind_lines(text):
+        props, action = parse_action_body(rest)
+        out.append({"key": key, "action": action, "props": props})
+    return out
+
+
+def validate_key(key):
+    """Return True iff `key` looks like a valid niri key combo.
+
+    Rules:
+      - One or more `+`-separated tokens
+      - Each token is alphanumeric (plus underscore for XF86 etc.)
+      - At least one token must be a non-modifier (the final key)
+      - Modifier tokens may only appear before the final key
+    """
+    if not key or "+" in (key[0], key[-1]):
+        return False
+    tokens = key.split("+")
+    if not tokens or any(not KEY_TOKEN_RE.match(t) for t in tokens):
+        return False
+    # Last token must not be a pure modifier.
+    if tokens[-1].upper() in MODIFIERS:
+        return False
+    # Earlier tokens, if any, must be modifiers (uppercase MOD/SHIFT/CTRL/ALT/SUPER).
+    for t in tokens[:-1]:
+        if t.upper() not in MODIFIERS:
+            return False
+    return True
+
+
+def set_binding(text, old_key, new_key):
+    """Return rewritten text with OLD_KEY's binding line retargeted to NEW_KEY.
+
+    Raises:
+      KeyError  - old_key not found in binds block
+      ValueError - ambiguous match (>1 line) or new_key already bound
+    """
+    matches = []
+    new_key_conflict = False
+    for offset, line, key, sep_ws, rest in iter_bind_lines(text):
+        if key == old_key:
+            matches.append((offset, line, sep_ws, rest))
+        if key == new_key and key != old_key:
+            new_key_conflict = True
+
+    if not matches:
+        raise KeyError(old_key)
+    if len(matches) > 1:
+        raise ValueError(f"ambiguous: {old_key} appears {len(matches)} times")
+    if new_key_conflict:
+        raise ValueError(f"conflict: {new_key} already bound")
+
+    offset, line, sep_ws, rest = matches[0]
+    indent_match = re.match(r"^(\s+)", line)
+    indent = indent_match.group(1) if indent_match else ""
+
+    # Preserve column alignment of the `rest` portion if we can — adjust the
+    # separator whitespace by the length delta. If shrinking past one space,
+    # clamp to a single space.
+    delta = len(old_key) - len(new_key)
+    if delta > 0:
+        new_sep = sep_ws + (" " * delta)
+    elif delta < 0:
+        new_sep = sep_ws[: max(1, len(sep_ws) + delta)]
+        if not new_sep:
+            new_sep = " "
+    else:
+        new_sep = sep_ws
+
+    new_line = f"{indent}{new_key}{new_sep}{rest}"
+    return text[:offset] + new_line + text[offset + len(line):]
+
+
+def write_atomic(path, content):
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".config.kdl.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(content)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+# ─── CLI ────────────────────────────────────────────────────────────────────
+
+def cmd_list(args):
+    with open(args.config) as f:
+        text = f.read()
+    print(json.dumps(list_bindings(text), indent=2))
+    return 0
+
+
+def cmd_get(args):
+    with open(args.config) as f:
+        text = f.read()
+    for b in list_bindings(text):
+        if b["key"] == args.key:
+            print(json.dumps(b, indent=2))
+            return 0
+    print(f"not found: {args.key}", file=sys.stderr)
+    return 3
+
+
+def cmd_set(args):
+    if not validate_key(args.new_key):
+        print(f"invalid key: {args.new_key}", file=sys.stderr)
+        return 4
+    with open(args.config) as f:
+        text = f.read()
+    try:
+        new_text = set_binding(text, args.old_key, args.new_key)
+    except KeyError:
+        print(f"not found: {args.old_key}", file=sys.stderr)
+        return 3
+    except ValueError as e:
+        msg = str(e)
+        print(msg, file=sys.stderr)
+        return 2 if msg.startswith("conflict") else 3
+    if new_text == text:
+        return 0
+    write_atomic(args.config, new_text)
+    return 0
+
+
+def cmd_validate(args):
+    return 0 if validate_key(args.key) else 4
+
+
+def cmd_selftest(args):
+    failures = run_selftests()
+    if failures:
+        for name, msg in failures:
+            print(f"FAIL {name}: {msg}", file=sys.stderr)
+        return 1
+    print("all selftests passed")
+    return 0
+
+
+# ─── Self tests ─────────────────────────────────────────────────────────────
+
+SAMPLE = """// header comment
+input { keyboard {} }
+
+binds {
+    MOD+SHIFT+ESCAPE                     { show-hotkey-overlay; }
+    MOD+RETURN                          hotkey-overlay-title="Open Terminal: alacritty" { spawn-sh "alacritty"; }
+    MOD+Q                               { close-window; }
+    MOD+1                               { focus-workspace 1; }
+    XF86AudioRaiseVolume                allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+"; }
+    MOD+SHIFT+S hotkey-overlay-title="Lock and Suspend" {
+        spawn "sh" "-c" "systemctl suspend && swaylock";
+    }
+    // commented binding — should be ignored
+    // MOD+ALT+L { spawn-sh "swaylock"; }
+}
+
+layout {
+    gaps 12
+}
+"""
+
+
+def _assert(cond, msg=""):
+    if not cond:
+        raise AssertionError(msg or "assertion failed")
+
+
+def run_selftests():
+    failures = []
+
+    def case(name):
+        def deco(fn):
+            try:
+                fn()
+            except AssertionError as e:
+                failures.append((name, str(e)))
+            except Exception as e:
+                failures.append((name, f"{type(e).__name__}: {e}"))
+            return fn
+        return deco
+
+    @case("list parses all top-level bindings")
+    def _():
+        binds = list_bindings(SAMPLE)
+        keys = [b["key"] for b in binds]
+        _assert(keys == [
+            "MOD+SHIFT+ESCAPE", "MOD+RETURN", "MOD+Q", "MOD+1",
+            "XF86AudioRaiseVolume", "MOD+SHIFT+S",
+        ], f"unexpected keys: {keys}")
+
+    @case("list extracts action body for single-line binding")
+    def _():
+        binds = list_bindings(SAMPLE)
+        by_key = {b["key"]: b for b in binds}
+        _assert(by_key["MOD+Q"]["action"] == "close-window",
+                f"got: {by_key['MOD+Q']!r}")
+        _assert(by_key["MOD+RETURN"]["action"] == 'spawn-sh "alacritty"',
+                f"got: {by_key['MOD+RETURN']!r}")
+        _assert(by_key["MOD+RETURN"]["props"] ==
+                'hotkey-overlay-title="Open Terminal: alacritty"')
+
+    @case("list ignores commented bindings")
+    def _():
+        binds = list_bindings(SAMPLE)
+        keys = [b["key"] for b in binds]
+        _assert("MOD+ALT+L" not in keys, "comment leaked through parser")
+
+    @case("validate_key accepts well-formed combos")
+    def _():
+        for k in ["MOD+Q", "MOD+SHIFT+ESCAPE", "CTRL+ALT+DELETE",
+                  "XF86AudioRaiseVolume", "MOD+1", "MOD+RETURN"]:
+            _assert(validate_key(k), f"rejected valid key: {k}")
+
+    @case("validate_key rejects malformed combos")
+    def _():
+        for k in ["", "+", "MOD+", "+Q", "MOD++Q", "MOD SHIFT Q",
+                  "MOD+SHIFT", "SHIFT"]:
+            _assert(not validate_key(k), f"accepted invalid key: {k!r}")
+
+    @case("set rebinds a single-line binding")
+    def _():
+        new = set_binding(SAMPLE, "MOD+Q", "MOD+SHIFT+Q")
+        binds = list_bindings(new)
+        keys = [b["key"] for b in binds]
+        _assert("MOD+SHIFT+Q" in keys and "MOD+Q" not in keys,
+                f"rebind failed; keys={keys}")
+        # Other lines untouched
+        _assert("MOD+RETURN" in keys and "XF86AudioRaiseVolume" in keys)
+
+    @case("set rebinds a multi-line binding")
+    def _():
+        new = set_binding(SAMPLE, "MOD+SHIFT+S", "MOD+ALT+S")
+        binds = list_bindings(new)
+        keys = [b["key"] for b in binds]
+        _assert("MOD+ALT+S" in keys and "MOD+SHIFT+S" not in keys,
+                f"multiline rebind failed; keys={keys}")
+        # And the multiline body must still be present
+        _assert("systemctl suspend" in new, "multiline body lost")
+
+    @case("set preserves column alignment when shrinking key")
+    def _():
+        new = set_binding(SAMPLE, "MOD+SHIFT+ESCAPE", "MOD+E")
+        # Action body should still be parseable to the same value
+        binds = list_bindings(new)
+        by_key = {b["key"]: b for b in binds}
+        _assert(by_key["MOD+E"]["action"] == "show-hotkey-overlay",
+                f"alignment shrink corrupted line: {by_key.get('MOD+E')!r}")
+
+    @case("set preserves column alignment when growing key")
+    def _():
+        # MOD+Q -> MOD+SHIFT+Q grows by 6; the `{` column should stay put.
+        new = set_binding(SAMPLE, "MOD+Q", "MOD+SHIFT+Q")
+        old_line = next(l for l in SAMPLE.splitlines() if l.lstrip().startswith("MOD+Q "))
+        new_line = next(l for l in new.splitlines() if "MOD+SHIFT+Q" in l)
+        _assert(old_line.index("{") == new_line.index("{"),
+                f"brace column shifted: old={old_line!r} new={new_line!r}")
+
+    @case("set raises on unknown key")
+    def _():
+        try:
+            set_binding(SAMPLE, "MOD+NOPE", "MOD+Q")
+        except KeyError:
+            return
+        raise AssertionError("expected KeyError")
+
+    @case("set raises on conflict")
+    def _():
+        try:
+            set_binding(SAMPLE, "MOD+Q", "MOD+RETURN")
+        except ValueError as e:
+            _assert("conflict" in str(e), f"expected conflict error, got: {e}")
+            return
+        raise AssertionError("expected ValueError")
+
+    @case("set is a no-op when OLD == NEW")
+    def _():
+        new = set_binding(SAMPLE, "MOD+Q", "MOD+Q")
+        _assert(new == SAMPLE, "no-op rebind changed text")
+
+    return failures
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="niri-keybind",
+        description="Query and rewrite niri keybindings.")
+    parser.add_argument("--config", default=DEFAULT_CONFIG,
+        help=f"Path to config.kdl (default: {DEFAULT_CONFIG})")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("list", help="emit all current bindings as JSON")
+
+    g = sub.add_parser("get", help="emit one binding by key")
+    g.add_argument("key")
+
+    s = sub.add_parser("set", help="rebind OLD_KEY to NEW_KEY")
+    s.add_argument("old_key")
+    s.add_argument("new_key")
+
+    v = sub.add_parser("validate", help="check key syntax")
+    v.add_argument("key")
+
+    sub.add_parser("selftest", help="run built-in tests")
+
+    args = parser.parse_args()
+    handler = {
+        "list": cmd_list,
+        "get": cmd_get,
+        "set": cmd_set,
+        "validate": cmd_validate,
+        "selftest": cmd_selftest,
+    }[args.cmd]
+    sys.exit(handler(args))
+
+
+if __name__ == "__main__":
+    main()

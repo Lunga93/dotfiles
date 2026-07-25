@@ -35,7 +35,7 @@ else
         v=$(awk -F= '/^[[:space:]]*Current[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2}' "$f" | tail -1)
         [ -n "$v" ] && cur="$v"
     done
-    [ -n "$cur" ] || cur="quickshell-pywal"
+    [ -n "$cur" ] || cur="manatee"
     THEME_PATH="$THEMES_DIR/$cur"
 fi
 
