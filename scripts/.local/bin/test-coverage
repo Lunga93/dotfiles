@@ -383,6 +383,17 @@ printf "Overall: %s  (%s/%s lines)\n" \
     "$(bold "$(printf '%.1f%%' "$OVERALL_PCT")")" \
     "$COVERED" "$TOTAL"
 
+# ── Python coverage (if coverage.py is installed and data exists) ───────────
+PY_COV=0
+if [ "$BASH_ONLY" -eq 0 ] && command -v coverage >/dev/null 2>&1; then
+    if [ -f "$REPO_ROOT/.coverage" ]; then
+        echo ""
+        echo "$(bold "Python Coverage (coverage.py)")"
+        PY_COV=1
+        coverage report -m --include='scripts/*' --skip-covered 2>&1 || true
+    fi
+fi
+
 # ── Check / threshold ───────────────────────────────────────────────────────
 if [ "$CHECK_MODE" -eq 1 ] || [ "$THRESHOLD" -gt 0 ]; then
     echo ""

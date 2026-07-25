@@ -18,6 +18,8 @@ OFFICIAL_PACKAGES=(
     "alacritty"
     "base-devel"
     "bats-core"
+    "kcov"
+    "python-coverage"
     "bluez"
     "bluez-utils"
     "chafa"

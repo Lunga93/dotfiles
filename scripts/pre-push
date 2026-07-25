@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+COVERAGE="$REPO_ROOT/scripts/.local/bin/test-coverage"
+
+echo "=== Pre-push: running tests ==="
+
+if ! bats "$REPO_ROOT/test/" 2>&1; then
+    echo ""
+    echo "ERROR: Tests failed. Push aborted."
+    echo "  Run 'bats test/' to see failures locally."
+    exit 1
+fi
+
+if [ -x "$COVERAGE" ]; then
+    echo ""
+    echo "=== Pre-push: checking coverage ==="
+
+    THRESHOLD=70
+    if ! "$COVERAGE" --threshold "$THRESHOLD" 2>&1; then
+        echo ""
+        echo "ERROR: Coverage dropped below ${THRESHOLD}% or regressed from baseline."
+        echo "  Run 'test-coverage --check' to see details."
+        echo "  Run 'test-coverage --update-baseline' if this is intentional."
+        exit 1
+    fi
+    echo "  Coverage OK"
+fi
+
+echo "=== Pre-push: OK ==="
+exit 0
