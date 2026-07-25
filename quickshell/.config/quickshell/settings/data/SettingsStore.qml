@@ -69,6 +69,8 @@ QtObject {
     })
 
     signal changed()
+    property int _version: 0
+    onChanged: { _version++; _version %= 1000; }
 
     property FileView _file: FileView {
         path: store.settingsPath
@@ -202,12 +204,12 @@ QtObject {
     function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
 
     // ── Top Bar ──
-    property var topBarGradientIntensity: get("top_bar", "gradient_intensity")
-    property var topBarBgOpacity: get("top_bar", "background_opacity")
-    property var topBarTextGlow: get("top_bar", "text_glow")
-    property var topBarGradientStyle: get("top_bar", "gradient_style")
-    property var topBarFontFamily: get("top_bar", "font_family")
-    property var topBarFontWeight: get("top_bar", "font_weight")
+    property var topBarGradientStyle:      { store._version; return store.get("top_bar", "gradient_style"); }
+    property var topBarGradientIntensity:  { store._version; return store.get("top_bar", "gradient_intensity"); }
+    property var topBarBgOpacity:          { store._version; return store.get("top_bar", "background_opacity"); }
+    property var topBarTextGlow:           { store._version; return store.get("top_bar", "text_glow"); }
+    property var topBarFontFamily:         { store._version; return store.get("top_bar", "font_family"); }
+    property var topBarFontWeight:         { store._version; return store.get("top_bar", "font_weight"); }
 
     // ── Icons ──
     property var iconTheme: get("icons", "icon_theme")
