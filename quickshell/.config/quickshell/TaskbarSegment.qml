@@ -4,6 +4,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 
@@ -82,15 +83,32 @@ Item {
                     activeWidth: 18
                 }
 
+                Process {
+                    id: taskbarMenu
+                    command: ["sh", "-c", ""]
+                    onRunningChanged: {
+                        if (running) Globals.closeAll();
+                    }
+                }
+
                 MouseArea {
                     id: mouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                     onClicked: (e) => {
                         if (!tile.modelData) return;
                         if (e.button === Qt.MiddleButton) tile.modelData.close();
+                        else if (e.button === Qt.RightButton) {
+                            const appId = tile.modelData.appId || "";
+                            const title = tile.modelData.title || "";
+                            taskbarMenu.command = [
+                                "sh", "-c",
+                                `APP_ID="${appId}" APP_TITLE="${title}" exec ~/.local/bin/taskbar-menu`
+                            ];
+                            taskbarMenu.startDetached();
+                        }
                         else tile.modelData.activate();
                     }
                 }
