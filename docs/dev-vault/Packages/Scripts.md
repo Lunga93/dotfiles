@@ -56,9 +56,12 @@ graph LR
 | `test-theme` | Diagnostics: swww, state, pywal, SDDM |
 | `lock-screen` | swaylock-effects with blur |
 | `clipboard-manager` | Wofi + cliphist + wl-copy |
+| `network-status` | JSON network state via nmcli |
+| `network-scan` | JSON wifi scan results |
 | `view-logs` | Alacritty tailing log files |
 | `sddm-greeter-debug` | Test SDDM greeter in window |
 | `test-alacritty.sh` | Validate config, auto-repair duplicates |
+| `test-coverage` | Runs bats + kcov, aggregates coverage, compares baseline |
 
 ## Design Pattern
 

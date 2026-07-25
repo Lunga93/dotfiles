@@ -40,6 +40,25 @@ graph LR
     SL --> SD
 ```
 
+## Testing Pipeline
+
+```mermaid
+graph LR
+    subgraph Test["Testing Pipeline"]
+        BATS[bats test/]
+        KCOV[kcov]
+        COV[coverage.py]
+        TC[test-coverage]
+        BL[.coverage-baseline.json]
+    end
+    BATS --> KCOV
+    BATS --> COV
+    KCOV --> TC
+    COV --> TC
+    TC --> BL
+    SL -.->|tested by| BATS
+```
+
 ## Data Flow: Theming
 
 ```mermaid
@@ -92,7 +111,8 @@ scripts/.local/bin/audio-status         →  ~/.local/bin/audio-status
 | Cache | `~/.cache/` | pywal, scripts |
 | systemd user | `~/.config/systemd/user/` | stow |
 | SDDM theme sync | `/var/lib/sddm-theme/` | apply-theme |
+| Coverage baseline | `test/.coverage-baseline.json` | test-coverage |
 
 ---
 
-**Next:** [[Packages Reference]]
+**Next:** [[Packages Reference]] | [[Testing Standards]]

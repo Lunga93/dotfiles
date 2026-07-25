@@ -81,8 +81,36 @@ Every package must:
 
 ## Git
 
-- `type(package): description` — `feat`, `fix`, `chore`
+- `type(package): description` — `feat`, `fix`, `chore`, `test`
 - No secrets, no force-push
+- Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`
+- Prefer `git rebase` over merge for feature branches
+- Use `git worktree` for parallel feature work on the same repo
+
+## Testing Standards
+
+> [!IMPORTANT] **Minimum 90% code coverage** required on all new/changed scripts.
+> See [[Testing Standards]] for full testing guide, mock architecture, and PR requirements.
+
+### Quick reference
+
+```bash
+bats test/                           # Run all tests
+test-coverage                        # Full coverage report
+test-coverage --check                # Check against baseline
+test-coverage --threshold 90         # Enforce minimum
+test-coverage --update-baseline      # Save current as baseline
+test-coverage --json                 # Machine-readable output
+```
+
+### Test design patterns
+
+| Pattern | For | Example |
+|---------|-----|---------|
+| Status | JSON output scripts | `audio-status`, `bluetooth-status`, `network-status` |
+| Action | Side-effect scripts | `audio-set`, `lock-screen` |
+| Menu | Wofi routing scripts | `audio-menu`, `bluetooth-menu`, `wallpaper-menu` |
+| Pipeline | Config generators | `apply-theme` |
 
 ## Comments
 
