@@ -77,6 +77,22 @@ QtObject {
         topBarGradientStyle = get("top_bar", "gradient_style");
         topBarFontFamily = get("top_bar", "font_family");
         topBarFontWeight = get("top_bar", "font_weight");
+
+        displayScale = get("display", "scale");
+        nightLightEnabled = get("display", "night_light_enabled");
+        nightLightTemperature = get("display", "night_light_temperature");
+
+        iconTheme = get("icons", "icon_theme");
+        cursorTheme = get("icons", "cursor_theme");
+        cursorSize = get("icons", "cursor_size");
+
+        outputVolume = get("sound", "output_volume");
+        outputMuted = get("sound", "output_muted");
+        inputVolume = get("sound", "input_volume");
+        inputMuted = get("sound", "input_muted");
+        alertSoundsEnabled = get("sound", "alert_sounds_enabled");
+
+        wifiEnabled = get("network", "wifi_enabled");
     }
 
     property FileView _file: FileView {
@@ -155,6 +171,22 @@ QtObject {
         store.topBarGradientStyle = store.get("top_bar", "gradient_style");
         store.topBarFontFamily = store.get("top_bar", "font_family");
         store.topBarFontWeight = store.get("top_bar", "font_weight");
+
+        store.displayScale = store.get("display", "scale");
+        store.nightLightEnabled = store.get("display", "night_light_enabled");
+        store.nightLightTemperature = store.get("display", "night_light_temperature");
+
+        store.iconTheme = store.get("icons", "icon_theme");
+        store.cursorTheme = store.get("icons", "cursor_theme");
+        store.cursorSize = store.get("icons", "cursor_size");
+
+        store.outputVolume = store.get("sound", "output_volume");
+        store.outputMuted = store.get("sound", "output_muted");
+        store.inputVolume = store.get("sound", "input_volume");
+        store.inputMuted = store.get("sound", "input_muted");
+        store.alertSoundsEnabled = store.get("sound", "alert_sounds_enabled");
+
+        store.wifiEnabled = store.get("network", "wifi_enabled");
     }
 
     function execScript(cmd: string): void {
@@ -212,9 +244,9 @@ QtObject {
     }
 
     // ── Display ──
-    property var displayScale: get("display", "scale")
-    property var nightLightEnabled: get("display", "night_light_enabled")
-    property var nightLightTemperature: get("display", "night_light_temperature")
+    property var displayScale: 1.0
+    property var nightLightEnabled: false
+    property var nightLightTemperature: 4000
 
     function setDisplayScale(scale: string): void { set("display", "scale", scale) }
     function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
@@ -229,9 +261,9 @@ QtObject {
     property var topBarFontWeight: "Regular"
 
     // ── Icons ──
-    property var iconTheme: get("icons", "icon_theme")
-    property var cursorTheme: get("icons", "cursor_theme")
-    property var cursorSize: get("icons", "cursor_size")
+    property var iconTheme: "Papirus"
+    property var cursorTheme: "Capitaine"
+    property var cursorSize: 24
 
     function setIconTheme(theme: string): void {
         set("icons", "icon_theme", theme);
@@ -247,11 +279,11 @@ QtObject {
     }
 
     // ── Sound ──
-    property var outputVolume: get("sound", "output_volume")
-    property var outputMuted: get("sound", "output_muted")
-    property var inputVolume: get("sound", "input_volume")
-    property var inputMuted: get("sound", "input_muted")
-    property var alertSoundsEnabled: get("sound", "alert_sounds_enabled")
+    property var outputVolume: 100
+    property var outputMuted: false
+    property var inputVolume: 100
+    property var inputMuted: false
+    property var alertSoundsEnabled: true
 
     function setOutputVolume(vol: int): void { set("sound", "output_volume", vol) }
     function setOutputMuted(muted: bool): void { set("sound", "output_muted", muted) }
@@ -260,7 +292,7 @@ QtObject {
     function setAlertSoundsEnabled(enabled: bool): void { set("sound", "alert_sounds_enabled", enabled) }
 
     // ── Network ──
-    property var wifiEnabled: get("network", "wifi_enabled")
+    property var wifiEnabled: true
 
     function setWifiEnabled(enabled: bool): void { set("network", "wifi_enabled", enabled) }
 }
