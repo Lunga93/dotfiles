@@ -70,7 +70,14 @@ QtObject {
 
     signal changed()
     property int _version: 0
-    onChanged: { _version++; _version %= 1000; }
+    onChanged: {
+        topBarGradientIntensity = get("top_bar", "gradient_intensity");
+        topBarBgOpacity = get("top_bar", "background_opacity");
+        topBarTextGlow = get("top_bar", "text_glow");
+        topBarGradientStyle = get("top_bar", "gradient_style");
+        topBarFontFamily = get("top_bar", "font_family");
+        topBarFontWeight = get("top_bar", "font_weight");
+    }
 
     property FileView _file: FileView {
         path: store.settingsPath
@@ -88,6 +95,7 @@ QtObject {
                 store.migrateAccentFields();
                 store.changed();
                 store.loadSelectedMood();
+                store.refreshAll();
             } catch (e) {
                 console.warn("SettingsStore: failed to parse settings, keeping defaults");
             }
@@ -138,6 +146,15 @@ QtObject {
             return store.data[section][key];
         }
         return null;
+    }
+
+    function refreshAll(): void {
+        store.topBarGradientIntensity = store.get("top_bar", "gradient_intensity");
+        store.topBarBgOpacity = store.get("top_bar", "background_opacity");
+        store.topBarTextGlow = store.get("top_bar", "text_glow");
+        store.topBarGradientStyle = store.get("top_bar", "gradient_style");
+        store.topBarFontFamily = store.get("top_bar", "font_family");
+        store.topBarFontWeight = store.get("top_bar", "font_weight");
     }
 
     function execScript(cmd: string): void {
@@ -204,12 +221,12 @@ QtObject {
     function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
 
     // ── Top Bar ──
-    property var topBarGradientStyle:      { store._version; return store.get("top_bar", "gradient_style"); }
-    property var topBarGradientIntensity:  { store._version; return store.get("top_bar", "gradient_intensity"); }
-    property var topBarBgOpacity:          { store._version; return store.get("top_bar", "background_opacity"); }
-    property var topBarTextGlow:           { store._version; return store.get("top_bar", "text_glow"); }
-    property var topBarFontFamily:         { store._version; return store.get("top_bar", "font_family"); }
-    property var topBarFontWeight:         { store._version; return store.get("top_bar", "font_weight"); }
+    property var topBarGradientIntensity: 0.5
+    property var topBarBgOpacity: 0.55
+    property var topBarTextGlow: 0.0
+    property var topBarGradientStyle: "off"
+    property var topBarFontFamily: ""
+    property var topBarFontWeight: "Regular"
 
     // ── Icons ──
     property var iconTheme: get("icons", "icon_theme")
