@@ -1,3 +1,4 @@
+//@ pragma UseQApplication
 // Quickshell entry. One Bar per screen + the floating popouts.
 
 import QtQuick
@@ -6,6 +7,10 @@ import Quickshell.Io
 
 ShellRoot {
     id: root
+
+    Component.onCompleted: {
+        Qt.application.styleHints.colorScheme = Qt.Dark;
+    }
 
     Variants {
         model: Quickshell.screens

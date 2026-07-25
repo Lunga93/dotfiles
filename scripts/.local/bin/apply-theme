@@ -260,101 +260,42 @@ CSS
     fi
 fi
 
-# ── OpenCode theme ──────────────────────────────────────────────────
-OPENCODE_THEME_DIR="$HOME/.config/opencode/themes"
-if [ -d "$(dirname "$OPENCODE_THEME_DIR")" ]; then
-    mkdir -p "$OPENCODE_THEME_DIR"
-
-    python3 - "$BG" "$FG" "$ACCENT" "$PY_COLORS" "$OPENCODE_THEME_DIR" <<'PY'
-import sys, json
-
-bg = sys.argv[1]
-fg = sys.argv[2]
-accent = sys.argv[3]
-colors_json = sys.argv[4]
-theme_dir = sys.argv[5]
-
-with open(colors_json) as f:
-    c = json.load(f).get("colors", {})
-
-def to_hex(n):
-    return c.get(f"color{n}", "#000000")
-
-theme = {
-    "$schema": "https://opencode.ai/theme.json",
-    "defs": {
-        "bg": bg,
-        "fg": fg,
-        "accent": accent,
-        "surface": bg,
-        "overlay": to_hex(8),
-        "subtle": to_hex(0),
-        "red": to_hex(1),
-        "green": to_hex(2),
-        "yellow": to_hex(3),
-        "blue": to_hex(4),
-        "magenta": to_hex(5),
-        "cyan": to_hex(6),
-        "white": to_hex(7),
-        "bright_black": to_hex(8),
-        "bright_red": to_hex(9),
-        "bright_green": to_hex(10),
-        "bright_yellow": to_hex(11),
-        "bright_blue": to_hex(12),
-        "bright_magenta": to_hex(13),
-        "bright_cyan": to_hex(14),
-        "bright_white": to_hex(15),
-    },
-    "theme": {
-        "text": "fg",
-        "textMuted": "subtle",
-        "background": "bg",
-        "backgroundPanel": "surface",
-        "backgroundElement": "overlay",
-        "border": "overlay",
-        "borderActive": "accent",
-        "borderSubtle": "subtle",
-        "primary": "accent",
-        "secondary": "cyan",
-        "accent": "accent",
-        "error": "red",
-        "warning": "yellow",
-        "success": "green",
-        "info": "blue",
-        "diffAdded": "green",
-        "diffRemoved": "red",
-        "diffHighlightAdded": "bright_green",
-        "diffHighlightRemoved": "bright_red",
-        "syntaxComment": "subtle",
-        "syntaxKeyword": "magenta",
-        "syntaxFunction": "blue",
-        "syntaxVariable": "fg",
-        "syntaxString": "green",
-        "syntaxNumber": "yellow",
-        "syntaxType": "cyan",
-        "syntaxOperator": "accent",
-        "syntaxPunctuation": "fg",
-        "markdownHeading": "accent",
-        "markdownLink": "blue",
-        "markdownCode": "green",
-        "markdownBlockQuote": "subtle",
-        "markdownEmph": "yellow",
-        "markdownStrong": "magenta",
-        "markdownListItem": "accent",
-        "markdownCodeBlock": "fg",
-    }
-}
-
-path = f"{theme_dir}/manatee.json"
-with open(path, "w") as f:
-    json.dump(theme, f, indent=2)
-print(f"OpenCode manatee theme written to {path}")
-PY
-fi
-
 QS_DIR="$HOME/.config/quickshell"
 if [ -d "$QS_DIR" ]; then
     : "Theme.qml watches ~/.cache/wal/colors.json directly via FileView; no regen needed."
+    MENU_BORDER=$(python3 - "$ACCENT" <<'PY'
+import sys
+h = sys.argv[1].lstrip('#')
+r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+def dim(v): return max(0, v - 60)
+print(f"#{dim(r):02x}{dim(g):02x}{dim(b):02x}")
+PY
+)
+    cat > "$QS_DIR/menu.qss" <<QSS
+QMenu {
+    background-color: ${BG};
+    color: ${FG};
+    border: 1px solid ${MENU_BORDER};
+    padding: 4px;
+    border-radius: 8px;
+}
+
+QMenu::item {
+    padding: 6px 24px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background-color: ${ACCENT};
+    color: ${BG};
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: ${MENU_BORDER};
+    margin: 4px 12px;
+}
+QSS
 fi
 
 WOFI_DIR="$HOME/.config/wofi"

@@ -1,6 +1,6 @@
 // StatusNotifierItem tray. Shows running app indicators.
-// Left-click activates, right-click opens context menu with
-// activate() fallback when no menu is provided.
+// Left-click activates. Right-click shows platform menu via display().
+// Requires //@ pragma UseQApplication in shell.qml.
 
 import QtQuick
 import QtQuick.Layouts
@@ -28,8 +28,6 @@ Item {
                 Layout.preferredWidth: Theme.barHeight - 8
                 Layout.fillHeight: true
 
-                readonly property bool hasMenu: item.modelData && item.modelData.menu !== null
-
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 4
@@ -56,34 +54,28 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
                     onClicked: (e) => {
                         if (!item.modelData) return;
 
                         if (e.button === Qt.RightButton) {
-                            const menu = item.modelData.menu;
-                            if (menu) {
-                                const globalPos = item.mapToItem(null, 0, item.height);
-                                menuAnchor.anchor.rect = Qt.rect(
-                                    globalPos ? globalPos.x : 0,
-                                    globalPos ? globalPos.y : 0,
-                                    1, 1
+                            if (item.modelData.hasMenu) {
+                                const pos = root.QsWindow.mapFromItem(item, mouse.x, mouse.y);
+                                item.modelData.display(
+                                    root.QsWindow.window,
+                                    Math.round(pos.x),
+                                    Math.round(pos.y + item.height + 4)
                                 );
-                                menuAnchor.menu = menu;
-                                menuAnchor.open();
                             } else {
-                                item.modelData.activate();
+                                item.modelData.secondaryActivate();
                             }
+                        } else if (e.button === Qt.MiddleButton) {
+                            item.modelData.secondaryActivate();
                         } else {
                             item.modelData.activate();
                         }
                     }
-                }
-
-                QsMenuAnchor {
-                    id: menuAnchor
-                    anchor.window: root.QsWindow.window
                 }
             }
         }

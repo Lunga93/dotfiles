@@ -43,4 +43,5 @@ BarIconButton {
     }
 
     onClicked: Globals.toggle(Globals.networkPanel)
+    onRightClicked: Globals.toggle(Globals.networkPanel)
 }

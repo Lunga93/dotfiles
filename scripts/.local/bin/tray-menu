@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ID="${APP_ID:-}"
+APP_TITLE="${APP_TITLE:-}"
+WOFI="$(command -v wofi || true)"
+
+die() { echo "$1" >&2; exit 0; }
+[ -z "$WOFI" ] && die "wofi not found"
+[ -z "$APP_ID" ] && die "no appId"
+
+prompt="${APP_TITLE:-$APP_ID}"
+prompt="${prompt::20}"
+
+choice=$(printf '%s\n' \
+    "󰐊  Show / Focus" \
+    "󰛑  Close Window" \
+    "󰗽  Quit Application" \
+    | "$WOFI" --dmenu --prompt "$prompt" 2>/dev/null || true)
+
+case "${choice%%  *}" in
+    "󰐊")
+        qdbus org.kde.StatusNotifierItem-*-"$APP_ID" /StatusNotifierItem org.kde.StatusNotifierItem.Activate 2>/dev/null \
+        || true
+        ;;
+    "󰛑")
+        niri msg action close-window 2>/dev/null || true
+        ;;
+    "󰗽")
+        niri msg action close-window 2>/dev/null || true
+        ;;
+esac

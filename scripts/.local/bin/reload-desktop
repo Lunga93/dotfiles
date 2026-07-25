@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+reload_niri() {
+    echo "Reloading niri config..."
+    niri msg action load-config-file
+}
+
+reload_quickshell() {
+    echo "Restarting Quickshell..."
+    pkill qs 2>/dev/null || true
+    sleep 0.3
+    nohup qs > /dev/null 2>&1 &
+    disown
+}
+
+reload_swaync() {
+    echo "Reloading swaync..."
+    swaync-client --reload-config
+}
+
+reload_all() {
+    reload_niri
+    reload_swaync
+    reload_quickshell
+}
+
+case "${1:-all}" in
+    niri)   reload_niri ;;
+    qs|bar) reload_quickshell ;;
+    swaync) reload_swaync ;;
+    all|*)  reload_all ;;
+esac

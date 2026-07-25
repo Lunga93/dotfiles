@@ -85,7 +85,8 @@ Item {
 
                 Process {
                     id: taskbarMenu
-                    command: ["sh", "-c", ""]
+                    command: ["true"]
+                    running: false
                     onRunningChanged: {
                         if (running) Globals.closeAll();
                     }
@@ -107,7 +108,7 @@ Item {
                                 "sh", "-c",
                                 `APP_ID="${appId}" APP_TITLE="${title}" exec ~/.local/bin/taskbar-menu`
                             ];
-                            taskbarMenu.startDetached();
+                            taskbarMenu.start();
                         }
                         else tile.modelData.activate();
                     }
