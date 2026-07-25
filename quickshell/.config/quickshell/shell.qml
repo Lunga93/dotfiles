@@ -12,6 +12,19 @@ ShellRoot {
         Qt.application.styleHints.colorScheme = Qt.Dark;
     }
 
+    Process {
+        running: true
+        command: ["sh", "-c", "gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d \"'\" | tr -d '\n'"]
+        stdout: SplitParser {
+            onRead: function(line) {
+                if (line && line !== SettingsStore.iconTheme) {
+                    SettingsStore.set("icons", "icon_theme", line);
+                    SettingsStore.iconTheme = line;
+                }
+            }
+        }
+    }
+
     Variants {
         model: Quickshell.screens
         Bar {}

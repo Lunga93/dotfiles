@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== Manatee Desktop — Icon Theme Installer ==="
+echo ""
+
+install_official() {
+    local pkg=$1
+    if pacman -Q "$pkg" &>/dev/null; then
+        echo "  [SKIP] $pkg already installed"
+    else
+        echo "  [INSTALL] $pkg"
+        sudo pacman -S --noconfirm "$pkg" 2>/dev/null || echo "  [FAIL] $pkg"
+    fi
+}
+
+install_aur() {
+    local pkg=$1
+    if yay -Q "$pkg" &>/dev/null; then
+        echo "  [SKIP] $pkg already installed"
+    else
+        echo "  [INSTALL] $pkg (AUR)"
+        yay -S --noconfirm "$pkg" 2>/dev/null || echo "  [FAIL] $pkg"
+    fi
+}
+
+echo "Official repositories:"
+install_official papirus-icon-theme
+install_official breeze-icons
+install_official adwaita-icon-theme
+install_official hicolor-icon-theme
+
+echo ""
+echo "AUR packages:"
+install_aur tela-circle-icon-theme-git
+install_aur whitesur-icon-theme-git
+install_aur numix-circle-icon-theme-git
+install_aur qogir-icon-theme
+install_aur candy-icons-git
+
+echo ""
+echo "Cursors:"
+install_official capitaine-cursors
+install_aur phinger-cursors
+install_aur bibata-cursor-theme
+
+echo ""
+echo "=== Done ==="
+echo "Available themes:"
+for d in /usr/share/icons/*/index.theme ~/.local/share/icons/*/index.theme; do
+    [ -f "$d" ] && echo "  $(basename "$(dirname "$d")")"
+done 2>/dev/null | sort -u
