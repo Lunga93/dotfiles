@@ -1,19 +1,63 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import "../../.."
 
 Item {
     id: root
 
-    readonly property var iconThemeKeys: ["Adwaita", "Papirus", "Papirus-Dark", "breeze", "breeze-dark", "Tela-circle", "WhiteSur", "Numix-Circle"]
-    readonly property var iconThemeLabels: ["Adwaita", "Papirus", "Papirus Dark", "Breeze", "Breeze Dark", "Tela", "WhiteSur", "Numix"]
+    property var iconThemeKeys: ["Adwaita"]
+    property var iconThemeLabels: ["Adwaita"]
+    property bool themesLoaded: false
+
+    Component.onCompleted: loadThemes()
+
+    function loadThemes() {
+        themeScan.start();
+    }
+
+    function addTheme(name) {
+        if (!name) return;
+        const names = root.iconThemeKeys;
+        if (names.indexOf(name) === -1) {
+            names.push(name);
+            root.iconThemeKeys = names;
+            root.iconThemeLabels = names;
+        }
+    }
+
+    function ensureCurrentThemeInList() {
+        const cur = SettingsStore.iconTheme;
+        if (cur) addTheme(cur);
+    }
 
     function indexOf(arr, value) {
         for (let i = 0; i < arr.length; i++) {
             if (arr[i] === value) return i;
         }
         return 0;
+    }
+
+    Process {
+        id: themeScan
+        command: ["sh", "-c",
+            "find /usr/share/icons ~/.local/share/icons ~/.icons " +
+            "-maxdepth 2 -name index.theme -not -path '*/hicolor/*' " +
+            "2>/dev/null | sed 's|/index.theme||' | xargs -n1 basename | sort -u"]
+        stdout: SplitParser {
+            onRead: function(line) {
+                if (line && line !== "hicolor" && line !== "default" && line !== "locolor") {
+                    root.addTheme(line);
+                }
+            }
+        }
+        onRunningChanged: {
+            if (!running) {
+                root.ensureCurrentThemeInList();
+                root.themesLoaded = true;
+            }
+        }
     }
 
     component GroupShell: Column {
@@ -32,8 +76,7 @@ Item {
             visible: gs.header !== ""
 
             Rectangle {
-                width: 3; height: 12
-                radius: 2
+                width: 3; height: 12; radius: 2
                 anchors.verticalCenter: parent.verticalCenter
                 color: gs.accent
             }
@@ -76,26 +119,21 @@ Item {
 
         Column {
             id: textCol
-            anchors.left: parent.left
-            anchors.leftMargin: 20
-            anchors.right: controlSlot.left
-            anchors.rightMargin: 16
+            anchors.left: parent.left; anchors.leftMargin: 20
+            anchors.right: controlSlot.left; anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
 
             Text {
                 text: lr.title
                 color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: 13
-                font.weight: Font.Medium
+                font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium
             }
             Text {
                 width: parent.width
                 text: lr.description
                 color: Theme.textSecondary
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.family: Theme.fontFamily; font.pixelSize: 11
                 visible: lr.description !== ""
                 wrapMode: Text.WordWrap
             }
@@ -103,8 +141,7 @@ Item {
                 width: parent.width
                 text: lr.hint
                 color: Theme.textTertiary
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
+                font.family: Theme.fontFamily; font.pixelSize: 10
                 font.italic: true
                 visible: lr.hint !== ""
                 wrapMode: Text.WordWrap
@@ -113,8 +150,7 @@ Item {
 
         Item {
             id: controlSlot
-            anchors.right: parent.right
-            anchors.rightMargin: 20
+            anchors.right: parent.right; anchors.rightMargin: 20
             anchors.verticalCenter: parent.verticalCenter
             width: childrenRect.width
             height: childrenRect.height
@@ -135,12 +171,10 @@ Item {
 
         Column {
             id: column
-            width: parent.width
-            spacing: 0
+            width: parent.width; spacing: 0
 
             Item {
-                width: parent.width
-                height: 76
+                width: parent.width; height: 76
                 Column {
                     anchors.left: parent.left; anchors.leftMargin: 28
                     anchors.top: parent.top; anchors.topMargin: 20
@@ -151,7 +185,7 @@ Item {
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
-                        text: "System-wide icon theme. Affects GTK and Qt apps on next launch."
+                        text: "System-wide icon theme for GTK and Qt applications."
                         color: "#8a8175"
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
@@ -159,10 +193,7 @@ Item {
             }
 
             Column {
-                x: 28
-                width: parent.width - 56
-                spacing: 18
-                bottomPadding: 32
+                x: 28; width: parent.width - 56; spacing: 18; bottomPadding: 32
 
                 GroupShell {
                     header: "GLOBAL ICON THEME"
@@ -170,8 +201,12 @@ Item {
 
                     LabelRow {
                         title: "Theme"
-                        description: "Icon set used by file managers, dialogs, and system apps."
-                        hint: indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0 && SettingsStore.iconTheme !== "Adwaita"
+                        description: root.themesLoaded
+                            ? root.iconThemeKeys.length + " themes found"
+                            : "Scanning installed themes..."
+                        hint: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0
+                            && SettingsStore.iconTheme
+                            && SettingsStore.iconTheme !== root.iconThemeKeys[0]
                             ? "Current: " + SettingsStore.iconTheme
                             : ""
 
@@ -179,29 +214,27 @@ Item {
                             options: root.iconThemeLabels
                             currentIndex: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme)
                             onSelected: function(index) {
-                                SettingsStore.setGlobalIconTheme(root.iconThemeKeys[index]);
+                                if (index >= 0 && index < root.iconThemeKeys.length) {
+                                    SettingsStore.setGlobalIconTheme(root.iconThemeKeys[index]);
+                                }
                             }
                         }
                     }
                 }
 
                 Rectangle {
-                    width: parent.width
-                    height: 56
+                    width: parent.width; height: 56
                     radius: Theme.radiusCard
                     color: Qt.rgba(1, 1, 1, 0.025)
-                    border.color: Theme.border
-                    border.width: 1
+                    border.color: Theme.border; border.width: 1
 
                     Text {
                         anchors.centerIn: parent
                         text: "Install icon themes via pacman or yay. Restart apps to see changes."
                         color: Theme.textTertiary
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
+                        font.family: Theme.fontFamily; font.pixelSize: 11
                         horizontalAlignment: Text.AlignHCenter
-                        width: parent.width - 32
-                        wrapMode: Text.WordWrap
+                        width: parent.width - 32; wrapMode: Text.WordWrap
                     }
                 }
             }
@@ -217,7 +250,8 @@ Item {
             anchors.right: parent.right; width: parent.width; radius: 2
             color: Qt.rgba(1, 1, 1, 0.15)
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
-            height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
+            height: scroller.contentHeight > 0
+                ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height
         }
     }
