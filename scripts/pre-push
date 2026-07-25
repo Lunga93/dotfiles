@@ -4,6 +4,15 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COVERAGE="$REPO_ROOT/scripts/.local/bin/test-coverage"
 
+echo "=== Pre-push: shellcheck ==="
+
+find "$REPO_ROOT/scripts" -name '*.sh' -o -name '*.bash' 2>/dev/null | while read -r f; do
+    shellcheck -S error "$f"
+done
+
+echo "  OK"
+
+echo ""
 echo "=== Pre-push: running tests ==="
 
 if ! bats "$REPO_ROOT/test/" 2>&1; then
