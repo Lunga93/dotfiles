@@ -1,38 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
-import Quickshell.Io
 import "../../.."
 
 Item {
     id: root
 
-    property var iconThemes: ["Adwaita", "Papirus", "Papirus-Dark", "Tela-circle", "WhiteSur", "Numix-Circle"]
-    property var iconThemeLabels: ["Adwaita", "Papirus", "Papirus Dark", "Tela", "WhiteSur", "Numix"]
-
-    Process {
-        id: themeScanner
-        running: true
-        command: ["sh", "-c", "for d in /usr/share/icons/*/index.theme ~/.local/share/icons/*/index.theme ~/.icons/*/index.theme; do [ -f \"$d\" ] && basename \"$(dirname \"$d\")\"; done 2>/dev/null | sort -u"]
-        stdout: SplitParser {
-            onRead: function(line) {
-                if (line) {
-                    const names = root.iconThemes;
-                    if (names.indexOf(line) === -1) {
-                        names.push(line);
-                        root.iconThemes = names;
-                        root.iconThemeLabels = names;
-                    }
-                }
-            }
-        }
-    }
+    readonly property var iconThemeKeys: ["Adwaita", "Papirus", "Papirus-Dark", "breeze", "breeze-dark", "Tela-circle", "WhiteSur", "Numix-Circle"]
+    readonly property var iconThemeLabels: ["Adwaita", "Papirus", "Papirus Dark", "Breeze", "Breeze Dark", "Tela", "WhiteSur", "Numix"]
 
     function indexOf(arr, value) {
         for (let i = 0; i < arr.length; i++) {
             if (arr[i] === value) return i;
         }
-        return -1;
+        return 0;
     }
 
     component GroupShell: Column {
@@ -81,12 +62,6 @@ Item {
                 width: parent.width
             }
         }
-    }
-
-    component Divider: Rectangle {
-        width: parent.width
-        height: 1
-        color: Qt.rgba(1, 1, 1, 0.04)
     }
 
     component LabelRow: Item {
@@ -176,7 +151,7 @@ Item {
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
-                        text: "System-wide icon theme. Changes take effect on next app launch."
+                        text: "System-wide icon theme. Affects GTK and Qt apps on next launch."
                         color: "#8a8175"
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
@@ -195,18 +170,16 @@ Item {
 
                     LabelRow {
                         title: "Theme"
-                        description: "Changes icons across all GTK and Qt applications."
-                        hint: root.indexOf(root.iconThemes, SettingsStore.iconTheme) === -1
-                            ? "Current: " + SettingsStore.iconTheme + " (not found in search paths)"
+                        description: "Icon set used by file managers, dialogs, and system apps."
+                        hint: indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0 && SettingsStore.iconTheme !== "Adwaita"
+                            ? "Current: " + SettingsStore.iconTheme
                             : ""
 
                         PillSelector {
                             options: root.iconThemeLabels
-                            currentIndex: root.indexOf(root.iconThemes, SettingsStore.iconTheme)
+                            currentIndex: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme)
                             onSelected: function(index) {
-                                if (index >= 0 && index < root.iconThemes.length) {
-                                    SettingsStore.setGlobalIconTheme(root.iconThemes[index]);
-                                }
+                                SettingsStore.setGlobalIconTheme(root.iconThemeKeys[index]);
                             }
                         }
                     }
@@ -222,7 +195,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Requires app restart to take full effect. Install themes via pacman or yay."
+                        text: "Install icon themes via pacman or yay. Restart apps to see changes."
                         color: Theme.textTertiary
                         font.family: Theme.fontFamily
                         font.pixelSize: 11
