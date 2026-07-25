@@ -11,12 +11,10 @@ Item {
     property var iconThemeLabels: ["Adwaita"]
     property bool themesLoaded: false
 
-    Component.onCompleted: loadThemes()
-
     Process {
         id: gsettingsProbe
-        running: true
         command: ["sh", "-c", "gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d \"'\" | tr -d '\n'"]
+        running: true
         stdout: SplitParser {
             onRead: function(line) {
                 if (line && line !== SettingsStore.iconTheme) {
@@ -27,17 +25,11 @@ Item {
         }
     }
 
-    function loadThemes() {
-        themeScan.start();
-    }
-
     function addTheme(name) {
         if (!name) return;
-        const names = root.iconThemeKeys;
-        if (names.indexOf(name) === -1) {
-            names.push(name);
-            root.iconThemeKeys = names;
-            root.iconThemeLabels = names;
+        if (root.iconThemeKeys.indexOf(name) === -1) {
+            root.iconThemeKeys = root.iconThemeKeys.concat(name);
+            root.iconThemeLabels = root.iconThemeLabels.concat(name);
         }
     }
 
@@ -59,6 +51,7 @@ Item {
             "find /usr/share/icons ~/.local/share/icons ~/.icons " +
             "-maxdepth 2 -name index.theme -not -path '*/hicolor/*' " +
             "2>/dev/null | sed 's|/index.theme||' | xargs -n1 basename | sort -u"]
+        running: true
         stdout: SplitParser {
             onRead: function(line) {
                 if (line && line !== "hicolor" && line !== "default" && line !== "locolor") {
@@ -213,18 +206,44 @@ Item {
                     header: "GLOBAL ICON THEME"
                     accent: Theme.primary
 
-                    LabelRow {
-                        title: "Theme"
-                        description: root.themesLoaded
-                            ? root.iconThemeKeys.length + " themes found"
-                            : "Scanning installed themes..."
-                        hint: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0
-                            && SettingsStore.iconTheme
-                            && SettingsStore.iconTheme !== root.iconThemeKeys[0]
-                            ? "Current: " + SettingsStore.iconTheme
-                            : ""
+                    Column {
+                        width: parent.width
+                        padding: 16
+                        spacing: 8
+
+                        Row {
+                            spacing: 8
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Text {
+                                text: "Theme"
+                                color: Theme.textPrimary
+                                font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium
+                            }
+                            Text {
+                                text: root.themesLoaded
+                                    ? root.iconThemeKeys.length + " themes found"
+                                    : "Scanning installed themes..."
+                                color: Theme.textSecondary
+                                font.family: Theme.fontFamily; font.pixelSize: 11
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0
+                                && SettingsStore.iconTheme
+                                && SettingsStore.iconTheme !== root.iconThemeKeys[0]
+                                ? "Current: " + SettingsStore.iconTheme
+                                : ""
+                            color: Theme.textTertiary
+                            font.family: Theme.fontFamily; font.pixelSize: 10
+                            font.italic: true
+                            visible: text !== ""
+                        }
 
                         PillSelector {
+                            width: parent.width
                             options: root.iconThemeLabels
                             currentIndex: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme)
                             onSelected: function(index) {

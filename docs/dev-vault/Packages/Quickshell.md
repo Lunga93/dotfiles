@@ -184,12 +184,64 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 |-------|----------|-----------|----------|------------|
 | 0 | Wallpaper | `pages/wallpaper/WallpaperPage.qml` | `components/`, `data/` | Yes (pywal, mood cache) |
 | 1 | Appearance | `pages/top-bar/TopBarPage.qml` | `TopBarPreview.qml` | Yes (live preview) |
-| 2 | Icons | `pages/icons/IconsPage.qml` | — | No (writer only) |
+| 2 | Icons | `pages/icons/IconsPage.qml` | — | Yes (theme scan) |
 | 3 | Display | `pages/display/DisplayPage.qml` | — | No (writer only) |
 | 4 | Keybindings | `pages/keybindings/KeybindingsPage.qml` | `KeyCaptureDialog.qml`, `data/KeybindingsStore.qml` | Yes (niri-keybind) |
 | 5 | Network | `pages/network/NetworkPage.qml` | — | Yes (nmcli) |
 | 6 | Sound | `pages/sound/SoundPage.qml` | — | Yes (wpctl) |
 | 7 | System Info | `pages/sysinfo/SysInfoPage.qml` | — | Yes (read-only) |
+
+### Shared Components
+
+| Component | Purpose |
+|-----------|---------|
+| `PillSelector.qml` | Pill-based option selector using `Flow` layout — pills wrap to multiple rows when constrained by parent width. `implicitWidth` allows auto-sizing by default; set `width: parent.width` to force wrapping. |
+| `LabelRow.qml` | Label + right-anchored control slot for settings rows |
+| `GroupShell.qml` | Card wrapper with accent header bar |
+| `VSlider.qml` | Vertical slider with `dragValue`/`dragging` state to avoid binding loops |
+
+### Icons Page
+
+The Icons page discovers installed icon themes at runtime and applies changes system-wide.
+
+**Discovery flow:**
+
+```qml
+// themeScan Process — runs find over icon directories
+Process {
+    running: true
+    command: ["sh", "-c",
+        "find /usr/share/icons ~/.local/share/icons ~/.icons " +
+        "-maxdepth 2 -name index.theme -not -path '*/hicolor/*' " +
+        "2>/dev/null | sed 's|/index.theme||' | xargs -n1 basename | sort -u"]
+    stdout: SplitParser {
+        onRead: function(line) {
+            // .concat() creates new array reference — critical for QML binding reactivity
+            root.iconThemeKeys = root.iconThemeKeys.concat(line);
+            root.iconThemeLabels = root.iconThemeLabels.concat(line);
+        }
+    }
+}
+```
+
+> [!WARNING] Using `.push()` + reassign (`root.iconThemeKeys = names`) does NOT trigger QML bindings because the array reference is identical. Always use `.concat()` to create a new reference.
+
+**Apply flow:**
+
+```mermaid
+graph TD
+    CLICK[User clicks pill] --> SGT[SettingsStore.setGlobalIconTheme]
+    SGT --> SET["set('icons', 'icon_theme', theme)"]
+    SET --> SAVE[settings.json updated]
+    SET --> CHANGED[changed signal → iconTheme property]
+    SGT --> EXEC["execScript: gsettings set ... && reload-desktop qs"]
+    EXEC --> GSET[gsettings writes to dconf]
+    EXEC --> KILL[pkill quickshell + pkill qs]
+    KILL --> RESPAWN[nohup env QT_QPA_PLATFORMTHEME=gtk3 QT_STYLE_OVERRIDE=Fusion qs]
+    RESPAWN --> QT[Qt reads gsettings → QIcon::fromTheme uses new theme]
+```
+
+The `reload-desktop qs` script handles kill+respawn atomically, so the theme change takes effect without manual intervention. See `Scripts.md` for the script details.
 
 ### Adding a page
 

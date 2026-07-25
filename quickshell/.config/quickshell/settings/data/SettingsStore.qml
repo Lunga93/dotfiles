@@ -280,7 +280,7 @@ QtObject {
 
     function setGlobalIconTheme(theme: string): void {
         set("icons", "icon_theme", theme);
-        execScript("gsettings set org.gnome.desktop.interface icon-theme '" + theme + "'");
+        execScript("gsettings set org.gnome.desktop.interface icon-theme '" + theme + "' && " + Quickshell.env("HOME") + "/.local/bin/reload-desktop qs");
     }
 
     // ── Sound ──

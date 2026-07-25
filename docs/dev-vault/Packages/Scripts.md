@@ -52,6 +52,7 @@ graph LR
 | Script | Purpose |
 |--------|---------|
 | `apply-theme` | pywal colors → all components |
+| `reload-desktop` | Restart niri config, quickshell, swaync. `qs` mode chains `pkill qs/quickshell` + `nohup env QT_QPA_PLATFORMTHEME=gtk3 QT_STYLE_OVERRIDE=Fusion qs`. Called by SettingsStore when icon theme changes — kills both process name variants (`qs` and `quickshell`) for reliable restart. |
 | `accent-guardian` | Detect 3+ identical accents in a row |
 | `test-theme` | Diagnostics: swww, state, pywal, SDDM |
 | `lock-screen` | swaylock-effects with blur |

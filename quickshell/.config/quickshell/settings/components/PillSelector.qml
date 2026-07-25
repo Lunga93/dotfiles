@@ -9,19 +9,19 @@ Rectangle {
     property int currentIndex: 0
     signal selected(int index)
 
-    height: 32
-    width: pillRow.width + 6
-    radius: 16
+    implicitWidth: Math.max(flow.width + 12, 80)
+    height: flow.height + 12
+    radius: 12
     color: "#0f0b07"
     border.color: "#0e0a06"
     border.width: 1
 
-    Row {
-        id: pillRow
+    Flow {
+        id: flow
+        anchors.left: parent.left; anchors.leftMargin: 6
+        anchors.right: parent.right; anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.leftMargin: 3
-        spacing: 0
+        spacing: 4
 
         Repeater {
             model: root.options
@@ -42,8 +42,6 @@ Rectangle {
                     return "transparent";
                 }
                 Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-
-                anchors.verticalCenter: parent.verticalCenter
 
                 Text {
                     id: pillText
