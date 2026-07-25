@@ -13,6 +13,8 @@ AudioPanel 1.0 AudioPanel.qml
 BarPill 1.0 BarPill.qml
 BarIconButton 1.0 BarIconButton.qml
 BarText 1.0 BarText.qml
+BarGradient 1.0 BarGradient.qml
+BarGlowText 1.0 BarGlowText.qml
 Bar 1.0 Bar.qml
 Indicator 1.0 Indicator.qml
 

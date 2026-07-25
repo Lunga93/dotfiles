@@ -23,6 +23,8 @@ PanelWindow {
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: Theme.barHeight + Theme.barMarginTop
 
+    BarGradient {}
+
     Item {
         anchors.fill: parent
 
