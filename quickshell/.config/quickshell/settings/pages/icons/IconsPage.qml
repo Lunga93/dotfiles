@@ -1,21 +1,38 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import "../../.."
 
 Item {
     id: root
 
-    readonly property var cursorThemeKeys: ["capitaine-cursors", "Adwaita", "Bibata-Modern-Classic", "Bibata-Modern-Ice", "phinger-cursors"]
-    readonly property var cursorThemeLabels: ["Capitaine", "Adwaita", "Bibata Classic", "Bibata Ice", "Phinger"]
-    readonly property var iconThemeKeys: ["Adwaita", "Papirus", "Papirus-Dark", "Tela-circle", "WhiteSur", "Numix-Circle"]
-    readonly property var iconThemeLabels: ["Adwaita", "Papirus", "Papirus Dark", "Tela", "WhiteSur", "Numix"]
+    property var iconThemes: ["Adwaita", "Papirus", "Papirus-Dark", "Tela-circle", "WhiteSur", "Numix-Circle"]
+    property var iconThemeLabels: ["Adwaita", "Papirus", "Papirus Dark", "Tela", "WhiteSur", "Numix"]
+
+    Process {
+        id: themeScanner
+        running: true
+        command: ["sh", "-c", "for d in /usr/share/icons/*/index.theme ~/.local/share/icons/*/index.theme ~/.icons/*/index.theme; do [ -f \"$d\" ] && basename \"$(dirname \"$d\")\"; done 2>/dev/null | sort -u"]
+        stdout: SplitParser {
+            onRead: function(line) {
+                if (line) {
+                    const names = root.iconThemes;
+                    if (names.indexOf(line) === -1) {
+                        names.push(line);
+                        root.iconThemes = names;
+                        root.iconThemeLabels = names;
+                    }
+                }
+            }
+        }
+    }
 
     function indexOf(arr, value) {
         for (let i = 0; i < arr.length; i++) {
             if (arr[i] === value) return i;
         }
-        return 0;
+        return -1;
     }
 
     component GroupShell: Column {
@@ -159,7 +176,7 @@ Item {
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
-                        text: "Icon pack, cursor theme, and cursor size."
+                        text: "System-wide icon theme. Changes take effect on next app launch."
                         color: "#8a8175"
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
@@ -173,59 +190,23 @@ Item {
                 bottomPadding: 32
 
                 GroupShell {
-                    header: "ICON PACK"
+                    header: "GLOBAL ICON THEME"
                     accent: Theme.primary
 
                     LabelRow {
                         title: "Theme"
-                        description: "GTK icon theme used by all applications."
-                        hint: SettingsStore.iconTheme && root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0 && SettingsStore.iconTheme !== "Adwaita"
-                            ? "Current: " + SettingsStore.iconTheme + " (not in preset list)"
+                        description: "Changes icons across all GTK and Qt applications."
+                        hint: root.indexOf(root.iconThemes, SettingsStore.iconTheme) === -1
+                            ? "Current: " + SettingsStore.iconTheme + " (not found in search paths)"
                             : ""
 
                         PillSelector {
                             options: root.iconThemeLabels
-                            currentIndex: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme)
+                            currentIndex: root.indexOf(root.iconThemes, SettingsStore.iconTheme)
                             onSelected: function(index) {
-                                SettingsStore.setIconTheme(root.iconThemeKeys[index]);
-                            }
-                        }
-                    }
-                }
-
-                GroupShell {
-                    header: "CURSOR"
-                    accent: Theme.secondary
-
-                    LabelRow {
-                        title: "Theme"
-                        description: "Mouse cursor style."
-
-                        PillSelector {
-                            options: root.cursorThemeLabels
-                            currentIndex: root.indexOf(root.cursorThemeKeys, SettingsStore.cursorTheme)
-                            onSelected: function(index) {
-                                SettingsStore.setCursorTheme(root.cursorThemeKeys[index]);
-                            }
-                        }
-                    }
-
-                    Divider {}
-
-                    LabelRow {
-                        title: "Size"
-                        description: "Cursor diameter in pixels."
-
-                        SettingsSlider {
-                            width: 240
-                            from: 16
-                            to: 48
-                            value: SettingsStore.cursorSize
-                            unitLabel: Math.round(value) + " px"
-                            snap: true
-                            stepSize: 2
-                            onValueChangedByUser: function(v) {
-                                SettingsStore.setCursorSize(Math.round(v));
+                                if (index >= 0 && index < root.iconThemes.length) {
+                                    SettingsStore.setGlobalIconTheme(root.iconThemes[index]);
+                                }
                             }
                         }
                     }
@@ -241,10 +222,13 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Theme packs must be installed system-wide. Use pacman or yay."
+                        text: "Requires app restart to take full effect. Install themes via pacman or yay."
                         color: Theme.textTertiary
                         font.family: Theme.fontFamily
                         font.pixelSize: 11
+                        horizontalAlignment: Text.AlignHCenter
+                        width: parent.width - 32
+                        wrapMode: Text.WordWrap
                     }
                 }
             }

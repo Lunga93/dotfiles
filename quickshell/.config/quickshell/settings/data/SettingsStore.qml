@@ -278,6 +278,14 @@ QtObject {
         execScript("gsettings set org.gnome.desktop.interface cursor-size " + size);
     }
 
+    function setGlobalIconTheme(theme: string): void {
+        set("icons", "icon_theme", theme);
+        execScript(
+            "gsettings set org.gnome.desktop.interface icon-theme '" + theme + "' && " +
+            "niri msg action load-config-file"
+        );
+    }
+
     // ── Sound ──
     property var outputVolume: 100
     property var outputMuted: false
