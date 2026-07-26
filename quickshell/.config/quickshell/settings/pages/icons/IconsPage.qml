@@ -244,6 +244,7 @@ Item {
 
                         PillSelector {
                             width: parent.width
+                            wrap: true
                             options: root.iconThemeLabels
                             currentIndex: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme)
                             onSelected: function(index) {
