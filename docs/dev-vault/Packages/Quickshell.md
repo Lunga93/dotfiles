@@ -195,7 +195,7 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 
 | Component | Purpose |
 |-----------|---------|
-| `PillSelector.qml` | Pill-based option selector using `Flow` layout — pills wrap to multiple rows when constrained by parent width. `implicitWidth` allows auto-sizing by default; set `width: parent.width` to force wrapping. |
+| `PillSelector.qml` | Pill-based option selector. Defaults to single-line `Row` via `Loader`. Set `wrap: true` + `width: parent.width` to switch to `Flow` layout for many options. `implicitWidth` auto-sizes in row mode; explicit width constrains wrapping in flow mode. |
 | `LabelRow.qml` | Label + right-anchored control slot for settings rows |
 | `GroupShell.qml` | Card wrapper with accent header bar |
 | `VSlider.qml` | Vertical slider with `dragValue`/`dragging` state to avoid binding loops |
@@ -242,6 +242,14 @@ graph TD
 ```
 
 The `reload-desktop qs` script handles kill+respawn atomically, so the theme change takes effect without manual intervention. See `Scripts.md` for the script details.
+
+### Wallpaper Grid
+
+The wallpaper grid shows individual images when browsing a mood category. Two critical details:
+
+1. **Scanner Process** (`WallpaperGrid.qml`) — must have both `command:` and `running: true` set declaratively. Without `command:`, the process starts empty and `root.wallpapers` stays `[]`.
+
+2. **Height binding** — `WallpaperPage.qml` must not override WallpaperGrid's internal height with `implicitHeight` (which is 0 for plain `Item` types). The grid's own height binding (`gridHeader.height + Math.min(wallList.height, 400) + 8`) handles show/hide correctly via `moodFilter !== ""`.
 
 ### Adding a page
 
