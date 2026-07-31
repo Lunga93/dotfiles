@@ -10,6 +10,7 @@ import Quickshell.Widgets
 
 Item {
     id: root
+    readonly property var blocked: ["nm-applet", "nm_applet", "networkmanager"]
     visible: SystemTray.items.values.length > 0
     implicitHeight: Theme.barHeight
     implicitWidth:  row.implicitWidth + (visible ? 4 : 0)
@@ -25,8 +26,14 @@ Item {
             Item {
                 id: item
                 required property SystemTrayItem modelData
-                Layout.preferredWidth: Theme.barHeight - 8
+                Layout.preferredWidth: filtered ? 0 : Theme.barHeight - 8
                 Layout.fillHeight: true
+                visible: filtered ? false : true
+
+                readonly property bool filtered: {
+                    const id = modelData.id || "";
+                    return id === "nm-applet" || id.includes("nm_applet") || id.includes("networkmanager");
+                }
 
                 Rectangle {
                     anchors.fill: parent

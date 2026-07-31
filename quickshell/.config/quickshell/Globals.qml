@@ -10,9 +10,10 @@ QtObject {
     property var audioPanel: null
     property var calendarPopout: null
     property var powerPopout: null
+    property var networkPanel: null
 
     function _allPopouts(): var {
-        return [audioPanel, calendarPopout, powerPopout].filter(p => p !== null);
+        return [audioPanel, calendarPopout, powerPopout, networkPanel].filter(p => p !== null);
     }
 
     function toggle(target: var): void {
