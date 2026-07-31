@@ -12,6 +12,18 @@ ShellRoot {
         Qt.application.styleHints.colorScheme = Qt.Dark;
     }
 
+    FileView {
+        id: menuQss
+        path: Quickshell.env("HOME") + "/.config/quickshell/menu.qss"
+        preload: true
+        onLoaded: {
+            try { Qt.application.styleSheet = text(); } catch (e) {}
+        }
+        onFileChanged: {
+            try { Qt.application.styleSheet = text(); } catch (e) {}
+        }
+    }
+
     Process {
         running: true
         command: ["sh", "-c", "gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d \"'\" | tr -d '\n'"]
