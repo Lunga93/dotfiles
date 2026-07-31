@@ -3,6 +3,7 @@
 // Requires //@ pragma UseQApplication in shell.qml.
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.SystemTray
@@ -30,6 +31,10 @@ Item {
                 Layout.fillHeight: true
                 visible: filtered ? false : true
 
+                property color tint: (mouse.containsMouse || mouse.pressed)
+                    ? Theme.accent : Theme.textPrimary
+                Behavior on tint { ColorAnimation { duration: Theme.durationFast } }
+
                 readonly property bool filtered: {
                     const id = modelData.id || "";
                     return id === "nm-applet" || id.includes("nm_applet") || id.includes("networkmanager");
@@ -48,12 +53,18 @@ Item {
                 }
 
                 IconImage {
+                    id: trayIcon
                     anchors.centerIn: parent
                     width: Theme.barIconSize
                     height: Theme.barIconSize
                     source: item.modelData ? item.modelData.icon || "" : ""
                     smooth: true
                     asynchronous: true
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        colorization: 1.0
+                        colorizationColor: item.tint
+                    }
                 }
 
                 MouseArea {

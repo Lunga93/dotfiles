@@ -64,7 +64,7 @@ graph TB
 |---|---|---|
 | `WorkspacesSegment.qml` | `niri msg --json event-stream` | Niri workspace list |
 | `TaskbarSegment.qml` | `Quickshell.Wayland.ToplevelManager` | Open window list |
-| `TraySegment.qml` | `Quickshell.Services.SystemTray` | System tray icons (filters `nm-applet` to avoid duplicate wifi icon) |
+| `TraySegment.qml` | `Quickshell.Services.SystemTray` | System tray icons — filters `nm-applet` (duplicate wifi icon); tinted `Theme.textPrimary` idle, `Theme.accent` on hover/press via `MultiEffect` colorization |
 | `NetworkSegment.qml` | `network-status --watch` via `Process` | WiFi/Ethernet status icon — click toggles NetworkPanel |
 | `VolumeSegment.qml` | `Quickshell.Services.Pipewire` | Volume icon + popout toggle |
 | `ClockSegment.qml` | `Date` JS object | Date/time |
