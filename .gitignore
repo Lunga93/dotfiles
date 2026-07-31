@@ -36,3 +36,6 @@ systemd/.config/systemd/user/mako.service
 **/dosdevices/
 **/*.reg
 **/wine-extension-*.desktop
+
+# JetBrains Toolbox auto-generated launchers (machine-local paths/UUIDs)
+welcome/.local/share/applications/jetbrains*.desktop
