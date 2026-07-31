@@ -17,6 +17,13 @@ Every top-level directory in the repo (except `archive/`) is a GNU Stow package.
 | [[Packages/SDDM|SDDM]] | `/usr/share/sddm/themes/` | Login screen |
 | [[Packages/Fastfetch|Fastfetch]] | `~/.config/fastfetch/` | System info |
 | [[Packages/Welcome|Welcome]] | `~/.config/manatee-welcome/` | First-run |
+| [[Packages/OpenCode|OpenCode]] | `~/.config/opencode/` | AI coding agent |
+
+## External Tools
+
+| Tool | Location | Role |
+|------|----------|------|
+| [[Packages/OpenCode#writekit-integration|WriteKit]] | `~/src/writekit/` | MCP-native documentation platform |
 
 ## Archived Packages
 
