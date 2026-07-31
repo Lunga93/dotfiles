@@ -76,6 +76,8 @@ test-coverage                       # Slow: full coverage run
 ### Pre-commit checklist
 
 ```bash
+git add -p                          # Stage hunks intentionally, not -A
+git diff --cached                   # Review exactly what will be committed
 bats test/                          # All 140+ tests must pass
 test-coverage --threshold 90        # Enforce coverage floor
 test-coverage --check               # No baseline regressions

@@ -84,8 +84,22 @@ Every package must:
 - `type(package): description` — `feat`, `fix`, `chore`, `test`
 - No secrets, no force-push
 - Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`
-- Prefer `git rebase` over merge for feature branches
+- Prefer `git rebase` over merge for feature branches (linear history)
 - Use `git worktree` for parallel feature work on the same repo
+
+### Atomic commits (history must stay bisectable)
+
+- One logical change per commit. Refactors, dependency upgrades, and unrelated
+  fixes never ride along in a feature commit.
+- Every commit must leave the tree building and `bats test/` passing, so
+  `git bisect run bats test/` works anywhere in history.
+- Stage intentionally: `git add -p` to pick hunks, then review
+  `git diff --cached` before committing. Never `git add -A` a dirty tree.
+- Split pre-existing backlog into per-topic commits (with `git add -p`) rather
+  than dumping everything into one `chore: commit pre-existing changes` blob —
+  a catch-all commit defeats `git blame`/`git bisect`.
+- Never commit editor/IDE state (`.obsidian/workspace.json`, etc.) — ignore it.
+- Keep branches short-lived; rebase interactively before publishing.
 
 ## Testing Standards
 
