@@ -17,6 +17,7 @@ graph LR
         WO[Wofi]
         AL[Alacritty]
         FF[Fastfetch]
+        WK[WriteKit]
     end
     subgraph Theme["Theming Pipeline"]
         S1[set-wallpaper] --> S2[swww]

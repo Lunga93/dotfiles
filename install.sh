@@ -28,6 +28,7 @@ OFFICIAL_PACKAGES=(
     "fastfetch"
     "git"
     "gnome-calendar"
+    "gtk3"
     "jq"
     "nautilus"
     "networkmanager"
@@ -55,6 +56,7 @@ OFFICIAL_PACKAGES=(
     "ttf-roboto"
     "wl-clipboard"
     "wlsunset"
+    "webkit2gtk-4.1"
     "wofi"
     "wireplumber"
     "opencode"
@@ -167,6 +169,20 @@ ensure_aur_helper() {
     (cd /tmp/yay && run makepkg -si --noconfirm)
     run rm -rf /tmp/yay
     ok "yay installed"
+}
+
+ensure_wails() {
+    if command -v wails &>/dev/null; then
+        ok "wails already installed"
+        return 0
+    fi
+    if ! command -v go &>/dev/null; then
+        warn "Go not found — install Go first to build wails"
+        return 0
+    fi
+    info "Installing wails (Go build tool for WriteKit desktop) ..."
+    run go install github.com/wailsapp/wails/v2/cmd/wails@latest
+    ok "wails installed"
 }
 
 install_aur() {
@@ -327,6 +343,7 @@ main() {
     update_system
     install_official
     ensure_aur_helper
+    ensure_wails
     install_aur
     evict_mako
     stow_all
