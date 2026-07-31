@@ -28,7 +28,7 @@ reload_all() {
 
 case "${1:-all}" in
     niri)   reload_niri ;;
-    qs|bar) reload_quickshell ;;
+    qs|bar|quickshell) reload_quickshell ;;
     swaync) reload_swaync ;;
     all|*)  reload_all ;;
 esac
