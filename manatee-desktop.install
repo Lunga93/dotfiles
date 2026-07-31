@@ -1,0 +1,42 @@
+post_install() {
+    cat <<EOF
+  🐋 Manatee Desktop v${1%-*} installed to /usr/share/manatee-desktop
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  READ THIS before running install.sh if you use KDE/GNOME:   │
+  │                                                              │
+  │  The installer will:                                         │
+  │  - Stow configs to ~/.config (backups existing files first)  │
+  │  - Change your SDDM theme to Manatee                         │
+  │  - Enable swaync, bluetooth, and wallpaper systemd services  │
+  │  - Remove mako if installed (conflicts with swaync)          │
+  │                                                              │
+  │  Run a dry-run first to review:                              │
+  │    /usr/share/manatee-desktop/install.sh -n                   │
+  │                                                              │
+  │  Manatee is a standalone Wayland desktop. It does not        │
+  │  uninstall KDE or GNOME, but it sets itself as the default.  │
+  └─────────────────────────────────────────────────────────────┘
+
+  After installation:
+    - Log out and select Niri from SDDM
+    - Mod+Space      App launcher (wofi)
+    - Mod+,          Settings
+    - Mod+Shift+W    Pick a wallpaper and retheme
+
+  Join the pod: https://github.com/Lunga93/dotfiles
+EOF
+}
+
+post_upgrade() {
+    cat <<EOF
+  🐋 Manatee Desktop updated to v${1%-*}
+
+  Re-run the installer to pull in any new dotfiles:
+
+    /usr/share/manatee-desktop/install.sh -n   # dry-run first
+    /usr/share/manatee-desktop/install.sh       # apply
+
+  Restart Quickshell to pick up changes: pkill quickshell
+EOF
+}
