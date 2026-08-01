@@ -1,0 +1,11 @@
+[Unit]
+Description=Niri Heal - Periodic Health Check
+After=graphical-session.target
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

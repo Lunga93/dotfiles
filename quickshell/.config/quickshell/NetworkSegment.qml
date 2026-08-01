@@ -11,7 +11,7 @@ BarIconButton {
     readonly property bool hasConnection: state.state === "connected"
 
     function iconChar(): string {
-        if (state.type === "ethernet" && state.state === "connected") return "󰒵";
+        if (state.type === "ethernet" && state.state === "connected") return "󰈀";
         if (!state.wifi_enabled) return "󰤭";
         if (state.state === "connected" && state.type === "wifi") {
             const s = state.signal || 0;
@@ -20,12 +20,15 @@ BarIconButton {
             if (s < 75)  return "󰤥";
             return "󰤨";
         }
-        if (state.state === "connecting") return "󰤪";
-        return state.wifi_powered ? "󰤫" : "󰤭";
+        if (state.state === "connecting") return "󰖩";
+        return state.wifi_powered ? "󰖩" : "󰤭";
     }
 
     icon: iconChar()
     active: hasConnection
+    fontSize: Theme.barIconSize + 4
+    tint: Theme.textPrimary
+    tintActive: Theme.accent
     tooltip: hasConnection
         ? (state.type === "ethernet" ? "Wired" : (state.ssid || "Connected"))
         : (state.wifi_enabled ? "Disconnected" : "WiFi off")

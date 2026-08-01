@@ -174,7 +174,7 @@ binds {
     // ─── Screenshots ───
     CTRL+SHIFT+1                        { screenshot; }
     CTRL+SHIFT+2                        { screenshot-screen; }
-    CTRL+SHIFT+3                        { screenshot-window; }
+    SHIFT+CTRL+3                        { screenshot-window; }
 
     // ─── Emergency Escape Key ───
     // Use this when a fullscreen app blocks your keybinds.
@@ -225,8 +225,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#2F5ED8"
-            inactive-color "#2F5ED8"
+            active-color "#5D4C91"
+            inactive-color "#5D4C91"
         }
 
         shadow {

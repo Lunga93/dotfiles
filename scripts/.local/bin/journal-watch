@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE_DIR="${HOME}/.local/state/niri-heal"
+CURSOR_FILE="${STATE_DIR}/cursor"
+RATE_LIMIT_DIR="${STATE_DIR}/ratelimits"
+WEBHOOK_URL="http://127.0.0.1:9876/heal"
+RATE_LIMIT_SECONDS=300
+
+mkdir -p "$STATE_DIR" "$RATE_LIMIT_DIR"
+
+touch "$CURSOR_FILE"
+
+rate_limited() {
+    local unit="$1"
+    local stamp_file="${RATE_LIMIT_DIR}/${unit//\//_}"
+    local now
+    now=$(date +%s)
+    if [[ -f "$stamp_file" ]]; then
+        local last
+        last=$(cat "$stamp_file")
+        if (( now - last < RATE_LIMIT_SECONDS )); then
+            return 0
+        fi
+    fi
+    echo "$now" > "$stamp_file"
+    return 1
+}
+
+fire_webhook() {
+    local unit="$1" message="$2" priority="$3"
+    local payload
+    payload=$(jq -n \
+        --arg unit "$unit" \
+        --arg message "$message" \
+        --arg priority "$priority" \
+        --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        '{unit: $unit, message: $message, priority: $priority, timestamp: $timestamp}')
+
+    curl -sS -X POST "$WEBHOOK_URL" \
+        -H "Content-Type: application/json" \
+        -d "$payload" \
+        -o /dev/null -w "%{http_code}" \
+        || echo "000"
+}
+
+# Filter: user journal, priority 0-3 (emerg..err)
+# Multiple -u flags are ORed
+exec journalctl --user --follow --output=json --cursor-file="$CURSOR_FILE" \
+    -p 3 \
+    -u niri.service \
+    -u swaync.service \
+    | while IFS= read -r line; do
+
+    unit=$(echo "$line" | jq -r '._SYSTEMD_USER_UNIT // .SYSLOG_IDENTIFIER // "unknown"')
+    message=$(echo "$line" | jq -r '.MESSAGE // ""')
+    priority=$(echo "$line" | jq -r '.PRIORITY // ""')
+
+    # Skip noise: empty messages, rate-limited units
+    [[ -z "$message" || "$message" == "null" ]] && continue
+
+    # Only act on known units
+    case "$unit" in
+        niri.service|swaync.service|quickshell) ;;
+        *) continue ;;
+    esac
+
+    rate_limited "$unit" && continue
+
+    http_code=$(fire_webhook "$unit" "$message" "$priority")
+    if [[ "$http_code" == "200" ]]; then
+        echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] FIRED  unit=$unit prio=$priority" >&2
+    else
+        echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] WEBHOOK_FAIL  unit=$unit http=$http_code" >&2
+    fi
+done

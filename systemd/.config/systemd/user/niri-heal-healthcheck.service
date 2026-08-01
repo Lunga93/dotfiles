@@ -1,0 +1,9 @@
+[Unit]
+Description=Niri Heal - Proactive Health Check
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/niri-healthcheck
+StandardOutput=journal
+StandardError=journal

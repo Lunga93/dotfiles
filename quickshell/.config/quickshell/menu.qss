@@ -1,7 +1,7 @@
 QMenu {
-    background-color: #0f0a13;
-    color: #acb9e7;
-    border: 1px solid #00229c;
+    background-color: #0c090e;
+    color: #e4dee5;
+    border: 1px solid #211055;
     padding: 4px;
     border-radius: 8px;
 }
@@ -12,12 +12,12 @@ QMenu::item {
 }
 
 QMenu::item:selected {
-    background-color: #2F5ED8;
-    color: #0f0a13;
+    background-color: #5D4C91;
+    color: #0c090e;
 }
 
 QMenu::separator {
     height: 1px;
-    background-color: #00229c;
+    background-color: #211055;
     margin: 4px 12px;
 }

@@ -31,10 +31,6 @@ Item {
                 Layout.fillHeight: true
                 visible: filtered ? false : true
 
-                property color tint: (mouse.containsMouse || mouse.pressed)
-                    ? Theme.accent : Theme.textPrimary
-                Behavior on tint { ColorAnimation { duration: Theme.durationFast } }
-
                 readonly property bool filtered: {
                     const id = modelData.id || "";
                     return id === "nm-applet" || id.includes("nm_applet") || id.includes("networkmanager");
@@ -95,6 +91,10 @@ Item {
                         }
                     }
                 }
+
+                property color tint: (mouse.containsMouse || mouse.pressed)
+                    ? Theme.accent : Theme.textPrimary
+                Behavior on tint { ColorAnimation { duration: Theme.durationFast } }
             }
         }
     }
