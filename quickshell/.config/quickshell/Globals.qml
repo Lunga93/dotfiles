@@ -10,22 +10,34 @@ QtObject {
     property var audioPanel: null
     property var calendarPopout: null
     property var powerPopout: null
+    property var networkPanel: null
+
+    property bool networkPanelVisible: false
 
     function _allPopouts(): var {
-        return [audioPanel, calendarPopout, powerPopout].filter(p => p !== null);
+        return [audioPanel, calendarPopout, powerPopout, networkPanel].filter(p => p !== null);
     }
 
     function toggle(target: var): void {
         if (!target) return;
         const opening = !target.visible;
-        // Close any other open popout — single-popout-at-a-time UX.
         for (const p of _allPopouts()) {
             if (p !== target && p.visible) p.visible = false;
         }
-        target.visible = opening;
+        if (target === networkPanel) {
+            networkPanelVisible = opening;
+        } else {
+            target.visible = opening;
+        }
     }
 
     function closeAll(): void {
-        for (const p of _allPopouts()) p.visible = false;
+        for (const p of _allPopouts()) {
+            if (p === networkPanel) {
+                networkPanelVisible = false;
+            } else {
+                p.visible = false;
+            }
+        }
     }
 }
