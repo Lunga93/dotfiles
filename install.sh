@@ -78,6 +78,7 @@ STOW_DIRS=(
     "niri"
     "quickshell"
     "scripts"
+    "swaylock"
     "swaync"
     "welcome"
     "systemd"

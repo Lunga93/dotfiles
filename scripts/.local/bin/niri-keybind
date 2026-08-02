@@ -294,7 +294,7 @@ binds {
     MOD+1                               { focus-workspace 1; }
     XF86AudioRaiseVolume                allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+"; }
     MOD+SHIFT+S hotkey-overlay-title="Lock and Suspend" {
-        spawn "sh" "-c" "systemctl suspend && swaylock";
+        spawn "sh" "-c" "systemctl suspend && ~/.local/bin/lock-screen";
     }
     // commented binding — should be ignored
     // MOD+ALT+L { spawn-sh "swaylock"; }

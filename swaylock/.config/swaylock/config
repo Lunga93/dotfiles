@@ -1,0 +1,23 @@
+ignore-empty-password
+show-failed-attempts
+indicator
+clock
+blur 7
+
+color=#1c1c1e
+ring-color=#0a84ff
+ring-clear-color=#0a84ff
+ring-ver-color=#0a84ff
+ring-wrong-color=#ff453a
+inside-color=#1c1c1e
+inside-clear-color=#1c1c1e
+inside-ver-color=#1c1c1e
+inside-wrong-color=#1c1c1e
+key-hl-color=#0a84ff
+bs-hl-color=#ff453a
+separator-color=#0a84ff4d
+line-color=#0a84ff4d
+text-color=#f5f5f7
+text-clear-color=#f5f5f7
+text-ver-color=#f5f5f7
+text-wrong-color=#f5f5f7

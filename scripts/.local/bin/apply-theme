@@ -244,6 +244,37 @@ if [ -f "$NIRI_CONF" ]; then
     fi
 fi
 
+SWAYLOCK_CONF="$HOME/.config/swaylock/config"
+if [ -f "$SWAYLOCK_CONF" ]; then
+    echo "Updating Swaylock colors..."
+    WRONG_COLOR=$(jq -r '.colors.color1' "$PY_COLORS")
+    ACCENT_DIM=$(python3 - "$ACCENT" <<'PY'
+import sys
+h = sys.argv[1].lstrip('#')
+r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+def dim(v): return max(0, int(v * 0.4))
+print(f"#{dim(r):02x}{dim(g):02x}{dim(b):02x}")
+PY
+)
+    sed -i -E "s/^(color=).*/\1${BG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(ring-color=).*/\1${ACCENT}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(ring-clear-color=).*/\1${ACCENT}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(ring-ver-color=).*/\1${ACCENT}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(ring-wrong-color=).*/\1${WRONG_COLOR}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(inside-color=).*/\1${BG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(inside-clear-color=).*/\1${BG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(inside-ver-color=).*/\1${BG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(inside-wrong-color=).*/\1${BG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(key-hl-color=).*/\1${ACCENT}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(bs-hl-color=).*/\1${WRONG_COLOR}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(separator-color=).*/\1${ACCENT_DIM}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(line-color=).*/\1${ACCENT_DIM}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(text-color=).*/\1${FG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(text-clear-color=).*/\1${FG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(text-ver-color=).*/\1${FG}/" "$SWAYLOCK_CONF"
+    sed -i -E "s/^(text-wrong-color=).*/\1${FG}/" "$SWAYLOCK_CONF"
+fi
+
 SWAYNC_DIR="$HOME/.config/swaync"
 if [ -d "$SWAYNC_DIR" ]; then
     echo "Generating SwayNC colors..."

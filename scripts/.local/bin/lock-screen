@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# lock-screen
-# Prefer swaylock-effects if available, otherwise fall back to swaylock.
-
 SWAYLOCK_EFFECTS="$(command -v swaylock-effects || true)"
 SWAYLOCK="$(command -v swaylock || true)"
 
+SWAYLOCK_CONFIG="$HOME/.config/swaylock/config"
+
 if [ -n "$SWAYLOCK_EFFECTS" ]; then
-    # Example options: blur, effect-strength etc. Adjust to taste.
-    exec "$SWAYLOCK_EFFECTS" --blur 7 --effect "boxblur" --indicator
+    if [ -f "$SWAYLOCK_CONFIG" ]; then
+        exec "$SWAYLOCK_EFFECTS" --config "$SWAYLOCK_CONFIG"
+    else
+        exec "$SWAYLOCK_EFFECTS" --blur 7 --indicator --clock
+    fi
 elif [ -n "$SWAYLOCK" ]; then
     exec "$SWAYLOCK"
 else
