@@ -34,7 +34,6 @@ Item {
         color: root.active ? root.tintActive : root.tint
         font.pixelSize: root.fontSize
         font.family: Theme.fontMono
-        renderType: Text.NativeRendering
         Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 
