@@ -25,7 +25,7 @@ BarIconButton {
     }
 
     icon: iconChar()
-    active: hasConnection
+    tint: Theme.textPrimary
     fontSize: Theme.barIconSize + 6
     tooltip: hasConnection
         ? (state.type === "ethernet" ? "Wired" : (state.ssid || "Connected"))
