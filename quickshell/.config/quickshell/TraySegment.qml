@@ -29,7 +29,7 @@ Item {
                 required property SystemTrayItem modelData
                 Layout.preferredWidth: filtered ? 0 : Theme.barHeight - 8
                 Layout.fillHeight: true
-                visible: filtered ? false : true
+                visible: !filtered
 
                 property color tint: (mouse.containsMouse || mouse.pressed)
                     ? Theme.accent : Theme.textPrimary
@@ -38,18 +38,6 @@ Item {
                 readonly property bool filtered: {
                     const id = modelData.id || "";
                     return id === "nm-applet" || id.includes("nm_applet") || id.includes("networkmanager");
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    radius: width / 2
-                    color: {
-                        if (mouse.pressed) return Theme.surfacePressed;
-                        if (mouse.containsMouse) return Theme.surfaceHover;
-                        return "transparent";
-                    }
-                    Behavior on color { ColorAnimation { duration: Theme.durationFast } }
                 }
 
                 IconImage {
