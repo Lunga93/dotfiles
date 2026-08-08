@@ -41,18 +41,6 @@ Item {
                     return id === "nm-applet" || id.includes("nm_applet") || id.includes("networkmanager");
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    radius: width / 2
-                    color: {
-                        if (mouse.pressed) return Theme.surfacePressed;
-                        if (mouse.containsMouse) return Theme.surfaceHover;
-                        return "transparent";
-                    }
-                    Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-                }
-
                 IconImage {
                     id: trayIcon
                     anchors.centerIn: parent
