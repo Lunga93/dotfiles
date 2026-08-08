@@ -1,0 +1,15 @@
+[Unit]
+Description=Niri Heal - Journal Watcher
+After=graphical-session.target
+BindsTo=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/journal-watch
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical-session.target

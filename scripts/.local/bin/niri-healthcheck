@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE_DIR="${HOME}/.local/state/niri-heal"
+LOG_FILE="${STATE_DIR}/heal.log"
+WEBHOOK_URL="http://127.0.0.1:9876/heal"
+
+log() {
+    local ts
+    ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    mkdir -p "$STATE_DIR"
+    echo "[$ts] HEALTHCHECK $*" >> "$LOG_FILE"
+    echo "[$ts] HEALTHCHECK $*"
+}
+
+fire_webhook() {
+    local unit="$1" message="$2"
+    local payload
+    payload=$(jq -n \
+        --arg unit "$unit" \
+        --arg message "$message" \
+        --arg priority "3" \
+        --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        '{unit: $unit, message: $message, priority: $priority, timestamp: $timestamp}')
+    curl -sS -X POST "$WEBHOOK_URL" \
+        -H "Content-Type: application/json" \
+        -d "$payload" \
+        -o /dev/null
+}
+
+# ── niri validate ──────────────────────────────────────────────────
+if command -v niri &>/dev/null; then
+    log "niri validate starting"
+    if niri validate 2>&1; then
+        log "niri validate passed"
+    else
+        log "niri validate FAILED"
+        fire_webhook "niri.service" "niri validate failed: config has syntax errors"
+    fi
+else
+    log "niri: binary not found — skipping validate"
+fi
+
+# ── Compositor responsiveness ──────────────────────────────────────
+if command -v niri &>/dev/null; then
+    if niri msg focused-window &>/dev/null; then
+        log "compositor: responsive"
+    else
+        log "compositor: UNRESPONSIVE"
+        fire_webhook "niri.service" "niri compositor not responding to IPC"
+    fi
+fi
+
+# ── Service status ─────────────────────────────────────────────────
+SERVICES=(swaync.service)
+for svc in "${SERVICES[@]}"; do
+    if systemctl --user is-active --quiet "$svc" 2>/dev/null; then
+        log "$svc: active"
+    else
+        log "$svc: INACTIVE"
+        fire_webhook "$svc" "$svc is inactive (exit or crash)"
+    fi
+done
+
+log "healthcheck complete"
