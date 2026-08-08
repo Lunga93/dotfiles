@@ -47,6 +47,16 @@ EOF
     export PATH="$SANDBOX_ROOT/bin:$PATH"
     export HOME="$SANDBOX_HOME"
 
+    # Misc potentially-slow real bins that get invoked via command -v
+    for bin in chafa seed-wallpapers fetch-wallpaper apply-theme; do
+        cat > "$SANDBOX_ROOT/bin/$bin" <<'EOF'
+#!/usr/bin/env bash
+echo "[MOCK] $(basename "$0") $@" >> "$SANDBOX_ROOT/calls.log"
+exit 0
+EOF
+        chmod +x "$SANDBOX_ROOT/bin/$bin"
+    done
+
     # wofi: return chosen line via SANDBOX_WOFI_CHOICE, or first stdin line
     cat > "$SANDBOX_ROOT/bin/wofi" <<'EOF'
 #!/usr/bin/env bash
