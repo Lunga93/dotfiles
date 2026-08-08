@@ -144,7 +144,7 @@ Item {
                         font.letterSpacing: 0.4
                     }
 
-                    PillSelector {
+                    Dropdown {
                         id: modeSelector
                         width: parent.width
                         options: {
@@ -177,8 +177,9 @@ Item {
                         font.letterSpacing: 0.4
                     }
 
-                    PillSelector {
+                    Dropdown {
                         id: scaleSelector
+                        width: parent.width
                         options: root.scaleLabels
                         currentIndex: root.scaleOptionIndex(modelData.scale || 1.0)
                         onSelected: function(index) {

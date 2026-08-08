@@ -213,11 +213,11 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 | 0 | Wallpaper | `pages/wallpaper/WallpaperPage.qml` | `components/`, `data/` | Yes (pywal, mood cache) |
 | 1 | Appearance | `pages/top-bar/TopBarPage.qml` | `TopBarPreview.qml` | Yes (live preview) |
 | 2 | Icons | `pages/icons/IconsPage.qml` |: | No (writer only) |
-| 3 | Display | `pages/display/DisplayPage.qml` |: | No (writer only) |
+| 3 | Display | `pages/display/DisplayPage.qml` | `data/MonitorStore.qml` | Yes (niri) |
 | 4 | Keybindings | `pages/keybindings/KeybindingsPage.qml` | `KeyCaptureDialog.qml`, `data/KeybindingsStore.qml` | Yes (niri-keybind) |
 | 5 | Network | `pages/network/NetworkPage.qml` |: | Yes (nmcli) |
 | 6 | Sound | `pages/sound/SoundPage.qml` |: | Yes (wpctl) |
-| 7 | System Info | `pages/sysinfo/SysInfoPage.qml` |: | Yes (read-only) |
+| 7 | System Info | `pages/sysinfo/SysInfoPage.qml` | `components/LogView.qml` | Yes (read-only) |
 
 ### Adding a page
 
@@ -233,5 +233,7 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 - `data/KeybindingsStore.qml`: niri keybind query/rebind via `niri-keybind` script
 - `data/MoodCatalog.qml`: mood taxonomy for wallpaper tagging
 - `components/Toast.qml`: reusable toast notification (info/success/error)
+- `components/Dropdown.qml`: animated option list (top-level `Popup`, so it escapes page clipping). API: `options`, `currentIndex`, `maxVisible`, `placeholder`, `selected(index)`; helper `openPopup()`/`closePopup()`, `popupOpen`. Opens upward when there isn't enough space below the trigger. Used where a fixed pill row would overflow (Display resolution/scale).
+- `components/LogView.qml`: scrolling log viewer with Follow/Clear pills and error/warn/info row tinting. API: `title`, `lines`, `maxLines`, `follow`, `cleared()`; helpers `appendLine(text)`, `clear()`. Used on the System Info page (e.g. wallpaper-cleanup log via `FileView watchChanges`).
 
 > [!WARNING] **Docs-update discipline**: changing Quickshell's bar layout, adding/removing segments, or modifying the IPC protocol means updating this page. See `AGENTS.md` section 11.

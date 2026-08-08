@@ -47,6 +47,8 @@ PillSelector 1.0 settings/components/PillSelector.qml
 ColorSwatch 1.0 settings/components/ColorSwatch.qml
 SettingsSlider 1.0 settings/components/SettingsSlider.qml
 Toast 1.0 settings/components/Toast.qml
+Dropdown 1.0 settings/components/Dropdown.qml
+LogView 1.0 settings/components/LogView.qml
 
 # Settings data singletons
 singleton SettingsStore 1.0 settings/data/SettingsStore.qml

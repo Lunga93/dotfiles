@@ -57,6 +57,15 @@ Item {
         onExited: function(code) { if (code !== 0) root.diskTotal = "Unknown" }
     }
 
+    property FileView _cleanupLog: FileView {
+        path: Quickshell.env("HOME") + "/.local/share/dotfiles/wallpaper-cleanup.log"
+        preload: true
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: diagLog.lines = text().split("\n").filter(line => line.trim() !== "")
+        onLoadFailed: diagLog.lines = [ "No cleanup log yet." ]
+    }
+
     property Process _uptimeProc: Process {
         command: ["bash", "-c", "uptime -p | sed 's/^up //'"]
         running: true
@@ -199,6 +208,17 @@ Item {
                     InfoRow { label: "Memory";        value: root.memoryTotal }
                     Divider {}
                     InfoRow { label: "Disk (/)";      value: root.diskTotal }
+                }
+
+                GroupShell {
+                    header: "DIAGNOSTICS"
+
+                    LogView {
+                        id: diagLog
+                        width: parent.width
+                        height: 168
+                        title: "wallpaper-cleanup.log"
+                    }
                 }
 
                 Rectangle {
