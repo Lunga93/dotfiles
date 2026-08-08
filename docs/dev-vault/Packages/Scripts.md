@@ -1,6 +1,6 @@
 # Scripts
 
-Utility scripts directory — the "glue" of the system.
+Utility scripts directory: the "glue" of the system.
 
 ## Location
 
@@ -67,14 +67,14 @@ graph LR
 
 ## Design Pattern
 
-**Status** — JSON to stdout:
+**Status**: JSON to stdout:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 echo '{"sink": "hdmi", "volume": 0.8}'
 ```
 
-**Action** — mutate state, return exit code:
+**Action**: mutate state, return exit code:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -83,7 +83,7 @@ case "${1}" in
 esac
 ```
 
-**Menu** — Wofi frontend:
+**Menu**: Wofi frontend:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail

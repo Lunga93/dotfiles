@@ -6,21 +6,21 @@ Manatee SDDM login greeter.
 
 `sddm/themes/manatee/` → `/usr/share/sddm/themes/manatee/`
 
-Installed by `install.sh` (not stowable — system path requires sudo).
+Installed by `install.sh` (not stowable: system path requires sudo).
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `Main.qml` | Greeter entry point — login form, user list, password field |
+| `Main.qml` | Greeter entry point: login form, user list, password field |
 | `Theme.qml` | Design tokens for the greeter |
 | `theme.conf` | SDDM theme metadata |
 
 ## Integration Points
 
-- **apply-theme** — pushes colors and wallpaper to `/var/lib/sddm-theme/` (user-writable)
-- **SDDM** — reads theme files from `/usr/share/sddm/themes/manatee/`
-- **sddm-greeter-debug** — script to test the greeter in a window without logging out
+- **apply-theme**: pushes colors and wallpaper to `/var/lib/sddm-theme/` (user-writable)
+- **SDDM**: reads theme files from `/usr/share/sddm/themes/manatee/`
+- **sddm-greeter-debug**: script to test the greeter in a window without logging out
 
 ## Conventions
 

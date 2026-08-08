@@ -34,6 +34,7 @@ QtObject {
             "selected_mood": null
         },
         "appearance": {
+            "color_scheme": "dark",
             "accent_mode": "dynamic",
             "manual_primary": null,
             "manual_secondary": null
@@ -69,31 +70,6 @@ QtObject {
     })
 
     signal changed()
-    property int _version: 0
-    onChanged: {
-        topBarGradientIntensity = get("top_bar", "gradient_intensity");
-        topBarBgOpacity = get("top_bar", "background_opacity");
-        topBarTextGlow = get("top_bar", "text_glow");
-        topBarGradientStyle = get("top_bar", "gradient_style");
-        topBarFontFamily = get("top_bar", "font_family");
-        topBarFontWeight = get("top_bar", "font_weight");
-
-        displayScale = get("display", "scale");
-        nightLightEnabled = get("display", "night_light_enabled");
-        nightLightTemperature = get("display", "night_light_temperature");
-
-        iconTheme = get("icons", "icon_theme");
-        cursorTheme = get("icons", "cursor_theme");
-        cursorSize = get("icons", "cursor_size");
-
-        outputVolume = get("sound", "output_volume");
-        outputMuted = get("sound", "output_muted");
-        inputVolume = get("sound", "input_volume");
-        inputMuted = get("sound", "input_muted");
-        alertSoundsEnabled = get("sound", "alert_sounds_enabled");
-
-        wifiEnabled = get("network", "wifi_enabled");
-    }
 
     property FileView _file: FileView {
         path: store.settingsPath
@@ -111,7 +87,6 @@ QtObject {
                 store.migrateAccentFields();
                 store.changed();
                 store.loadSelectedMood();
-                store.refreshAll();
             } catch (e) {
                 console.warn("SettingsStore: failed to parse settings, keeping defaults");
             }
@@ -136,11 +111,20 @@ QtObject {
     property Process _writer: Process { command: ["true"] }
     property Process _exec: Process { command: ["true"] }
 
+    property real _pendingReapply: 0
+
     function save(): void {
         const json = JSON.stringify(store.data, null, 2);
         const cmd = "mkdir -p " + Quickshell.env("HOME") + "/.config/dotfiles && cat > '" + store.settingsPath + "' << 'ENDOFFILE'\n" + json + "\nENDOFFILE";
         _writer.command = ["bash", "-c", cmd];
         _writer.startDetached();
+    }
+
+    function _scheduleReapply(): void {
+        _pendingReapply = Date.now();
+        _exec.command = ["bash", "-c",
+            "sleep 0.5 && ~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\""];
+        _exec.startDetached();
     }
 
     function set(section: string, key: string, value: var): void {
@@ -162,31 +146,6 @@ QtObject {
             return store.data[section][key];
         }
         return null;
-    }
-
-    function refreshAll(): void {
-        store.topBarGradientIntensity = store.get("top_bar", "gradient_intensity");
-        store.topBarBgOpacity = store.get("top_bar", "background_opacity");
-        store.topBarTextGlow = store.get("top_bar", "text_glow");
-        store.topBarGradientStyle = store.get("top_bar", "gradient_style");
-        store.topBarFontFamily = store.get("top_bar", "font_family");
-        store.topBarFontWeight = store.get("top_bar", "font_weight");
-
-        store.displayScale = store.get("display", "scale");
-        store.nightLightEnabled = store.get("display", "night_light_enabled");
-        store.nightLightTemperature = store.get("display", "night_light_temperature");
-
-        store.iconTheme = store.get("icons", "icon_theme");
-        store.cursorTheme = store.get("icons", "cursor_theme");
-        store.cursorSize = store.get("icons", "cursor_size");
-
-        store.outputVolume = store.get("sound", "output_volume");
-        store.outputMuted = store.get("sound", "output_muted");
-        store.inputVolume = store.get("sound", "input_volume");
-        store.inputMuted = store.get("sound", "input_muted");
-        store.alertSoundsEnabled = store.get("sound", "alert_sounds_enabled");
-
-        store.wifiEnabled = store.get("network", "wifi_enabled");
     }
 
     function execScript(cmd: string): void {
@@ -235,7 +194,7 @@ QtObject {
     }
 
     function reapplyTheme(): void {
-        execScript("~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\"");
+        _scheduleReapply();
     }
 
     // Kept for backward compat with any callers still using setManualAccent.
@@ -244,26 +203,38 @@ QtObject {
     }
 
     // ── Display ──
-    property var displayScale: 1.0
-    property var nightLightEnabled: false
-    property var nightLightTemperature: 4000
+    property var displayScale: get("display", "scale")
+    property var nightLightEnabled: get("display", "night_light_enabled")
+    property var nightLightTemperature: get("display", "night_light_temperature")
+    property var colorScheme: get("appearance", "color_scheme")
 
     function setDisplayScale(scale: string): void { set("display", "scale", scale) }
-    function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
-    function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
+    function setNightLightEnabled(enabled: bool): void {
+        set("display", "night_light_enabled", enabled);
+        execScript("~/.local/bin/night-light");
+    }
+    function setNightLightTemperature(temp: int): void {
+        set("display", "night_light_temperature", temp);
+        execScript("~/.local/bin/night-light");
+    }
+    function setColorScheme(scheme: string): void {
+        console.log("SettingsStore: setColorScheme", scheme);
+        set("appearance", "color_scheme", scheme);
+        _scheduleReapply();
+    }
 
     // ── Top Bar ──
-    property var topBarGradientIntensity: 0.5
-    property var topBarBgOpacity: 0.55
-    property var topBarTextGlow: 0.0
-    property var topBarGradientStyle: "off"
-    property var topBarFontFamily: ""
-    property var topBarFontWeight: "Regular"
+    property var topBarGradientIntensity: get("top_bar", "gradient_intensity")
+    property var topBarBgOpacity: get("top_bar", "background_opacity")
+    property var topBarTextGlow: get("top_bar", "text_glow")
+    property var topBarGradientStyle: get("top_bar", "gradient_style")
+    property var topBarFontFamily: get("top_bar", "font_family")
+    property var topBarFontWeight: get("top_bar", "font_weight")
 
     // ── Icons ──
-    property var iconTheme: "Papirus"
-    property var cursorTheme: "Capitaine"
-    property var cursorSize: 24
+    property var iconTheme: get("icons", "icon_theme")
+    property var cursorTheme: get("icons", "cursor_theme")
+    property var cursorSize: get("icons", "cursor_size")
 
     function setIconTheme(theme: string): void {
         set("icons", "icon_theme", theme);
@@ -278,17 +249,12 @@ QtObject {
         execScript("gsettings set org.gnome.desktop.interface cursor-size " + size);
     }
 
-    function setGlobalIconTheme(theme: string): void {
-        set("icons", "icon_theme", theme);
-        execScript("gsettings set org.gnome.desktop.interface icon-theme '" + theme + "' && " + Quickshell.env("HOME") + "/.local/bin/reload-desktop qs");
-    }
-
     // ── Sound ──
-    property var outputVolume: 100
-    property var outputMuted: false
-    property var inputVolume: 100
-    property var inputMuted: false
-    property var alertSoundsEnabled: true
+    property var outputVolume: get("sound", "output_volume")
+    property var outputMuted: get("sound", "output_muted")
+    property var inputVolume: get("sound", "input_volume")
+    property var inputMuted: get("sound", "input_muted")
+    property var alertSoundsEnabled: get("sound", "alert_sounds_enabled")
 
     function setOutputVolume(vol: int): void { set("sound", "output_volume", vol) }
     function setOutputMuted(muted: bool): void { set("sound", "output_muted", muted) }
@@ -297,7 +263,7 @@ QtObject {
     function setAlertSoundsEnabled(enabled: bool): void { set("sound", "alert_sounds_enabled", enabled) }
 
     // ── Network ──
-    property var wifiEnabled: true
+    property var wifiEnabled: get("network", "wifi_enabled")
 
     function setWifiEnabled(enabled: bool): void { set("network", "wifi_enabled", enabled) }
 }

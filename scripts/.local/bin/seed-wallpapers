@@ -225,7 +225,7 @@ def collect_wallhaven_urls(log, want_total):
         while gathered < per_query and page <= 3:
             url = (
                 f"https://wallhaven.cc/api/v1/search"
-                f"?q={quote(query)}&categories=111&purity=110"
+                f"?q={quote(query)}&categories=111&purity=100"
                 f"&sorting=toplist&page={page}&apikey={WALLHAVEN_KEY}"
             )
             try:

@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TASK_DIR="${HOME}/.local/state/niri-heal/tasks"
+HEAL_LOG="${HOME}/.local/state/niri-heal/heal.log"
+
+usage() {
+    cat <<EOF
+niri-heal-log — view self-healing pipeline progress
+
+Usage:
+  niri-heal-log                 show last 20 lines of heal log
+  niri-heal-log -f              follow heal log (tail -f)
+  niri-heal-log tasks           list recent task log files
+  niri-heal-log task <name>     tail the most recent task matching <name>
+  niri-heal-log latest          tail the most recent task log
+EOF
+    exit 0
+}
+
+case "${1:-}" in
+    -f|--follow)
+        exec tail -f "$HEAL_LOG"
+        ;;
+    tasks|--tasks)
+        if [[ -d "$TASK_DIR" ]]; then
+            ls -lt "$TASK_DIR"/*.log 2>/dev/null | head -10
+        else
+            echo "No task logs yet."
+        fi
+        ;;
+    task|--task)
+        if [[ -z "${2:-}" ]]; then
+            echo "Usage: niri-heal-log task <name-pattern>" >&2
+            exit 1
+        fi
+        match=$(ls -t "$TASK_DIR"/*"$2"*.log 2>/dev/null | head -1)
+        if [[ -n "$match" ]]; then
+            exec tail -f "$match"
+        else
+            echo "No task log matching '$2'" >&2
+            exit 1
+        fi
+        ;;
+    latest|--latest)
+        match=$(ls -t "$TASK_DIR"/*.log 2>/dev/null | head -1)
+        if [[ -n "$match" ]]; then
+            exec tail -f "$match"
+        else
+            echo "No task logs yet." >&2
+            exit 1
+        fi
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        if [[ -f "$HEAL_LOG" ]]; then
+            tail -20 "$HEAL_LOG"
+        else
+            echo "No heal log yet."
+        fi
+        ;;
+esac

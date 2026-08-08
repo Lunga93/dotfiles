@@ -22,14 +22,14 @@ First-run onboarding wizard built with Quickshell/QML.
 
 | File | Purpose |
 |------|---------|
-| `shell.qml` | Main app — fullscreen PanelWindow, StackView for pages |
+| `shell.qml` | Main app: fullscreen PanelWindow, StackView for pages |
 | `Theme.qml` | Design tokens (hardcoded dark palette with pywal live-update) |
 | `qmldir` | Module registry |
 | `DistroFacts.qml` | Distro metadata singleton |
 | `Keybindings.qml` | Keybinding data model |
 | `NiriKeybindsModel.qml` | Parsed Niri keybinding model |
 | `parse-niri-keybinds.sh` | Extracts keybindings from niri config.kdl → JSON |
-| `manatee-welcome` | Bash launcher — checks flag file, generates data, launches qs |
+| `manatee-welcome` | Bash launcher: checks flag file, generates data, launches qs |
 | `manatee-welcome.desktop` | Autostart entry |
 
 ### UI Components
@@ -45,9 +45,9 @@ First-run onboarding wizard built with Quickshell/QML.
 
 ## Integration Points
 
-- **Niri** — parses keybindings from `config.kdl`
-- **wallpapers** — scans `~/Pictures/wallpapers/` for thumbnails
-- **Autostart** — launched by Niri `spawn-at-startup`; checks `shown` flag in `~/.local/state/manatee-welcome/`
+- **Niri**: parses keybindings from `config.kdl`
+- **wallpapers**: scans `~/Pictures/wallpapers/` for thumbnails
+- **Autostart**: launched by Niri `spawn-at-startup`; checks `shown` flag in `~/.local/state/manatee-welcome/`
 
 ## Conventions
 

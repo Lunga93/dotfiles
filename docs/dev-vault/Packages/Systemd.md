@@ -34,7 +34,7 @@ User-level systemd services and timers.
 
 ## Conventions
 
-- All services are **user-level** — no sudo for management
+- All services are **user-level**: no sudo for management
 - Oneshot services for tasks, simple services for daemons
 - Timers are persistent (missed runs fire on next boot)
 - Nice/IO scheduling classes for background tasks

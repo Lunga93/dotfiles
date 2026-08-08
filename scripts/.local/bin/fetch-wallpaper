@@ -64,7 +64,7 @@ download_wallhaven() {
     local query=${queries[$RANDOM % ${#queries[@]}]}
 
     echo "Fetching from Wallhaven (query: $query)..."
-    local API_URL="https://wallhaven.cc/api/v1/search?q=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$query'))")&categories=111&purity=110&sorting=toplist&page=1&apikey=$apikey"
+    local API_URL="https://wallhaven.cc/api/v1/search?q=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$query'))")&categories=111&purity=100&sorting=toplist&page=1&apikey=$apikey"
     local JSON
     JSON=$(curl -fsSL "$API_URL") || return 1
     local COUNT

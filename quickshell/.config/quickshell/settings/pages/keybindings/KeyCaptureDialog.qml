@@ -130,7 +130,7 @@ Item {
                         width: chipText.width + 24
                         height: 30
                         radius: 15
-                        color: selected ? Theme.accent : Qt.rgba(1, 1, 1, 0.04)
+                        color: selected ? Theme.accent : Theme.dividerColor
                         border.color: selected ? Theme.accent : Theme.border
                         border.width: 1
 
@@ -159,7 +159,7 @@ Item {
                 width: parent.width
                 height: 72
                 radius: 10
-                color: activeFocus ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.02)
+                color: activeFocus ? Theme.surfaceElev : Theme.surfaceElev
                 border.color: activeFocus ? Theme.accent : Theme.border
                 border.width: 1
                 focus: dialog.open
@@ -221,7 +221,7 @@ Item {
                     width: cancelText.width + 28
                     height: 32
                     radius: 8
-                    color: Qt.rgba(1, 1, 1, 0.04)
+                    color: Theme.dividerColor
                     border.color: Theme.border
                     border.width: 1
 
@@ -245,7 +245,7 @@ Item {
                     width: applyText.width + 28
                     height: 32
                     radius: 8
-                    color: dialog._isValid() ? Theme.accent : Qt.rgba(1, 1, 1, 0.04)
+                    color: dialog._isValid() ? Theme.accent : Theme.dividerColor
                     opacity: dialog._isValid() ? 1 : 0.5
                     border.color: dialog._isValid() ? Theme.accent : Theme.border
                     border.width: 1

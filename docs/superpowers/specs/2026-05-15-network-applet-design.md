@@ -7,7 +7,7 @@ Author: AI agent
 ## Overview
 
 Add a wifi/ethernet network applet to the Quickshell bar, matching the feature
-depth and polish of the existing AudioPanel — live status icon, a popout for
+depth and polish of the existing AudioPanel: live status icon, a popout for
 network management (scan, connect, disconnect, toggle wifi), with smooth
 animations throughout.
 
@@ -74,17 +74,17 @@ Extends `Popout` (same base as AudioPanel, CalendarPopout).
 
 **Layout (top→bottom):**
 
-1. **Header** — "Network" title (DemiBold 14px) + wifi toggle pill (like
+1. **Header**: "Network" title (DemiBold 14px) + wifi toggle pill (like
    WallpaperHero's Dynamic/Manual pill). Toggle calls `nmcli radio wifi on/off`.
    Smooth color transitions on toggle state change.
 
-2. **Current connection card** — visible when `state === "connected"`.
+2. **Current connection card**: visible when `state === "connected"`.
    - Row: SSID (bold) + signal bars icon + signal percent
    - Row: IP address (mono, muted)
    - Disconnect button (click → `nmcli connection down`, with feedback state)
    - Border: `Theme.border`, rounded, hover highlight
 
-3. **Available networks section** — always visible.
+3. **Available networks section**: always visible.
    - Header row: "AVAILABLE NETWORKS" + count
    - Scrollable list (Flickable + ScrollBar custom thumb, same pattern as
      WallpaperPage)
@@ -95,13 +95,13 @@ Extends `Popout` (same base as AudioPanel, CalendarPopout).
      - "Connected" badge or active indicator when currently connected
      - Scale animation on hover (1.0→1.02, like WallpaperGrid)
 
-4. **Inline password field** — when a secured network is tapped:
+4. **Inline password field**: when a secured network is tapped:
    - Smooth height animation expanding the row
    - Password TextField (echo mode) + Connect button (→ "Connecting..." state)
    - Animated spinner/progress during connection attempt
    - Error state (wrong password, timeout) with message + color transition
 
-5. **Footer** — "Network Settings" button → `nm-connection-editor`
+5. **Footer**: "Network Settings" button → `nm-connection-editor`
    - Full-width, hover highlight, subtle arrow icon
 
 **Animations (matching Theme.durationFast/Med/Slow):**
@@ -147,18 +147,18 @@ user action (connect/...) ──→  nmcli command via Process
 ## Files to Create/Modify
 
 ### New files:
-- `scripts/.local/bin/network-status` — watch script (like bluetooth-status)
-- `scripts/.local/bin/network-scan` — one-shot scan script
-- `quickshell/.config/quickshell/NetworkSegment.qml` — bar icon
-- `quickshell/.config/quickshell/NetworkPanel.qml` — popout panel
+- `scripts/.local/bin/network-status`: watch script (like bluetooth-status)
+- `scripts/.local/bin/network-scan`: one-shot scan script
+- `quickshell/.config/quickshell/NetworkSegment.qml`: bar icon
+- `quickshell/.config/quickshell/NetworkPanel.qml`: popout panel
 
 ### Modified files:
-- `quickshell/.config/quickshell/Globals.qml` — add `networkPanel`
-- `quickshell/.config/quickshell/shell.qml` — instantiate NetworkPanel
-- `quickshell/.config/quickshell/Bar.qml` — add NetworkSegment
+- `quickshell/.config/quickshell/Globals.qml`: add `networkPanel`
+- `quickshell/.config/quickshell/shell.qml`: instantiate NetworkPanel
+- `quickshell/.config/quickshell/Bar.qml`: add NetworkSegment
 
 ## Testing
 
-- `bats test/` — existing tests must still pass
+- `bats test/`: existing tests must still pass
 - Manual: click network icon, verify scan populates, connect to open/secured
   network, disconnect, toggle wifi off/on, verify icon updates live

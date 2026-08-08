@@ -1,36 +1,34 @@
-singleton Theme 1.0 Theme.qml
-singleton Globals 1.0 Globals.qml
-singleton AudioNames 1.0 AudioNames.qml
+singleton Theme 1.0 design/Theme.qml
+singleton Globals 1.0 state/Globals.qml
+singleton AudioNames 1.0 audio/AudioNames.qml
 
-Card 1.0 Card.qml
-Popout 1.0 Popout.qml
-IconButton 1.0 IconButton.qml
-VolumeSlider 1.0 VolumeSlider.qml
-VolumeRow 1.0 VolumeRow.qml
-DeviceChip 1.0 DeviceChip.qml
-AudioPanel 1.0 AudioPanel.qml
+Card 1.0 components/Card.qml
+Popout 1.0 popouts/Popout.qml
+IconButton 1.0 components/IconButton.qml
+VolumeSlider 1.0 components/VolumeSlider.qml
+VolumeRow 1.0 components/VolumeRow.qml
+DeviceChip 1.0 components/DeviceChip.qml
+AudioPanel 1.0 popouts/AudioPanel.qml
 
-BarPill 1.0 BarPill.qml
-BarIconButton 1.0 BarIconButton.qml
-BarText 1.0 BarText.qml
-BarGradient 1.0 BarGradient.qml
-BarGlowText 1.0 BarGlowText.qml
-Bar 1.0 Bar.qml
-Indicator 1.0 Indicator.qml
+BarPill 1.0 bar/BarPill.qml
+BarIconButton 1.0 bar/BarIconButton.qml
+BarText 1.0 bar/BarText.qml
+Bar 1.0 bar/Bar.qml
+Indicator 1.0 components/Indicator.qml
 
-WorkspacesSegment 1.0 WorkspacesSegment.qml
-TaskbarSegment 1.0 TaskbarSegment.qml
-TraySegment 1.0 TraySegment.qml
-BluetoothSegment 1.0 BluetoothSegment.qml
-VolumeSegment 1.0 VolumeSegment.qml
-ClockSegment 1.0 ClockSegment.qml
-ClipboardButton 1.0 ClipboardButton.qml
-PowerButton 1.0 PowerButton.qml
+WorkspacesSegment 1.0 segments/WorkspacesSegment.qml
+TaskbarSegment 1.0 segments/TaskbarSegment.qml
+TraySegment 1.0 segments/TraySegment.qml
+BluetoothSegment 1.0 segments/BluetoothSegment.qml
+VolumeSegment 1.0 segments/VolumeSegment.qml
+ClockSegment 1.0 segments/ClockSegment.qml
+ClipboardButton 1.0 segments/ClipboardButton.qml
+PowerButton 1.0 segments/PowerButton.qml
 
-CalendarPopout 1.0 CalendarPopout.qml
-PowerMenuPopout 1.0 PowerMenuPopout.qml
-NetworkPanel 1.0 NetworkPanel.qml
-NetworkSegment 1.0 NetworkSegment.qml
+CalendarPopout 1.0 popouts/CalendarPopout.qml
+PowerMenuPopout 1.0 popouts/PowerMenuPopout.qml
+NetworkPanel 1.0 popouts/NetworkPanel.qml
+NetworkSegment 1.0 segments/NetworkSegment.qml
 
 # Settings app
 SettingsWindow 1.0 settings/SettingsWindow.qml

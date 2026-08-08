@@ -60,7 +60,7 @@ PanelWindow {
         anchors.centerIn: parent
         radius: 16
         color: Theme.surfaceWindow
-        border.color: Qt.rgba(1, 1, 1, 0.06)
+        border.color: Theme.border
         border.width: 1
         clip: true
 
@@ -132,7 +132,7 @@ PanelWindow {
             Text {
                 anchors.centerIn: parent
                 text: "Settings"
-                color: "#a89e8e"
+                color: Theme.textSecondary
                 font.family: Theme.fontFamily
                 font.pixelSize: 13
                 font.weight: Font.Medium

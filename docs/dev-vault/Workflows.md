@@ -137,7 +137,7 @@ git sparse-checkout set scripts test
 git config --global pull.rebase true
 git config --global merge.ort.ignoreCoworkerConflicts true
 
-# Interactive rebase — clean up before PR
+# Interactive rebase: clean up before PR
 git rebase -i HEAD~5
 
 # Bisect with test execution

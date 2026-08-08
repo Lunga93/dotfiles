@@ -208,7 +208,7 @@ binds {
     spawn-sh-at-startup "manatee-welcome" // First-run greeter
 
     prefer-no-csd // Disable program decorations
-    screenshot-path null // Disable screenshot saving
+    screenshot-path "~/Pictures/Screenshots/screenshot-%Y-%m-%d-%H-%M-%S.png"
 
 // ────────────── Layout Settings ──────────────
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Layout
@@ -225,8 +225,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#2F5ED8"
-            inactive-color "#2F5ED8"
+            active-color "#18D2F0"
+            inactive-color "#18D2F0"
         }
 
         shadow {

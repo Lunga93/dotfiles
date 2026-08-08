@@ -1,8 +1,8 @@
-# Manatee Desktop Rebrand — Design Spec
+# Manatee Desktop Rebrand: Design Spec
 
 **Date:** 2026-07-15
 **Status:** Approved
-**Personality:** Playful & warm — the manatee mascot leads. "Oh My Zsh" / "LazyVim" energy.
+**Personality:** Playful & warm: the manatee mascot leads. "Oh My Zsh" / "LazyVim" energy.
 
 ## 1. Naming & Repo
 
@@ -16,13 +16,13 @@
 
 ## 2. Visual Identity
 
-- **Logo**: Existing `logo.svg` (manatee silhouette + bubbles) — kept. `manatee-logo.jpg` kept for fastfetch.
+- **Logo**: Existing `logo.svg` (manatee silhouette + bubbles): kept. `manatee-logo.jpg` kept for fastfetch.
 - **Brand directory**: New `brand/` in repo root:
-  - `logo.svg` — the manatee icon (copied from `welcome/.config/manatee-welcome/assets/logo.svg`)
-  - `logo-full.svg` — manatee icon + "Manatee Desktop" wordmark (new)
-  - `BRANDING.md` — style guide: accent `#0a84ff`, font Fira Sans, logo usage
+  - `logo.svg`: the manatee icon (copied from `welcome/.config/manatee-welcome/assets/logo.svg`)
+  - `logo-full.svg`: manatee icon + "Manatee Desktop" wordmark (new)
+  - `BRANDING.md`: style guide: accent `#0a84ff`, font Fira Sans, logo usage
 - **Installer banner**: Render `logo.svg` via chafa (already a dependency), no ASCII approximation. Falls back cleanly if chafa unavailable.
-- **Color identity**: No new hardcoded palette — pywal-driven theming is the point. `#0a84ff` only for static branded surfaces (README, brand guide, GitHub).
+- **Color identity**: No new hardcoded palette: pywal-driven theming is the point. `#0a84ff` only for static branded surfaces (README, brand guide, GitHub).
 
 ## 3. Install Script (`install.sh`)
 
@@ -34,11 +34,11 @@
 
 Structure:
 1. Logo + tagline + badges (Arch, Niri, license)
-2. "Why Manatee?" — 3 warm bullets
-3. Quick start — clone, `./install.sh`, log out, log in
-4. What's in the box — component overview with personality
-5. Theming — pywal + wallpaper pipeline
-6. Contributing — short, welcoming
+2. "Why Manatee?": 3 warm bullets
+3. Quick start: clone, `./install.sh`, log out, log in
+4. What's in the box: component overview with personality
+5. Theming: pywal + wallpaper pipeline
+6. Contributing: short, welcoming
 7. "Join the pod" closer
 
 ## 5. SDDM Theme Rename

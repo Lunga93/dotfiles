@@ -1,70 +1,21 @@
 import QtQuick
 import QtQuick.Controls
 import Quickshell
-import Quickshell.Io
 import "../../.."
 
 Item {
     id: root
 
-    property var iconThemeKeys: ["Adwaita"]
-    property var iconThemeLabels: ["Adwaita"]
-    property bool themesLoaded: false
-
-    Process {
-        id: gsettingsProbe
-        command: ["sh", "-c", "gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d \"'\" | tr -d '\n'"]
-        running: true
-        stdout: SplitParser {
-            onRead: function(line) {
-                if (line && line !== SettingsStore.iconTheme) {
-                    SettingsStore.set("icons", "icon_theme", line);
-                    SettingsStore.iconTheme = line;
-                }
-            }
-        }
-    }
-
-    function addTheme(name) {
-        if (!name) return;
-        if (root.iconThemeKeys.indexOf(name) === -1) {
-            root.iconThemeKeys = root.iconThemeKeys.concat(name);
-            root.iconThemeLabels = root.iconThemeLabels.concat(name);
-        }
-    }
-
-    function ensureCurrentThemeInList() {
-        const cur = SettingsStore.iconTheme;
-        if (cur) addTheme(cur);
-    }
+    readonly property var cursorThemeKeys: ["capitaine-cursors", "Adwaita", "Bibata-Modern-Classic", "Bibata-Modern-Ice", "phinger-cursors"]
+    readonly property var cursorThemeLabels: ["Capitaine", "Adwaita", "Bibata Classic", "Bibata Ice", "Phinger"]
+    readonly property var iconThemeKeys: ["Adwaita", "Papirus", "Papirus-Dark", "Tela-circle", "WhiteSur", "Numix-Circle"]
+    readonly property var iconThemeLabels: ["Adwaita", "Papirus", "Papirus Dark", "Tela", "WhiteSur", "Numix"]
 
     function indexOf(arr, value) {
         for (let i = 0; i < arr.length; i++) {
             if (arr[i] === value) return i;
         }
         return 0;
-    }
-
-    Process {
-        id: themeScan
-        command: ["sh", "-c",
-            "find /usr/share/icons ~/.local/share/icons ~/.icons " +
-            "-maxdepth 2 -name index.theme -not -path '*/hicolor/*' " +
-            "2>/dev/null | sed 's|/index.theme||' | xargs -n1 basename | sort -u"]
-        running: true
-        stdout: SplitParser {
-            onRead: function(line) {
-                if (line && line !== "hicolor" && line !== "default" && line !== "locolor") {
-                    root.addTheme(line);
-                }
-            }
-        }
-        onRunningChanged: {
-            if (!running) {
-                root.ensureCurrentThemeInList();
-                root.themesLoaded = true;
-            }
-        }
     }
 
     component GroupShell: Column {
@@ -83,7 +34,8 @@ Item {
             visible: gs.header !== ""
 
             Rectangle {
-                width: 3; height: 12; radius: 2
+                width: 3; height: 12
+                radius: 2
                 anchors.verticalCenter: parent.verticalCenter
                 color: gs.accent
             }
@@ -114,6 +66,12 @@ Item {
         }
     }
 
+    component Divider: Rectangle {
+        width: parent.width
+        height: 1
+        color: Theme.dividerColor
+    }
+
     component LabelRow: Item {
         id: lr
         property string title: ""
@@ -126,21 +84,26 @@ Item {
 
         Column {
             id: textCol
-            anchors.left: parent.left; anchors.leftMargin: 20
-            anchors.right: controlSlot.left; anchors.rightMargin: 16
+            anchors.left: parent.left
+            anchors.leftMargin: 20
+            anchors.right: controlSlot.left
+            anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3
 
             Text {
                 text: lr.title
                 color: Theme.textPrimary
-                font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium
+                font.family: Theme.fontFamily
+                font.pixelSize: 13
+                font.weight: Font.Medium
             }
             Text {
                 width: parent.width
                 text: lr.description
                 color: Theme.textSecondary
-                font.family: Theme.fontFamily; font.pixelSize: 11
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
                 visible: lr.description !== ""
                 wrapMode: Text.WordWrap
             }
@@ -148,7 +111,8 @@ Item {
                 width: parent.width
                 text: lr.hint
                 color: Theme.textTertiary
-                font.family: Theme.fontFamily; font.pixelSize: 10
+                font.family: Theme.fontFamily
+                font.pixelSize: 10
                 font.italic: true
                 visible: lr.hint !== ""
                 wrapMode: Text.WordWrap
@@ -157,7 +121,8 @@ Item {
 
         Item {
             id: controlSlot
-            anchors.right: parent.right; anchors.rightMargin: 20
+            anchors.right: parent.right
+            anchors.rightMargin: 20
             anchors.verticalCenter: parent.verticalCenter
             width: childrenRect.width
             height: childrenRect.height
@@ -178,97 +143,108 @@ Item {
 
         Column {
             id: column
-            width: parent.width; spacing: 0
+            width: parent.width
+            spacing: 0
 
             Item {
-                width: parent.width; height: 76
+                width: parent.width
+                height: 76
                 Column {
                     anchors.left: parent.left; anchors.leftMargin: 28
                     anchors.top: parent.top; anchors.topMargin: 20
                     spacing: 4
                     Text {
                         text: "Icons"
-                        color: "#f5ede0"
+                        color: Theme.textHeader
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
-                        text: "System-wide icon theme for GTK and Qt applications."
-                        color: "#8a8175"
+                        text: "Icon pack, cursor theme, and cursor size."
+                        color: Theme.textSubtitle
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
                 }
             }
 
             Column {
-                x: 28; width: parent.width - 56; spacing: 18; bottomPadding: 32
+                x: 28
+                width: parent.width - 56
+                spacing: 18
+                bottomPadding: 32
 
                 GroupShell {
-                    header: "GLOBAL ICON THEME"
+                    header: "ICON PACK"
                     accent: Theme.primary
 
-                    Column {
-                        width: parent.width
-                        padding: 16
-                        spacing: 8
-
-                        Row {
-                            spacing: 8
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            Text {
-                                text: "Theme"
-                                color: Theme.textPrimary
-                                font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium
-                            }
-                            Text {
-                                text: root.themesLoaded
-                                    ? root.iconThemeKeys.length + " themes found"
-                                    : "Scanning installed themes..."
-                                color: Theme.textSecondary
-                                font.family: Theme.fontFamily; font.pixelSize: 11
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0
-                                && SettingsStore.iconTheme
-                                && SettingsStore.iconTheme !== root.iconThemeKeys[0]
-                                ? "Current: " + SettingsStore.iconTheme
-                                : ""
-                            color: Theme.textTertiary
-                            font.family: Theme.fontFamily; font.pixelSize: 10
-                            font.italic: true
-                            visible: text !== ""
-                        }
+                    LabelRow {
+                        title: "Theme"
+                        description: "GTK icon theme used by all applications."
+                        hint: SettingsStore.iconTheme && root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0 && SettingsStore.iconTheme !== "Adwaita"
+                            ? "Current: " + SettingsStore.iconTheme + " (not in preset list)"
+                            : ""
 
                         PillSelector {
-                            width: parent.width
-                            wrap: true
                             options: root.iconThemeLabels
                             currentIndex: root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme)
                             onSelected: function(index) {
-                                if (index >= 0 && index < root.iconThemeKeys.length) {
-                                    SettingsStore.setGlobalIconTheme(root.iconThemeKeys[index]);
-                                }
+                                SettingsStore.setIconTheme(root.iconThemeKeys[index]);
+                            }
+                        }
+                    }
+                }
+
+                GroupShell {
+                    header: "CURSOR"
+                    accent: Theme.secondary
+
+                    LabelRow {
+                        title: "Theme"
+                        description: "Mouse cursor style."
+
+                        PillSelector {
+                            options: root.cursorThemeLabels
+                            currentIndex: root.indexOf(root.cursorThemeKeys, SettingsStore.cursorTheme)
+                            onSelected: function(index) {
+                                SettingsStore.setCursorTheme(root.cursorThemeKeys[index]);
+                            }
+                        }
+                    }
+
+                    Divider {}
+
+                    LabelRow {
+                        title: "Size"
+                        description: "Cursor diameter in pixels."
+
+                        SettingsSlider {
+                            width: 240
+                            from: 16
+                            to: 48
+                            value: SettingsStore.cursorSize
+                            unitLabel: Math.round(value) + " px"
+                            snap: true
+                            stepSize: 2
+                            onValueChangedByUser: function(v) {
+                                SettingsStore.setCursorSize(Math.round(v));
                             }
                         }
                     }
                 }
 
                 Rectangle {
-                    width: parent.width; height: 56
+                    width: parent.width
+                    height: 56
                     radius: Theme.radiusCard
-                    color: Qt.rgba(1, 1, 1, 0.025)
-                    border.color: Theme.border; border.width: 1
+                    color: Theme.surfaceElev
+                    border.color: Theme.border
+                    border.width: 1
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Install icon themes via pacman or yay. Restart apps to see changes."
+                        text: "Theme packs must be installed system-wide. Use pacman or yay."
                         color: Theme.textTertiary
-                        font.family: Theme.fontFamily; font.pixelSize: 11
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width - 32; wrapMode: Text.WordWrap
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 11
                     }
                 }
             }
@@ -282,10 +258,9 @@ Item {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
-            height: scroller.contentHeight > 0
-                ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
+            height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height
         }
     }

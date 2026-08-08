@@ -1,0 +1,17 @@
+// Clipboard launcher → cliphist | wofi | wl-copy.
+
+import QtQuick
+import Quickshell.Io
+import "../"
+
+BarIconButton {
+    icon: "󰅌"
+    tooltip: "Clipboard history"
+    onClicked: proc.startDetached()
+    onRightClicked: proc.startDetached()
+
+    Process {
+        id: proc
+        command: ["sh", "-c", "cliphist list | wofi --dmenu | cliphist decode | wl-copy"]
+    }
+}

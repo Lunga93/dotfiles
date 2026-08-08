@@ -22,12 +22,12 @@ Item {
     readonly property bool isManual: SettingsStore.get("appearance", "accent_mode") === "manual"
     readonly property color currentPrimary: Theme.primary
     readonly property color currentSecondary: Theme.secondary
-    readonly property color labelMuted:  "#6b6258"
-    readonly property color labelDim:    "#8a8175"
-    readonly property color labelActive: "#f5ede0"
+    readonly property color labelMuted:  Theme.textSubtitle
+    readonly property color labelDim:    Theme.textSubtitle
+    readonly property color labelActive: Theme.textHeader
     readonly property color cardBg:      "#221c15"
-    readonly property color cardBorder:  "#0e0a06"
-    readonly property color rowDivider:  Qt.rgba(1, 1, 1, 0.04)
+    readonly property color cardBorder:  Theme.dividerColor
+    readonly property color rowDivider:  Theme.dividerColor
 
     function selectedIndex(target) {
         for (let i = 0; i < paletteColors.length; i++) {
@@ -46,7 +46,7 @@ Item {
             width: (parent.width - 16) / 2
             height: parent.height
             radius: 14
-            color: "#0f0b07"
+            color: Theme.surfaceDeep
             clip: true
 
             Image {

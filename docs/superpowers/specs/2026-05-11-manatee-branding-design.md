@@ -8,7 +8,7 @@ default color palette. All three live in the dotfiles repo and ship with
 `install.sh`.
 
 Reference: [Underwater manatee photo](https://upload.wikimedia.org/wikipedia/commons/d/d7/Underwater_photography_on_endangered_mammal_manatee.jpg)
-— validates the oceanic scene, blue-green water, light rays, and the manatee's
+: validates the oceanic scene, blue-green water, light rays, and the manatee's
 gentle silhouette with whiskered snout and paddle tail.
 
 ## Deliverables
@@ -25,7 +25,7 @@ gentle silhouette with whiskered snout and paddle tail.
 - Add `fastfetch` to `OFFICIAL_PACKAGES` in `install.sh`.
 - Add `fastfetch` to `STOW_DIRS` in `install.sh`.
 
-### 2. Default Wallpaper — "Deep Dive" (`assets/wallpapers/manatee-default.png`)
+### 2. Default Wallpaper: "Deep Dive" (`assets/wallpapers/manatee-default.png`)
 
 - Generated via Python PIL script (committed to `scripts/.local/bin/gen-default-wallpaper`).
 - Scene: manatee silhouette swimming in deep ocean, light rays piercing from above,
@@ -74,7 +74,7 @@ color7:      #f5f5f7  (white)
 - Create `fastfetch/.config/fastfetch/config.jsonc` in the dotfiles repo
 - Hand-craft ASCII manatee art
 - Add fastfetch to `install.sh` (packages + stow dirs)
-- File: `scripts/.local/bin/gen-manatee-ascii` (optional — or inline)
+- File: `scripts/.local/bin/gen-manatee-ascii` (optional: or inline)
 - Tests: `fastfetch` runs without errors with the config
 
 ### Task 2: Default wallpaper + color palette

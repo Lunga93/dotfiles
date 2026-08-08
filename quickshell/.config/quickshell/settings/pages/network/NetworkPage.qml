@@ -91,7 +91,7 @@ Item {
     component Divider: Rectangle {
         width: parent.width
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Theme.dividerColor
     }
 
     component LabelRow: Item {
@@ -169,12 +169,12 @@ Item {
                     spacing: 4
                     Text {
                         text: "Network"
-                        color: "#f5ede0"
+                        color: Theme.textHeader
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
                         text: "Connection status and wireless control."
-                        color: "#8a8175"
+                        color: Theme.textSubtitle
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
                 }
@@ -216,8 +216,8 @@ Item {
                         Rectangle {
                             width: 56; height: 56; radius: 28
                             anchors.verticalCenter: parent.verticalCenter
-                            color: root.connectionType !== "" ? Theme.withAlpha(Theme.primary, 0.25) : Qt.rgba(1, 1, 1, 0.05)
-                            border.color: root.connectionType !== "" ? Theme.primary : Qt.rgba(1, 1, 1, 0.15)
+                            color: root.connectionType !== "" ? Theme.withAlpha(Theme.primary, 0.25) : Theme.surfaceElev
+                            border.color: root.connectionType !== "" ? Theme.primary : Theme.border
                             border.width: 1
 
                             Rectangle {
@@ -247,7 +247,7 @@ Item {
                             }
                             Text {
                                 text: root.activeConnection
-                                color: "#f5ede0"
+                                color: Theme.textHeader
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 18; font.weight: Font.DemiBold
                             }
@@ -328,7 +328,7 @@ Item {
                                 id: openBtnText
                                 anchors.centerIn: parent
                                 text: "Open NetworkManager"
-                                color: "#1a1105"
+                                color: Theme.foreground
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 12; font.weight: Font.DemiBold
                             }
@@ -357,7 +357,7 @@ Item {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
             height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height

@@ -30,7 +30,7 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "Coming Soon"
-            color: "#f5ede0"
+            color: Theme.textHeader
             font.family: Theme.fontFamily
             font.pixelSize: 22
             font.weight: Font.Bold
@@ -40,7 +40,7 @@ Item {
         Text {
             width: parent.width
             text: "This settings page will be available in a future update."
-            color: "#8a8175"
+            color: Theme.textSubtitle
             font.family: Theme.fontFamily
             font.pixelSize: 13
             horizontalAlignment: Text.AlignHCenter

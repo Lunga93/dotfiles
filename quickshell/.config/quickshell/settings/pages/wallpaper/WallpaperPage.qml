@@ -31,12 +31,12 @@ Flickable {
                 spacing: 4
                 Text {
                     text: "Wallpaper"
-                    color: "#f5ede0"
+                    color: Theme.textHeader
                     font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                 }
                 Text {
                     text: "Browse by mood, schedule rotation, and manage sources."
-                    color: "#8a8175"
+                    color: Theme.textSubtitle
                     font.family: Theme.fontFamily; font.pixelSize: 12
                 }
             }
@@ -117,7 +117,7 @@ Flickable {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: root.contentHeight > 0 ? (root.contentY / root.contentHeight) * parent.height : 0
             height: root.contentHeight > 0 ? Math.max(40, (root.height / root.contentHeight) * parent.height) : 0
             visible: root.contentHeight > root.height

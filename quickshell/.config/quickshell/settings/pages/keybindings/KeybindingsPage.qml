@@ -171,7 +171,7 @@ Item {
 
         width: parent.width
         height: 42
-        color: alternate ? Qt.rgba(1, 1, 1, 0.02) : "transparent"
+        color: alternate ? Theme.surfaceElev : "transparent"
 
         // Re-fetch when the store reloads
         Connections {
@@ -202,7 +202,7 @@ Item {
                 width: keyText.width + 16
                 height: 24
                 radius: 6
-                color: kr.bound ? Qt.rgba(1, 1, 1, 0.04) : "transparent"
+                color: kr.bound ? Theme.dividerColor : "transparent"
                 border.color: kr.bound ? Theme.border : Qt.rgba(1, 1, 1, 0.06)
                 border.width: 1
 
@@ -303,12 +303,12 @@ Item {
                     spacing: 4
                     Text {
                         text: "Keybindings"
-                        color: "#f5ede0"
+                        color: Theme.textHeader
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
                         text: "Niri keybinding reference. MOD = Super/Windows key. Changes save instantly."
-                        color: "#8a8175"
+                        color: Theme.textSubtitle
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
                 }
@@ -319,7 +319,7 @@ Item {
                     width: reloadText.width + 24
                     height: 28
                     radius: 7
-                    color: Qt.rgba(1, 1, 1, 0.04)
+                    color: Theme.dividerColor
                     border.color: Theme.border
                     border.width: 1
 
@@ -373,7 +373,7 @@ Item {
                     width: parent.width
                     height: 64
                     radius: Theme.radiusCard
-                    color: Qt.rgba(1, 1, 1, 0.03)
+                    color: Theme.surfaceElev
                     border.color: Theme.border
                     border.width: 1
 
@@ -458,7 +458,7 @@ Item {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
             height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height

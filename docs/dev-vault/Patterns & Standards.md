@@ -19,19 +19,19 @@ IFS=$'\n\t'
 
 ### Three Patterns
 
-**Status** — JSON to stdout:
+**Status** : JSON to stdout:
 ```bash
 echo '{"volume": 0.8, "mute": false}'
 ```
 
-**Action** — mutate state, return exit code:
+**Action** : mutate state, return exit code:
 ```bash
 case "${1}" in
     --volume) wpctl set-volume @DEFAULT_SINK@ "${2}" ;;
 esac
 ```
 
-**Menu** — Wofi frontend:
+**Menu** : Wofi frontend:
 ```bash
 choice=$(generate | wofi --dmenu)
 [[ -n "$choice" ]] || exit 1
@@ -81,7 +81,7 @@ Every package must:
 
 ## Git
 
-- `type(package): description` — `feat`, `fix`, `chore`, `test`
+- `type(package): description` : `feat`, `fix`, `chore`, `test`
 - No secrets, no force-push
 - Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`
 - Prefer `git rebase` over merge for feature branches (linear history)

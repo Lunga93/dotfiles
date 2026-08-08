@@ -31,7 +31,7 @@ Item {
             id: specular
             width: parent.width * 1.5
             height: parent.height * 2
-            color: Qt.rgba(1, 1, 1, 0.05)
+            color: Theme.surfaceElev
             rotation: 25
             x: -width
             y: -height * 0.5
@@ -52,7 +52,7 @@ Item {
             anchors.fill: parent
             radius: 14
             color: "transparent"
-            border.color: Qt.rgba(1, 1, 1, 0.15)
+            border.color: Theme.border
             border.width: root.selected ? 2 : 0
             opacity: root.selected ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 200 } }

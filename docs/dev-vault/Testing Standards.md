@@ -292,8 +292,8 @@ sequenceDiagram
 - [ ] Test all code paths: success, failure, edge cases, empty input, missing deps
 - [ ] Shell variable assertions use `$status`, `$output`, `${lines[@]}`
 - [ ] Verify side effects via `$SANDBOX_ROOT/calls.log`
-- [ ] Run `bats test/` — all 140+ tests must pass
-- [ ] Run `test-coverage --check` — no regressions
+- [ ] Run `bats test/` : all 140+ tests must pass
+- [ ] Run `test-coverage --check` : no regressions
 - [ ] Run `shellcheck` on the test file (it's still bash)
 
 ### Anti-patterns

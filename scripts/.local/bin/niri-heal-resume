@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+rm -f "${HOME}/.local/state/niri-heal/pause"
+echo "niri-heal: RESUMED — journal watching and webhook processing enabled."
