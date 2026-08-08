@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for bats tests
+# Shared helpers for bats tests — lightweight: no repo copy, mocks only
 set -euo pipefail
 
 create_sandbox() {
@@ -86,9 +86,8 @@ EOF
     export TEST_TMPDIR="$SANDBOX_ROOT/tmp"
     mkdir -p "$TEST_TMPDIR"
 
-    SANDBOX_REPO="$SANDBOX_ROOT/repo"
-    mkdir -p "$SANDBOX_REPO"
-    cp -a "$(pwd)"/* "$SANDBOX_REPO/" || true
+    # Point to the real repo — no copy needed
+    SANDBOX_REPO="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
     export SANDBOX_REPO
 }
 
@@ -204,5 +203,5 @@ EOF
 }
 
 run_install_sh() {
-    (cd "$SANDBOX_REPO" && bash ./install.sh)
+    (cd "$SANDBOX_REPO" && PATH="$SANDBOX_ROOT/bin:$PATH" HOME="$SANDBOX_HOME" bash ./install.sh)
 }
