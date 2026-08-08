@@ -5,9 +5,9 @@ import "../../.." // qmldir types
 
 // Self-contained preview of the bar. Does NOT load Bar.qml; instead, renders a
 // mock approximation — workspace dots, a centered window title, clock + power
-// — using the live `top_bar.vibrancy` settings. Updates automatically because
-// every binding chains through SettingsStore.data, whose `set()` rebuilds the
-// object reference and emits `changed()`.
+// — using the live top_bar settings. Updates automatically because the
+// SettingsStore.topBar* properties re-evaluate when the settings file changes
+// (they depend on SettingsStore._revision, bumped by load/set).
 Item {
     id: root
 
@@ -32,21 +32,8 @@ Item {
         }
     }
 
-    readonly property real bgOpacity:         SettingsStore.topBarBgOpacity
-    readonly property real gradientIntensity: SettingsStore.topBarGradientIntensity
-    readonly property real textGlow:          SettingsStore.topBarTextGlow
-    readonly property string gradientStyle:   SettingsStore.topBarGradientStyle
-
-    // Max alpha caps per gradient style (mirrors BarGradient.qml).
-    function maxAlphaFor(style) {
-        switch (style) {
-            case "luminance":   return 0.07;
-            case "single_hue":  return 0.09;
-            case "cabin":       return 0.06;
-            default:            return 0.0;
-        }
-    }
-    readonly property real effectiveMaxAlpha: maxAlphaFor(gradientStyle) * gradientIntensity
+    readonly property real bgOpacity: SettingsStore.topBarBgOpacity
+    readonly property real textGlow:  SettingsStore.topBarTextGlow
 
     clip: true
 
@@ -84,85 +71,6 @@ Item {
             id: surface
             anchors.fill: parent
             color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, root.bgOpacity)
-        }
-
-        // Gradient overlay — top-down mask, fades from max alpha at top to 0 at bottom.
-        // Composed differently per style; "off" simply renders nothing.
-        Item {
-            id: gradientOverlay
-            anchors.fill: parent
-            visible: root.gradientStyle !== "off" && root.gradientIntensity > 0
-            opacity: 1.0
-
-            // Luminance: white linear, top-down
-            Rectangle {
-                anchors.fill: parent
-                visible: root.gradientStyle === "luminance"
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, root.effectiveMaxAlpha) }
-                    GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0) }
-                }
-            }
-
-            // Single hue: primary linear, top-down
-            Rectangle {
-                anchors.fill: parent
-                visible: root.gradientStyle === "single_hue"
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0.0
-                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b,
-                                       root.effectiveMaxAlpha)
-                    }
-                    GradientStop {
-                        position: 1.0
-                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0)
-                    }
-                }
-            }
-
-            // Cabin: primary on the left half + secondary on the right half,
-            // each fading top-down. Approximated with two layered rectangles
-            // masked by a horizontal split.
-            Item {
-                anchors.fill: parent
-                visible: root.gradientStyle === "cabin"
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    width: parent.width * 0.6
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.0
-                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b,
-                                           root.effectiveMaxAlpha)
-                        }
-                        GradientStop {
-                            position: 1.0
-                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0)
-                        }
-                    }
-                }
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    width: parent.width * 0.6
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0.0
-                            color: Qt.rgba(Theme.secondary.r, Theme.secondary.g, Theme.secondary.b,
-                                           root.effectiveMaxAlpha)
-                        }
-                        GradientStop {
-                            position: 1.0
-                            color: Qt.rgba(Theme.secondary.r, Theme.secondary.g, Theme.secondary.b, 0)
-                        }
-                    }
-                }
-            }
         }
 
         // ─── Mock content ──────────────────────────────────────────────

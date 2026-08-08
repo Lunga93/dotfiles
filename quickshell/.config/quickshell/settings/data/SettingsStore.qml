@@ -40,12 +40,10 @@ QtObject {
             "manual_secondary": null
         },
         "top_bar": {
-            "gradient_style": "off",
-            "gradient_intensity": 0.5,
-            "background_opacity": 0.85,
+            "background_opacity": 0.55,
             "text_glow": 0.0,
             "font_family": "",
-            "font_weight": "Regular"
+            "font_weight": "medium"
         },
         "display": {
             "scale": 1.0,
@@ -69,7 +67,12 @@ QtObject {
         }
     })
 
+    // Bumped on every data change. Derived properties depend on it because
+    // load/set mutate store.data in place, which QML bindings don't track.
+    property int _revision: 0
+
     signal changed()
+    onChanged: store._revision += 1
 
     property FileView _file: FileView {
         path: store.settingsPath
@@ -203,10 +206,10 @@ QtObject {
     }
 
     // ── Display ──
-    property var displayScale: get("display", "scale")
-    property var nightLightEnabled: get("display", "night_light_enabled")
-    property var nightLightTemperature: get("display", "night_light_temperature")
-    property var colorScheme: get("appearance", "color_scheme")
+    property var displayScale: (store._revision, get("display", "scale"))
+    property var nightLightEnabled: (store._revision, get("display", "night_light_enabled"))
+    property var nightLightTemperature: (store._revision, get("display", "night_light_temperature"))
+    property var colorScheme: (store._revision, get("appearance", "color_scheme"))
 
     function setDisplayScale(scale: string): void {
         set("display", "scale", scale);
@@ -227,17 +230,15 @@ QtObject {
     }
 
     // ── Top Bar ──
-    property var topBarGradientIntensity: get("top_bar", "gradient_intensity")
-    property var topBarBgOpacity: get("top_bar", "background_opacity")
-    property var topBarTextGlow: get("top_bar", "text_glow")
-    property var topBarGradientStyle: get("top_bar", "gradient_style")
-    property var topBarFontFamily: get("top_bar", "font_family")
-    property var topBarFontWeight: get("top_bar", "font_weight")
+    property var topBarBgOpacity: (store._revision, get("top_bar", "background_opacity"))
+    property var topBarTextGlow: (store._revision, get("top_bar", "text_glow"))
+    property var topBarFontFamily: (store._revision, get("top_bar", "font_family"))
+    property var topBarFontWeight: (store._revision, get("top_bar", "font_weight"))
 
     // ── Icons ──
-    property var iconTheme: get("icons", "icon_theme")
-    property var cursorTheme: get("icons", "cursor_theme")
-    property var cursorSize: get("icons", "cursor_size")
+    property var iconTheme: (store._revision, get("icons", "icon_theme"))
+    property var cursorTheme: (store._revision, get("icons", "cursor_theme"))
+    property var cursorSize: (store._revision, get("icons", "cursor_size"))
 
     function setIconTheme(theme: string): void {
         set("icons", "icon_theme", theme);
@@ -253,11 +254,11 @@ QtObject {
     }
 
     // ── Sound ──
-    property var outputVolume: get("sound", "output_volume")
-    property var outputMuted: get("sound", "output_muted")
-    property var inputVolume: get("sound", "input_volume")
-    property var inputMuted: get("sound", "input_muted")
-    property var alertSoundsEnabled: get("sound", "alert_sounds_enabled")
+    property var outputVolume: (store._revision, get("sound", "output_volume"))
+    property var outputMuted: (store._revision, get("sound", "output_muted"))
+    property var inputVolume: (store._revision, get("sound", "input_volume"))
+    property var inputMuted: (store._revision, get("sound", "input_muted"))
+    property var alertSoundsEnabled: (store._revision, get("sound", "alert_sounds_enabled"))
 
     function setOutputVolume(vol: int): void { set("sound", "output_volume", vol) }
     function setOutputMuted(muted: bool): void { set("sound", "output_muted", muted) }
@@ -266,7 +267,7 @@ QtObject {
     function setAlertSoundsEnabled(enabled: bool): void { set("sound", "alert_sounds_enabled", enabled) }
 
     // ── Network ──
-    property var wifiEnabled: get("network", "wifi_enabled")
+    property var wifiEnabled: (store._revision, get("network", "wifi_enabled"))
 
     function setWifiEnabled(enabled: bool): void { set("network", "wifi_enabled", enabled) }
 }

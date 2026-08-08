@@ -55,12 +55,11 @@ Item {
             Behavior on color { ColorAnimation { duration: Theme.durationFast } }
         }
 
-        BarText {
+        BarGlowText {
             text: Math.round(root.volume * 100) + "%"
             color: root.muted ? Theme.textTertiary
                  : mouse.containsMouse || mouse.pressed ? Theme.accent
                  : Theme.textPrimary
-            font.weight: Font.Medium
             Behavior on color { ColorAnimation { duration: Theme.durationFast } }
         }
     }

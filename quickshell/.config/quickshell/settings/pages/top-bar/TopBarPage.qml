@@ -1,7 +1,6 @@
-// Top Bar settings page. Tunes the single translucent edge-to-edge bar via
-// gradient style + intensity, background opacity, text glow, and typography.
-// Bindings read from top-level SettingsStore.topBar* properties so changes
-// propagate live; writes go through SettingsStore.set("top_bar", k, v).
+// Top Bar settings page. Tunes the translucent bar via background opacity,
+// text glow, and typography. Bindings read from top-level SettingsStore.topBar*
+// properties so changes propagate live; writes go through SettingsStore.set.
 
 import QtQuick
 import QtQuick.Controls
@@ -12,21 +11,18 @@ Item {
     id: root
 
     // ─── Helpers ────────────────────────────────────────────────────────
-    readonly property var gradientStyleKeys: ["off", "luminance", "single_hue", "cabin"]
-    readonly property var gradientStyleLabels: ["Off", "Luminance", "Single hue", "Cabin"]
-
     readonly property var fontFamilyOptions: ["Inter", "SF Pro", "Geist", "Manrope", "Noto Sans Mono"]
     readonly property var fontWeightKeys: ["light", "regular", "medium"]
     readonly property var fontWeightLabels: ["Light", "Regular", "Medium"]
 
-    function indexOf(arr, value) {
+    readonly property var indexOf: (arr, value) => {
         for (let i = 0; i < arr.length; i++) {
             if (arr[i] === value) return i;
         }
         return 0;
     }
 
-    function fontInstalled(name) {
+    readonly property var fontInstalled: (name) => {
         if (!name) return false;
         const fams = Qt.fontFamilies();
         for (let i = 0; i < fams.length; i++) {
@@ -35,7 +31,7 @@ Item {
         return false;
     }
 
-    function installHintFor(name) {
+    readonly property var installHintFor: (name) => {
         switch (name) {
             case "Inter":   return "(install with `pacman -S inter-font`)";
             case "SF Pro":  return "(install via AUR: `yay -S otf-san-francisco`)";
@@ -296,41 +292,6 @@ Item {
                     TopBarPreview { anchors.fill: parent }
                 }
 
-                // Gradient
-                GroupShell {
-                    header: "GRADIENT"
-
-                    LabelRow {
-                        title: "Style"
-                        description: "Top-down ambient tint, like the band on a car windshield."
-
-                        PillSelector {
-                            options: root.gradientStyleLabels
-                            currentIndex: root.indexOf(root.gradientStyleKeys, SettingsStore.topBarGradientStyle)
-                            onSelected: function(index) {
-                                SettingsStore.set("top_bar", "gradient_style", root.gradientStyleKeys[index]);
-                            }
-                        }
-                    }
-
-                    Divider {}
-
-                    LabelRow {
-                        title: "Intensity"
-                        description: "How strongly the gradient tints the top edge."
-
-                        VSlider {
-                            width: 240
-                            from: 0.0
-                            to: 1.0
-                            value: SettingsStore.topBarGradientIntensity
-                            onValueChangedByUser: function(v) {
-                                SettingsStore.set("top_bar", "gradient_intensity", v);
-                            }
-                        }
-                    }
-                }
-
                 // Surface
                 GroupShell {
                     header: "SURFACE"
@@ -345,7 +306,7 @@ Item {
                             to: 0.60
                             value: SettingsStore.topBarBgOpacity
                             onValueChangedByUser: function(v) {
-                                SettingsStore.set("top_bar", "bg_opacity", v);
+                                SettingsStore.set("top_bar", "background_opacity", v);
                             }
                         }
                     }

@@ -60,15 +60,12 @@ Item {
                 Layout.preferredWidth: 28
                 Layout.fillHeight: true
 
-                Text {
+                BarGlowText {
                     anchors.centerIn: parent
                     text: ws.modelData.idx + ""
                     color: ws.modelData.is_active ? Theme.textPrimary
                          : mouse.containsMouse || mouse.pressed ? Theme.accent
                          : Theme.textTertiary
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.barFontSize
-                    font.weight: ws.modelData.is_active ? Font.DemiBold : Font.Medium
                     Behavior on color { ColorAnimation { duration: Theme.durationFast } }
                 }
 

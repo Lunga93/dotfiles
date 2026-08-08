@@ -19,26 +19,36 @@ Item {
     property real   glow:   SettingsStore.topBarTextGlow
     property string family: SettingsStore.topBarFontFamily
 
+    readonly property string effectiveFamily: {
+        if (family === "") return Theme.fontFamily;
+        const fams = Qt.fontFamilies();
+        for (let i = 0; i < fams.length; i++) {
+            if (fams[i] === family || fams[i].toLowerCase() === family.toLowerCase()) return family;
+        }
+        return Theme.fontFamily;
+    }
+
     implicitWidth:  visibleText.implicitWidth
     implicitHeight: visibleText.implicitHeight
 
-    function weightOf(s) {
+    readonly property var weightOf: (s) => {
         switch (s) {
             case "regular": return Font.Normal;
             case "medium":  return Font.Medium;
             case "light":
-            default:        return Font.Light;
+            default:        return Font.Normal;
         }
     }
 
     // Glow underlay — duplicated text, blurred via MultiEffect. Disabled
     // entirely when glow is 0 so we don't pay the offscreen layer cost.
+    // White halo regardless of text color (matches TopBarPreview).
     Text {
         id: glowLayer
         anchors.fill: parent
         text: root.text
-        color: root.color
-        font.family: root.family
+        color: Qt.rgba(1, 1, 1, 1)
+        font.family: root.effectiveFamily
         font.pixelSize: root.pixelSize
         font.weight: root.weight
         verticalAlignment: Text.AlignVCenter
@@ -57,7 +67,7 @@ Item {
         id: visibleText
         text: root.text
         color: root.color
-        font.family: root.family
+        font.family: root.effectiveFamily
         font.pixelSize: root.pixelSize
         font.weight: root.weight
         verticalAlignment: Text.AlignVCenter

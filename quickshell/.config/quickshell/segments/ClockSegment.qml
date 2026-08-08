@@ -15,12 +15,11 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    BarText {
+    BarGlowText {
         id: label
         anchors.centerIn: parent
         text: Qt.formatDateTime(clock.date, "ddd HH:mm")
         color: mouse.containsMouse || mouse.pressed ? Theme.accent : Theme.textPrimary
-        font.weight: Font.DemiBold
         Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 

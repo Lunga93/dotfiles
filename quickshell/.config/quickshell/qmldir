@@ -13,6 +13,7 @@ AudioPanel 1.0 popouts/AudioPanel.qml
 BarPill 1.0 bar/BarPill.qml
 BarIconButton 1.0 bar/BarIconButton.qml
 BarText 1.0 bar/BarText.qml
+BarGlowText 1.0 bar/BarGlowText.qml
 Bar 1.0 bar/Bar.qml
 Indicator 1.0 components/Indicator.qml
 
