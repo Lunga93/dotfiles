@@ -233,7 +233,7 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 - `data/KeybindingsStore.qml`: niri keybind query/rebind via `niri-keybind` script
 - `data/MoodCatalog.qml`: mood taxonomy for wallpaper tagging
 - `components/Toast.qml`: reusable toast notification (info/success/error)
-- `components/Dropdown.qml`: animated option list (top-level `Popup`, so it escapes page clipping). API: `options`, `currentIndex`, `maxVisible`, `placeholder`, `selected(index)`; helper `openPopup()`/`closePopup()`, `popupOpen`. Opens upward when there isn't enough space below the trigger. Used where a fixed pill row would overflow (Display resolution/scale).
+- `components/Dropdown.qml`: animated option list (top-level `Popup`, so it escapes page clipping). API: `options`, `currentIndex`, `maxVisible`, `placeholder`, `selected(index)`; helper `openPopup()`/`closePopup()`, `popupOpen`. Opens upward when there isn't enough space below the trigger. Used where a fixed pill row would overflow (Display resolution/scale, Wallpaper schedule frequency).
 - `components/LogView.qml`: scrolling log viewer with Follow/Clear pills and error/warn/info row tinting. API: `title`, `lines`, `maxLines`, `follow`, `cleared()`; helpers `appendLine(text)`, `clear()`. Used on the System Info page (e.g. wallpaper-cleanup log via `FileView watchChanges`).
 
 > [!WARNING] **Docs-update discipline**: changing Quickshell's bar layout, adding/removing segments, or modifying the IPC protocol means updating this page. See `AGENTS.md` section 11.

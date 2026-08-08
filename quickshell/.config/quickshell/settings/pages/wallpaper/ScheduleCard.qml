@@ -64,9 +64,11 @@ Rectangle {
                 Text { text: "How often to fetch a new wallpaper"; color: Theme.textSubtitle; font.family: Theme.fontFamily; font.pixelSize: 11 }
             }
 
-            PillSelector {
+            Dropdown {
+                id: freqSelector
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                width: 150
                 options: ["Off", "Hourly", "6h", "Daily"]
                 currentIndex: {
                     const f = root.currentFrequency;
