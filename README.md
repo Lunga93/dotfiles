@@ -59,6 +59,14 @@ See `./install.sh --help` for dry-run and update options.
 Plus: fastfetch system info, daily wallpaper rotation, Bluetooth and audio
 controls, clipboard history, and a first-run welcome wizard.
 
+## Gallery
+
+<p align="center">
+  <img src="assets/screenshots/desktop-overview.png" alt="Desktop overview" width="45%" />
+  <img src="assets/screenshots/calendar-apps.png" alt="Calendar and apps" width="45%" />
+  <img src="assets/screenshots/power-menu.png" alt="Power menu" width="45%" />
+</p>
+
 ## Theming
 
 Manatee is theme-native. Drop a wallpaper into `~/Pictures/wallpapers/` and
