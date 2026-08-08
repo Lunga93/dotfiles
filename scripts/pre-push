@@ -13,6 +13,20 @@ done
 echo "  OK"
 
 echo ""
+echo "=== Pre-push: QML lint ==="
+
+if [ -x "$REPO_ROOT/scripts/.local/bin/lint-qml" ]; then
+    if ! "$REPO_ROOT/scripts/.local/bin/lint-qml" 2>&1; then
+        echo ""
+        echo "ERROR: QML lint failed. Bar would crash on reload."
+        echo "  Run 'lint-qml' to see details."
+        exit 1
+    fi
+else
+    echo "  SKIP: lint-qml not found"
+fi
+
+echo ""
 echo "=== Pre-push: running tests ==="
 
 if ! bats "$REPO_ROOT/test/" 2>&1; then

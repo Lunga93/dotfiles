@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+errors=0
+
+echo "=== Lint QML: quickshell config validation ==="
+
+output=$(timeout 5 env QT_QPA_PLATFORMTHEME=offscreen QT_STYLE_OVERRIDE=Fusion qs 2>&1) || true
+
+if echo "$output" | grep -q "Failed to load configuration"; then
+    echo "  FAIL: config fails to load (bar would crash)"
+    echo "$output" | sed -n '/ERROR:/,$p' | sed 's/^/  /' >&2
+    errors=$((errors + 1))
+elif echo "$output" | grep -q "Configuration Loaded"; then
+    echo "  OK: config loads cleanly"
+    echo "$output" | grep "caused by" | sed 's/^/  /' >&2 || true
+else
+    echo "  FAIL: config validation timed out"
+    errors=$((errors + 1))
+fi
+
+echo ""
+
+qml_files=$(find "$REPO_ROOT/quickshell" -name "*.qml" -type f 2>/dev/null | wc -l)
+echo "  ($qml_files QML files in quickshell package)"
+
+echo ""
+if [ "$errors" -eq 0 ]; then
+    echo "=== Lint QML: OK ==="
+    exit 0
+else
+    echo "=== Lint QML: $errors error(s) ==="
+    exit 1
+fi
