@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# night-light [--watch]
+# Reads night_light_enabled / night_light_temperature from
+# ~/.config/dotfiles/settings.json and starts or stops wlsunset.
+# --watch   poll the settings file and re-apply on change (for systemd service)
+
+SETTINGS="$HOME/.config/dotfiles/settings.json"
+PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/wlsunset-night-light.pid"
+
+WLSUNSET="$(command -v wlsunset || true)"
+JQ="$(command -v jq || true)"
+
+warn() { echo "night-light: $*" >&2; }
+
+get_setting() {
+    local section="$1" key="$2"
+    if [ -z "$JQ" ]; then
+        warn "jq not found"
+        return 1
+    fi
+    "$JQ" -r ".${section}.${key} // empty" "$SETTINGS" 2>/dev/null || echo ""
+}
+
+start_wlsunset() {
+    local temp="${1:-4000}"
+    if [ -z "$WLSUNSET" ]; then
+        warn "wlsunset not found"
+        return 0
+    fi
+    pkill -x wlsunset 2>/dev/null || true
+    "$WLSUNSET" -t "$temp" -T "$temp" &
+    echo $! > "$PIDFILE"
+}
+
+stop_wlsunset() {
+    if [ -n "$WLSUNSET" ] && pgrep -x wlsunset >/dev/null 2>&1; then
+        pkill -x wlsunset 2>/dev/null || true
+    fi
+    rm -f "$PIDFILE"
+}
+
+apply() {
+    if [ ! -f "$SETTINGS" ]; then
+        return 0
+    fi
+
+    local enabled temp
+    enabled="$(get_setting "display" "night_light_enabled")"
+    temp="$(get_setting "display" "night_light_temperature")"
+
+    if [ "$enabled" = "true" ]; then
+        start_wlsunset "${temp:-4000}"
+    else
+        stop_wlsunset
+    fi
+}
+
+settings_hash() {
+    if [ -n "$JQ" ] && [ -f "$SETTINGS" ]; then
+        "$JQ" -r '{d: .display.night_light_enabled, t: .display.night_light_temperature} | tostring' \
+            "$SETTINGS" 2>/dev/null || echo ""
+    elif [ -f "$SETTINGS" ]; then
+        sha256sum "$SETTINGS" 2>/dev/null | cut -d' ' -f1 || echo ""
+    fi
+}
+
+case "${1:-}" in
+    --watch)
+        last_hash=""
+        while true; do
+            curr_hash="$(settings_hash)"
+            if [ "$curr_hash" != "$last_hash" ] && [ -n "$curr_hash" ]; then
+                apply
+                last_hash="$curr_hash"
+            fi
+            sleep 3
+        done
+        ;;
+    *)
+        apply
+        ;;
+esac

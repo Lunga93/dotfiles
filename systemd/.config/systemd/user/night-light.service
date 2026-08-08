@@ -1,0 +1,15 @@
+[Unit]
+Description=Night Light - wlsunset controller
+After=graphical-session.target
+BindsTo=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/night-light --watch
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical-session.target
