@@ -244,21 +244,8 @@ Item {
                     }
                 }
 
-                Rectangle {
+                MonitorPanel {
                     width: parent.width
-                    height: 56
-                    radius: Theme.radiusCard
-                    color: Theme.surfaceElev
-                    border.color: Theme.border
-                    border.width: 1
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Per-display resolution and scale: edit niri config (output blocks)."
-                        color: Theme.textTertiary
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                    }
                 }
             }
         }
