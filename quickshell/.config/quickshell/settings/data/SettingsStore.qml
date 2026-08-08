@@ -111,11 +111,20 @@ QtObject {
     property Process _writer: Process { command: ["true"] }
     property Process _exec: Process { command: ["true"] }
 
+    property real _pendingReapply: 0
+
     function save(): void {
         const json = JSON.stringify(store.data, null, 2);
         const cmd = "mkdir -p " + Quickshell.env("HOME") + "/.config/dotfiles && cat > '" + store.settingsPath + "' << 'ENDOFFILE'\n" + json + "\nENDOFFILE";
         _writer.command = ["bash", "-c", cmd];
         _writer.startDetached();
+    }
+
+    function _scheduleReapply(): void {
+        _pendingReapply = Date.now();
+        _exec.command = ["bash", "-c",
+            "sleep 0.5 && ~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\""];
+        _exec.startDetached();
     }
 
     function set(section: string, key: string, value: var): void {
@@ -185,7 +194,7 @@ QtObject {
     }
 
     function reapplyTheme(): void {
-        execScript("~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\"");
+        _scheduleReapply();
     }
 
     // Kept for backward compat with any callers still using setManualAccent.
@@ -200,11 +209,18 @@ QtObject {
     property var colorScheme: get("appearance", "color_scheme")
 
     function setDisplayScale(scale: string): void { set("display", "scale", scale) }
-    function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
-    function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
+    function setNightLightEnabled(enabled: bool): void {
+        set("display", "night_light_enabled", enabled);
+        execScript("~/.local/bin/night-light");
+    }
+    function setNightLightTemperature(temp: int): void {
+        set("display", "night_light_temperature", temp);
+        execScript("~/.local/bin/night-light");
+    }
     function setColorScheme(scheme: string): void {
+        console.log("SettingsStore: setColorScheme", scheme);
         set("appearance", "color_scheme", scheme);
-        reapplyTheme();
+        _scheduleReapply();
     }
 
     // ── Top Bar ──

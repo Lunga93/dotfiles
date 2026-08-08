@@ -21,7 +21,10 @@ Item {
     property string tooltip: ""
     property int fontSize: Theme.barIconSize + 2
 
+    // Read live from settings — keeps icons in sync with the rest of the bar.
     property real   glow:       SettingsStore.topBarTextGlow
+    // Exposed for parity with BarGlowText / future text labels inside the
+    // button; not applied to the icon glyph itself (see note above).
     property string fontFamily: SettingsStore.topBarFontFamily
 
     signal clicked()
@@ -32,14 +35,23 @@ Item {
     implicitHeight: Theme.barHeight
     implicitWidth: implicitHeight
 
+    // Hover / pressed background — same subtle wash as BarIconButton.
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 4
+        radius: Theme.radiusControl - 2
+        color: mouse.pressed
+            ? Theme.surfacePressed
+            : (mouse.containsMouse ? Theme.surfaceHover : "transparent")
+        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
+    }
+
+    // Glow halo — duplicated, blurred glyph underlay.
     Text {
         id: glowLayer
         anchors.centerIn: parent
         text: root.icon
-        color: root.active ? root.tintActive
-             : mouse.pressed ? Theme.secondaryMuted
-             : mouse.containsMouse ? Theme.secondary
-             : root.tint
+        color: root.active ? root.tintActive : root.tint
         font.pixelSize: root.fontSize
         font.family: Theme.fontMono
         opacity: root.glow * 0.7
@@ -53,13 +65,11 @@ Item {
         Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 
+    // Crisp visible glyph on top.
     Text {
         anchors.centerIn: parent
         text: root.icon
-        color: root.active ? root.tintActive
-             : mouse.pressed ? Theme.secondaryMuted
-             : mouse.containsMouse ? Theme.secondary
-             : root.tint
+        color: root.active ? root.tintActive : root.tint
         font.pixelSize: root.fontSize
         font.family: Theme.fontMono
         renderType: Text.NativeRendering

@@ -105,9 +105,6 @@ QtObject {
     readonly property color secondarySoft:    withAlpha(secondary, 0.18)
     readonly property color secondaryMuted:   withAlpha(secondary, 0.55)
 
-    readonly property color surfaceSecondaryHover:   withAlpha(secondary, 0.18)
-    readonly property color surfaceSecondaryPressed: withAlpha(secondary, 0.28)
-
     readonly property int radiusCard:    18
     readonly property int radiusControl: 12
     readonly property int radiusPill:    16

@@ -28,13 +28,24 @@ if [ -d "$HOME/.cache/wal" ]; then
     find "$HOME/.cache/wal/schemes" -maxdepth 1 -type f -print0 | xargs -0 -r rm -f || true
 fi
 
+# Read settings before wal so we know light vs dark mode
+SETTINGS_JSON="$HOME/.config/dotfiles/settings.json"
+COLOR_SCHEME="dark"
+if [ -f "$SETTINGS_JSON" ] && command -v jq >/dev/null 2>&1; then
+    COLOR_SCHEME=$(jq -r '.appearance.color_scheme // "dark"' "$SETTINGS_JSON")
+fi
+echo "Color scheme: $COLOR_SCHEME"
+echo "DEBUG: read color_scheme from settings: '$COLOR_SCHEME'"
+
 echo "Generating colors with pywal..."
 if [ "$COLOR_SCHEME" = "light" ]; then
+    echo "DEBUG: running wal in LIGHT mode (-l)"
     if ! $WAL_CMD -l -n -i "$WALLPAPER" -q; then
         echo "pywal failed."
         exit 1
     fi
 else
+    echo "DEBUG: running wal in DARK mode"
     if ! $WAL_CMD -n -i "$WALLPAPER" -q; then
         echo "pywal failed."
         exit 1
@@ -75,8 +86,7 @@ LAST_SECONDARY_FILE="$HOME/.local/share/dotfiles/last_secondary"
 LAST_PRIMARY=$([ -f "$LAST_PRIMARY_FILE" ] && cat "$LAST_PRIMARY_FILE" || echo "")
 LAST_SECONDARY=$([ -f "$LAST_SECONDARY_FILE" ] && cat "$LAST_SECONDARY_FILE" || echo "")
 
-# Read manual overrides from settings.json. Empty when missing or not in manual mode.
-SETTINGS_JSON="$HOME/.config/dotfiles/settings.json"
+# Read manual overrides from settings.json
 ACCENT_MODE="dynamic"
 MANUAL_PRIMARY=""
 MANUAL_SECONDARY=""
@@ -85,6 +95,7 @@ if [ -f "$SETTINGS_JSON" ] && command -v jq >/dev/null 2>&1; then
     MANUAL_PRIMARY=$(jq -r '.appearance.manual_primary // ""' "$SETTINGS_JSON")
     MANUAL_SECONDARY=$(jq -r '.appearance.manual_secondary // ""' "$SETTINGS_JSON")
     COLOR_SCHEME=$(jq -r '.appearance.color_scheme // "dark"' "$SETTINGS_JSON")
+    echo "DEBUG: read color_scheme from settings: '$COLOR_SCHEME'"
     # One-shot migration of legacy field.
     [ -z "$MANUAL_PRIMARY" ] \
         && MANUAL_PRIMARY=$(jq -r '.appearance.manual_accent // ""' "$SETTINGS_JSON")
