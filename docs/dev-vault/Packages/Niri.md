@@ -26,6 +26,7 @@ Niri's scrollable-tiling model:
 - **Focus ring**: colors patched by `apply-theme` (active-color, inactive-color)
 - **Input config**: keyboard layout, touchpad settings
 - **Output config**: monitor layout, scale, refresh rate
+- **Screenshots**: `Ctrl+Shift+{1,2,3}` save to `~/Pictures/Screenshots/` with timestamps
 
 ## Notable Keybindings
 

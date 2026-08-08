@@ -51,9 +51,7 @@ graph LR
 
 | Script | Purpose |
 |--------|---------|
-| `apply-theme` | pywal colors → all components |
-| `reload-desktop` | Restart niri config, quickshell, swaync. `qs` mode chains `pkill qs/quickshell` + `nohup env QT_QPA_PLATFORMTHEME=gtk3 QT_STYLE_OVERRIDE=Fusion qs`. Called by SettingsStore when icon theme changes — kills both process name variants (`qs` and `quickshell`) for reliable restart. Args: `niri`, `quickshell`/`qs`/`bar`, `swaync`, `all` |
-| `desktop-menu` | Wofi right-click desktop context menu — reload components, change wallpaper |
+| `apply-theme` | pywal colors → all components. Reads `color_scheme` from settings.json, passes `-l` for light mode, injects `scheme` into colors.json, sets `gsettings color-scheme` |
 | `accent-guardian` | Detect 3+ identical accents in a row |
 | `test-theme` | Diagnostics: swww, state, pywal, SDDM |
 | `lock-screen` | swaylock-effects with blur |
@@ -64,6 +62,19 @@ graph LR
 | `sddm-greeter-debug` | Test SDDM greeter in window |
 | `test-alacritty.sh` | Validate config, auto-repair duplicates |
 | `test-coverage` | Runs bats + kcov, aggregates coverage, compares baseline |
+| `night-light` | wlsunset controller. `--watch` polls settings.json every 3s for live toggle |
+| `reload-desktop` | Reloads niri config, restarts swaync and quickshell |
+
+### Self-Healing Pipeline
+
+| Script | Purpose |
+|--------|---------|
+| `journal-watch` | Tails user journal for niri/swaync errors, POSTs to webhook (rate-limited, pauseable) |
+| `webhook-listener` | HTTP server on :9876. `/heal` endpoint runs `opencode run` to auto-fix, `/task` drives feature dev |
+| `niri-healthcheck` | Proactive: niri validate, compositor responsiveness, service status |
+| `niri-heal-pause` | Create pause file → disables healing (for manual editing) |
+| `niri-heal-resume` | Remove pause file → re-enables healing |
+| `niri-heal-log` | Log viewer: heal events, task logs, `-f` follow mode |
 
 ## Design Pattern
 

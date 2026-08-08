@@ -75,6 +75,7 @@ graph TB
 | `AudioPanel.qml` | `qs ipc call audio toggle` | Volume sliders + device selector |
 | `CalendarPopout.qml` | `qs ipc call calendar toggle` | Calendar widget |
 | `PowerMenuPopout.qml` | `qs ipc call power toggle` | Shutdown/reboot/logout |
+| `NetworkPanel.qml` | `qs ipc call network toggle` | WiFi network list + connection manager |
 
 ## Integration Points
 
@@ -106,7 +107,32 @@ Toggle popouts from anywhere:
 qs ipc call audio toggle      # Audio panel
 qs ipc call calendar toggle    # Calendar
 qs ipc call power toggle       # Power menu
+qs ipc call network toggle     # Network panel
 ```
+
+These can be bound to Niri keybindings in `config.kdl`:
+
+```kdl
+binds {
+    Mod+AudioRaiseVolume { spawn ["qs", "ipc", "call", "audio", "toggle"]; }
+}
+```
+
+## Dark / Light Mode
+
+Toggle in Settings → Display page. Writes `appearance.color_scheme` to `settings.json`.
+
+**Propagation:**
+```
+Settings toggle → set("appearance", "color_scheme", "dark"|"light")
+  → apply-theme runs (wal -l for light, gsettings color-scheme set)
+  → scheme injected into ~/.cache/wal/colors.json
+  → Theme.qml FileView detects change → isDark flips
+  → surfaceElev/Hover/Pressed/Border flip via surfaceOverlay()
+  → settings window colors (surfaceWindow, textHeader, etc.) adapt
+```
+
+Surface colors use `surfaceOverlay(a)` which returns `rgba(1,1,1,a)` in dark mode and `rgba(0,0,0,a)` in light mode. No hardcoded white overlays.
 
 These can be bound to Niri keybindings in `config.kdl`:
 
@@ -120,8 +146,10 @@ binds {
 
 - 4-space indent in QML
 - Design tokens in `Theme.qml`: never hardcoded in components
-- Palette colors in `Palette.qml` (gitignored, generated)
+- Palette colors from pywal via `~/.cache/wal/colors.json` (FileView watcher, no restart needed)
 - Popout toggle naming: `qs ipc call <target> toggle`
+- Surface colors via `Theme.surfaceOverlay()` (respects dark/light mode)
+- Bar icons: no background rectangles on hover; glyph/text tints `Theme.accent`
 
 ## Extending
 
