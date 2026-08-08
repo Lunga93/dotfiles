@@ -10,8 +10,8 @@ GPU-accelerated terminal emulator.
 
 | File | Purpose |
 |------|---------|
-| `template.alacritty.toml` | Template with pywal color placeholders — source of truth |
-| `alacritty.toml` | **Generated** — built from template by `apply-theme` |
+| `template.alacritty.toml` | Template with pywal color placeholders: source of truth |
+| `alacritty.toml` | **Generated**: built from template by `apply-theme` |
 
 ## How It Works
 
@@ -21,8 +21,8 @@ If validation fails, the broken file is saved as `.broken.<timestamp>` and the t
 
 ## Integration Points
 
-- **apply-theme** — regenerates `alacritty.toml` on every theme change
-- **test-alacritty.sh** — automatic validation with rollback
+- **apply-theme**: regenerates `alacritty.toml` on every theme change
+- **test-alacritty.sh**: automatic validation with rollback
 
 ## Conventions
 
@@ -32,4 +32,4 @@ If validation fails, the broken file is saved as `.broken.<timestamp>` and the t
 
 ## Extending
 
-Edit `template.alacritty.toml` to change defaults (font, opacity, padding). Add new pywal placeholders if needed. Never edit `alacritty.toml` directly — it's overwritten.
+Edit `template.alacritty.toml` to change defaults (font, opacity, padding). Add new pywal placeholders if needed. Never edit `alacritty.toml` directly: it's overwritten.

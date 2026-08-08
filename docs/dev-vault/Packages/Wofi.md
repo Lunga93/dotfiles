@@ -12,13 +12,13 @@ Fuzzy application launcher.
 |------|---------|
 | `config` | Wofi configuration (position, size, mode) |
 | `style.css` | Base styling |
-| `colors-wal.css` | pywal-generated colors — rewritten on theme change |
+| `colors-wal.css` | pywal-generated colors: rewritten on theme change |
 
 ## Integration Points
 
-- **Keybinding** — bound to `Mod+Space` in Niri config
-- **apply-theme** — writes `colors-wal.css`
-- **Scripts** — `audio-menu`, `bluetooth-menu`, `clipboard-manager`, `wallpaper-menu` use Wofi as their UI
+- **Keybinding**: bound to `Mod+Space` in Niri config
+- **apply-theme**: writes `colors-wal.css`
+- **Scripts**: `audio-menu`, `bluetooth-menu`, `clipboard-manager`, `wallpaper-menu` use Wofi as their UI
 
 ## Conventions
 

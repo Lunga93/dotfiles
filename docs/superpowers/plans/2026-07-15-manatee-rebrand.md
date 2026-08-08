@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rebrand the dotfiles project as "Manatee Desktop" — rename SDDM theme, update install script, rewrite README, create brand assets, and update all internal references.
+**Goal:** Rebrand the dotfiles project as "Manatee Desktop": rename SDDM theme, update install script, rewrite README, create brand assets, and update all internal references.
 
-**Architecture:** This is a pure rename/rebrand — no new logic. SDDM theme directory moves, metadata files get new names, install.sh gains branded banner messages, README is rewritten with warm/playful tone. Tests update path references in lockstep with the renames.
+**Architecture:** This is a pure rename/rebrand: no new logic. SDDM theme directory moves, metadata files get new names, install.sh gains branded banner messages, README is rewritten with warm/playful tone. Tests update path references in lockstep with the renames.
 
 **Tech Stack:** Bash (install.sh), QML (SDDM theme), Markdown (README, docs), SVG (logo), GNU Stow (unchanged)
 
@@ -12,7 +12,7 @@
 
 - All "quickshell-pywal" references in paths and test files → "manatee"
 - All "dotfiles" project name references → "Manatee" or "Manatee Desktop"
-- No logic changes — only names, paths, and text
+- No logic changes: only names, paths, and text
 - `sddm/themes/quickshell-pywal/` directory → `sddm/themes/manatee/` (full rename)
 - Warm, playful tone in README and installer messages
 - Installer banner renders logo.svg via chafa (chafa already in OFFICIAL_PACKAGES)
@@ -294,14 +294,14 @@ Create `brand/BRANDING.md`:
 
 ## Logo
 
-The Manatee logo is a stylized manatee silhouette with bubbles — a friendly,
+The Manatee logo is a stylized manatee silhouette with bubbles: a friendly,
 gentle sea cow. Use it wherever Manatee Desktop is represented.
 
-- `logo.svg` — icon only (64x64 viewBox). Use for app icons, favicons, small spots.
-- `logo-full.svg` — icon + "Manatee Desktop" wordmark (200x80 viewBox). Use for
+- `logo.svg`: icon only (64x64 viewBox). Use for app icons, favicons, small spots.
+- `logo-full.svg`: icon + "Manatee Desktop" wordmark (200x80 viewBox). Use for
   headers, README, project pages.
 
-The logo uses `fill="currentColor"` — it inherits color from context. On light
+The logo uses `fill="currentColor"`: it inherits color from context. On light
 backgrounds, prefer a dark color (#1c1c1e). On dark backgrounds, prefer light
 (#f5f5f7) or the accent color.
 
@@ -318,13 +318,13 @@ The desktop itself uses pywal-generated palettes from your wallpaper.
 
 ## Typography
 
-- Primary: **Fira Sans** — used in the welcome app and recommended for all
+- Primary: **Fira Sans**: used in the welcome app and recommended for all
   Manatee-branded text.
-- Monospace: **Fira Code** or system monospace — for code blocks and terminals.
+- Monospace: **Fira Code** or system monospace: for code blocks and terminals.
 
 ## Voice
 
-Warm, playful, and gentle — like a manatee. Technical accuracy without coldness.
+Warm, playful, and gentle: like a manatee. Technical accuracy without coldness.
 Think "friendly companion" not "corporate product."
 ```
 
@@ -370,17 +370,17 @@ Create `README.md`:
 
 ## Why Manatee?
 
-Manatees are gentle giants — calm, deliberate, and perfectly at home in their
+Manatees are gentle giants: calm, deliberate, and perfectly at home in their
 environment. Your desktop should feel the same.
 
-- **Gentle on your system** — Niri's scrollable tiling keeps everything flowing
+- **Gentle on your system**: Niri's scrollable tiling keeps everything flowing
   without the jank. One workspace scrolls into the next. No reshuffling, no
   surprises.
-- **Glossy out of the box** — Quickshell bar, notification center, app launcher,
-  lock screen, and SDDM greeter — all themed together. Looks good from the moment
+- **Glossy out of the box**: Quickshell bar, notification center, app launcher,
+  lock screen, and SDDM greeter: all themed together. Looks good from the moment
   you log in.
-- **Grows with your wallpaper** — pywal pulls a full palette from any image.
-  Every surface — bar, notifications, terminal, GTK apps, even the login screen —
+- **Grows with your wallpaper**: pywal pulls a full palette from any image.
+  Every surface: bar, notifications, terminal, GTK apps, even the login screen 
   follows along. Drop a new wallpaper, everything shifts to match.
 
 ## Quick Start
@@ -391,7 +391,7 @@ cd manatee-desktop
 ./install.sh
 ```
 
-Log out. Log back in with Niri. That's it — you're in the pod.
+Log out. Log back in with Niri. That's it: you're in the pod.
 
 > **Arch-based distros only.** Tested on CachyOS. The installer checks
 > `/etc/arch-release` and will bail politely if it's not there.
@@ -407,7 +407,7 @@ See `./install.sh --help` for dry-run and update options.
 | **Wofi**    | Fuzzy app launcher. Type to find.                 | `Mod+Space`      |
 | **swaync**  | Notification daemon with slide-out control center. | `Mod+N`          |
 | **Alacritty** | GPU-accelerated terminal.                      | `Mod+Return`     |
-| **SDDM**    | Login greeter themed to match your desktop.       | —                |
+| **SDDM**    | Login greeter themed to match your desktop.       |:                |
 
 Plus: fastfetch system info, daily wallpaper rotation, Bluetooth and audio
 controls, clipboard history, and a first-run welcome wizard.
@@ -433,7 +433,7 @@ Use `Mod+Shift+W` to pick a new wallpaper and retheme instantly.
 ## Contributing
 
 Found a rough edge? Have an idea? Open an issue or PR. Manatee is a personal
-desktop that grew into something worth sharing — contributions that keep it
+desktop that grew into something worth sharing: contributions that keep it
 gentle and glossy are welcome.
 
 ## Join the pod
@@ -444,7 +444,7 @@ gentle and glossy are welcome.
 ---
 
 <p align="center">
-  <sub>🐋 Manatee Desktop — gentle by nature, glossy by design.</sub>
+  <sub>🐋 Manatee Desktop: gentle by nature, glossy by design.</sub>
 </p>
 ```
 

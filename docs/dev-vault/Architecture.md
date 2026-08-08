@@ -1,6 +1,6 @@
 # Architecture
 
-> [!WARNING] Living document — update when data flows or components change.
+> [!WARNING] Living document: update when data flows or components change.
 
 ## Layer Diagram
 

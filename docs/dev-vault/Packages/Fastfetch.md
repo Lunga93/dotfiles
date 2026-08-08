@@ -10,7 +10,7 @@ System information display tool (neofetch replacement).
 
 | File | Purpose |
 |------|---------|
-| `config.jsonc` | Fastfetch config — modules, logo, display options |
+| `config.jsonc` | Fastfetch config: modules, logo, display options |
 | `manatee-logo.jpg` | Logo image rendered as ASCII art by Chafa |
 
 ## What It Shows
@@ -27,8 +27,8 @@ System information display tool (neofetch replacement).
 
 - JSON with comments (`.jsonc`)
 - Logo rendered via Chafa (256-color indexed, diffusion dithering)
-- No theming integration — static config
+- No theming integration: static config
 
 ## Extending
 
-To add or remove info modules: edit `config.jsonc` — add/remove entries in the `modules` array.
+To add or remove info modules: edit `config.jsonc`: add/remove entries in the `modules` array.

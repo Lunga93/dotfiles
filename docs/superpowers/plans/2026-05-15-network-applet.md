@@ -111,7 +111,7 @@ snapshot() {
                 ssid="$conn_name"; signal=0
             fi
         else
-            # ethernet or other — use connection name as display label
+            # ethernet or other: use connection name as display label
             ssid="$conn_name"; signal=0
         fi
 
@@ -205,7 +205,7 @@ fi
 # Request a fresh scan
 nmcli device wifi list --rescan yes 2>/dev/null || true
 
-# Parse list — deduplicate by SSID, keep strongest signal
+# Parse list: deduplicate by SSID, keep strongest signal
 networks=$(
     nmcli -t -f SSID,SIGNAL,SECURITY device wifi list 2>/dev/null \
     | grep -v '^:' \
@@ -531,7 +531,7 @@ Popout {
                 anchors.left: parent.left; anchors.leftMargin: 12
                 anchors.top: stateLabel.bottom; anchors.topMargin: 4
                 text: {
-                    if (panel.state.type === "ethernet") return "Wired — " + (panel.state.ip || "");
+                    if (panel.state.type === "ethernet") return "Wired: " + (panel.state.ip || "");
                     return panel.state.ip || "";
                 }
                 visible: panel.state.state === "connected" && !!panel.state.ip

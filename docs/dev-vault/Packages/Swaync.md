@@ -12,13 +12,13 @@ Notification daemon with a slide-out control center.
 |------|---------|
 | `config.json` | Notification behavior: timeout, position, notification blocking |
 | `style.css` | Base styling |
-| `colors.css` | pywal-generated colors — rewritten on theme change |
+| `colors.css` | pywal-generated colors: rewritten on theme change |
 
 ## Integration Points
 
-- **apply-theme** — writes `colors.css` and calls `swaync-client -R` to reload
-- **Autostart** — Niri config spawns `swaync` at startup
-- **systemd** — `graphical-session.target.wants/swaync.service` symlink
+- **apply-theme**: writes `colors.css` and calls `swaync-client -R` to reload
+- **Autostart**: Niri config spawns `swaync` at startup
+- **systemd**: `graphical-session.target.wants/swaync.service` symlink
 
 ## Conventions
 

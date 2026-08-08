@@ -51,8 +51,8 @@ pkill qs && qs &
 
 ## Vault Map
 
-- [[Home]] — start here
-- [[Architecture]] — system overview
-- [[Packages Reference]] — where things live
-- [[Patterns & Standards]] — conventions
-- [[Workflows]] — step-by-step guides
+- [[Home]]: start here
+- [[Architecture]]: system overview
+- [[Packages Reference]]: where things live
+- [[Patterns & Standards]]: conventions
+- [[Workflows]]: step-by-step guides

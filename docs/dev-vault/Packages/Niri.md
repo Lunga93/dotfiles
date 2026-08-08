@@ -15,17 +15,17 @@ Scrollable-tiling Wayland compositor.
 ## Architecture
 
 Niri's scrollable-tiling model:
-- **Vertical workspaces** — scroll with `Mod+Page_Up`/`Mod+Page_Down`
-- **Columns** — columns scroll horizontally with `Mod+Left`/`Mod+Right`
+- **Vertical workspaces**: scroll with `Mod+Page_Up`/`Mod+Page_Down`
+- **Columns**: columns scroll horizontally with `Mod+Left`/`Mod+Right`
 - Windows tile within columns
 
 ## What Lives Here
 
-- **Keybindings** — all keyboard shortcuts
-- **Startup programs** — `spawn-at-startup` blocks (Quickshell, swaync, swww, etc.)
-- **Focus ring** — colors patched by `apply-theme` (active-color, inactive-color)
-- **Input config** — keyboard layout, touchpad settings
-- **Output config** — monitor layout, scale, refresh rate
+- **Keybindings**: all keyboard shortcuts
+- **Startup programs**: `spawn-at-startup` blocks (Quickshell, swaync, swww, etc.)
+- **Focus ring**: colors patched by `apply-theme` (active-color, inactive-color)
+- **Input config**: keyboard layout, touchpad settings
+- **Output config**: monitor layout, scale, refresh rate
 
 ## Notable Keybindings
 
@@ -41,7 +41,7 @@ Niri's scrollable-tiling model:
 
 ## Multi-Monitor
 
-Output config uses exact names from `niri msg outputs` — case-sensitive, must match exactly or the block is silently ignored.
+Output config uses exact names from `niri msg outputs`: case-sensitive, must match exactly or the block is silently ignored.
 
 ```kdl
 output "SKYDATA S.P.A. TV-monitor 0x01010101" {
@@ -59,9 +59,9 @@ niri msg output "<name>" position set 1920 0
 
 ## Integration Points
 
-- **Quickshell** — launched at startup; Niri provides `niri msg --json event-stream` for live workspace/window data
-- **apply-theme** — patches focus ring colors in `config.kdl` after pywal runs
-- **Keybindings page** — `welcome/parse-niri-keybinds.sh` extracts binds for the Welcome wizard
+- **Quickshell**: launched at startup; Niri provides `niri msg --json event-stream` for live workspace/window data
+- **apply-theme**: patches focus ring colors in `config.kdl` after pywal runs
+- **Keybindings page**: `welcome/parse-niri-keybinds.sh` extracts binds for the Welcome wizard
 
 ## Conventions
 

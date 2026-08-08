@@ -17,17 +17,17 @@
 
 ## Why Manatee?
 
-Manatees are gentle giants — calm, deliberate, and perfectly at home in their
+Manatees are gentle giants: calm, deliberate, and perfectly at home in their
 environment. Your desktop should feel the same.
 
-- **Gentle on your system** — Niri's scrollable tiling keeps everything flowing
+- **Gentle on your system**: Niri's scrollable tiling keeps everything flowing
   without the jank. One workspace scrolls into the next. No reshuffling, no
   surprises.
-- **Glossy out of the box** — Quickshell bar, notification center, app launcher,
-  lock screen, and SDDM greeter — all themed together. Looks good from the moment
+- **Glossy out of the box**: Quickshell bar, notification center, app launcher,
+  lock screen, and SDDM greeter: all themed together. Looks good from the moment
   you log in.
-- **Grows with your wallpaper** — pywal pulls a full palette from any image.
-  Every surface — bar, notifications, terminal, GTK apps, even the login screen —
+- **Grows with your wallpaper**: pywal pulls a full palette from any image.
+  Every surface: bar, notifications, terminal, GTK apps, even the login screen
   follows along. Drop a new wallpaper, everything shifts to match.
 
 ## Quick Start
@@ -38,7 +38,7 @@ cd manatee-desktop
 ./install.sh
 ```
 
-Log out. Log back in with Niri. That's it — you're in the pod.
+Log out. Log back in with Niri. That's it: you're in the pod.
 
 > **Arch-based distros only.** Tested on CachyOS. The installer checks
 > `/etc/arch-release` and will bail politely if it's not there.
@@ -54,7 +54,7 @@ See `./install.sh --help` for dry-run and update options.
 | **Wofi**    | Fuzzy app launcher. Type to find.                 | `Mod+Space`      |
 | **swaync**  | Notification daemon with slide-out control center. | `Mod+N`          |
 | **Alacritty** | GPU-accelerated terminal.                      | `Mod+Return`     |
-| **SDDM**    | Login greeter themed to match your desktop.       | —                |
+| **SDDM**    | Login greeter themed to match your desktop.       |:                |
 
 Plus: fastfetch system info, daily wallpaper rotation, Bluetooth and audio
 controls, clipboard history, and a first-run welcome wizard.
@@ -80,7 +80,7 @@ Use `Mod+Shift+W` to pick a new wallpaper and retheme instantly.
 ## Contributing
 
 Found a rough edge? Have an idea? Open an issue or PR. Manatee is a personal
-desktop that grew into something worth sharing — contributions that keep it
+desktop that grew into something worth sharing: contributions that keep it
 gentle and glossy are welcome.
 
 ## Join the pod
@@ -91,5 +91,5 @@ gentle and glossy are welcome.
 ---
 
 <p align="center">
-  <sub>🐋 Manatee Desktop — gentle by nature, glossy by design.</sub>
+  <sub>🐋 Manatee Desktop: gentle by nature, glossy by design.</sub>
 </p>

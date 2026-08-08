@@ -28,9 +28,9 @@
 | `ToggleSwitch.qml`, `PillSelector.qml`, `ColorSwatch.qml`, `PhosphorIcon.qml`, `SettingsGroup.qml`, `SettingsRow.qml` | `settings/components/` | Move; update `qmldir` |
 | `PlaceholderPage.qml` | `settings/pages/` | Move; update `qmldir` |
 | `WallpaperPage.qml` | `settings/pages/wallpaper/WallpaperPage.qml` | Refactor (handled in Phase E) |
-| `WallpaperLibrary.qml` | — | **DELETE** |
-| `RecentHistory.qml` | — | **DELETE** |
-| `DerivedPalette.qml` | — | **DELETE** |
+| `WallpaperLibrary.qml` |: | **DELETE** |
+| `RecentHistory.qml` |: | **DELETE** |
+| `DerivedPalette.qml` |: | **DELETE** |
 | `FrequencyPicker.qml` | `settings/pages/wallpaper/ScheduleCard.qml` | Repurpose (handled in Phase D) |
 | `SourceManager.qml` | `settings/pages/wallpaper/SourcesCard.qml` | Repurpose (handled in Phase D) |
 
@@ -147,7 +147,7 @@ singleton SettingsStore 1.0 settings/data/SettingsStore.qml
 singleton Categories 1.0 settings/data/Categories.qml
 ```
 
-Note: `MoodCatalog`, `MoodGrid`, `MoodTile`, `WallpaperHero`, `WallpaperGrid`, `ScheduleCard`, and `SourcesCard` do NOT exist yet — they will be added to `qmldir` in a batch update at the end of Phase D.
+Note: `MoodCatalog`, `MoodGrid`, `MoodTile`, `WallpaperHero`, `WallpaperGrid`, `ScheduleCard`, and `SourcesCard` do NOT exist yet: they will be added to `qmldir` in a batch update at the end of Phase D.
 
 - [ ] **Step 10: Verify the application still loads**
 
@@ -192,14 +192,14 @@ SourcesCard.qml), then deleted."
 
 ```python
 #!/usr/bin/env python3
-"""tag-wallpaper-moods — Classify wallpapers by mood using OKLab/OKLCH.
+"""tag-wallpaper-moods: Classify wallpapers by mood using OKLab/OKLCH.
 
 Moods: dark, light, warm, cool, sky, earth.
 Pipeline: Pillow median-cut (8 colors) → OKLab → OKLCH → rule table.
 Cache: ~/.cache/dotfiles/wallpaper-moods.json (versioned, atomic write).
 
 CLI:
-  tag-wallpaper-moods                 # incremental — new/changed only
+  tag-wallpaper-moods                 # incremental: new/changed only
   tag-wallpaper-moods --force         # re-tag everything
   tag-wallpaper-moods --file PATH     # single image (used by set-wallpaper hook)
   tag-wallpaper-moods --quiet         # suppress stdout progress
@@ -627,7 +627,7 @@ if command -v tag-wallpaper-moods >/dev/null 2>&1; then
 fi
 ```
 
-Do NOT block on the tagger — it runs in background. The `--quiet` flag suppresses all output.
+Do NOT block on the tagger: it runs in background. The `--quiet` flag suppresses all output.
 
 - [ ] **Step 7: Commit**
 
@@ -674,7 +674,7 @@ LOCAL_WALLPAPER_DIR="${LIBRARY_DIR:-$HOME/Pictures/wallpapers}"
 
 This is the only change needed. The rest of the script uses `LOCAL_WALLPAPER_DIR` which now reads from settings.json. The `choose_local()` function at line 34 will use this value.
 
-**Do NOT** modify the `OUT_DIR` (`$HOME/Pictures/wallpapers`) — that's the download destination, not the local library source.
+**Do NOT** modify the `OUT_DIR` (`$HOME/Pictures/wallpapers`): that's the download destination, not the local library source.
 
 - [ ] **Step 2: Verify the change works**
 
@@ -1275,7 +1275,7 @@ mood browsing. Replaces DerivedPalette.qml inline functionality."
 
 - [ ] **Step 1: Write WallpaperGrid.qml**
 
-Adapted from WallpaperLibrary.qml — strips "library" framing, adds mood filter property, sort options.
+Adapted from WallpaperLibrary.qml: strips "library" framing, adds mood filter property, sort options.
 
 ```qml
 import QtQuick
@@ -1519,7 +1519,7 @@ Item {
 git add quickshell/.config/quickshell/settings/pages/wallpaper/WallpaperGrid.qml
 git commit -m "feat(settings): add WallpaperGrid with mood filtering and stage-in animation
 
-Adapted from WallpaperLibrary.qml — accepts moodFilter property to show
+Adapted from WallpaperLibrary.qml: accepts moodFilter property to show
 only tagged wallpapers. Stage-in animation with 40ms stagger.
 Sort options placeholder (Newest/Random/Most used) for Ship 1.
 Rescan method for re-scanning library directory."
@@ -1532,7 +1532,7 @@ Rescan method for re-scanning library directory."
 
 - [ ] **Step 1: Write ScheduleCard.qml**
 
-Adapted from FrequencyPicker.qml — adds fetch button, uses SettingsGroup layout.
+Adapted from FrequencyPicker.qml: adds fetch button, uses SettingsGroup layout.
 
 ```qml
 import QtQuick
@@ -1701,7 +1701,7 @@ button. Systemd timer override logic preserved from FrequencyPicker."
 
 - [ ] **Step 1: Write SourcesCard.qml**
 
-Adapted from SourceManager.qml — adds folder picker overflow on Local row.
+Adapted from SourceManager.qml: adds folder picker overflow on Local row.
 
 ```qml
 import QtQuick
@@ -2049,7 +2049,7 @@ git commit -m "feat(settings): animate SettingsWindow height on mood selection
 
 Container height toggles between 640 and 900px with 380ms OutBack
 spring easing (overshoot 1.05). Content fills available space via
-anchors — no child layout changes needed."
+anchors: no child layout changes needed."
 ```
 
 #### Task E3: Refactor WallpaperPage.qml into thin composer
@@ -2221,7 +2221,7 @@ restores previous mood from SettingsStore."
 
 - [ ] **Step 1: Update import path (should already work via qmldir)**
 
-No changes needed — `SettingsContent.qml` imports `WallpaperPage` which is resolved via qmldir. The qmldir already maps `WallpaperPage 1.0 settings/pages/wallpaper/WallpaperPage.qml`.
+No changes needed: `SettingsContent.qml` imports `WallpaperPage` which is resolved via qmldir. The qmldir already maps `WallpaperPage 1.0 settings/pages/wallpaper/WallpaperPage.qml`.
 
 Verify by checking that the `WallpaperPage { }` reference at line 9 still resolves after the move.
 
@@ -2244,7 +2244,7 @@ If no changes needed: skip commit.
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Settings app smoke test — opens window, tabs through pages, exits clean.
+# Settings app smoke test: opens window, tabs through pages, exits clean.
 
 echo "=== Settings App Smoke Test ==="
 
