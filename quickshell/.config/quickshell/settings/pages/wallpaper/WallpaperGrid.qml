@@ -54,7 +54,7 @@ Item {
                 anchors.left: parent.left; anchors.leftMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.moodFilter ? root.moodFilter.charAt(0).toUpperCase() + root.moodFilter.slice(1) + " wallpapers" : ""
-                color: "#6b6258"
+                color: Theme.textSubtitle
                 font.family: Theme.fontFamily; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 0.8
             }
             Text {
@@ -94,9 +94,9 @@ Item {
                     required property string modelData
                     width: parent.width - 24; height: 96
                     radius: 10
-                    color: "#0f0b07"
+                    color: Theme.surfaceDeep
                     border.width: modelData === SettingsStore.currentWallpaper ? 2 : 1
-                    border.color: modelData === SettingsStore.currentWallpaper ? Theme.accent : "#0e0a06"
+                    border.color: modelData === SettingsStore.currentWallpaper ? Theme.accent : Theme.dividerColor
                     clip: true
 
                     Row {
@@ -118,7 +118,7 @@ Item {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.basename(modelData)
-                            color: "#f5ede0"
+                            color: Theme.textHeader
                             font.family: Theme.fontFamily
                             font.pixelSize: 11
                             elide: Text.ElideMiddle

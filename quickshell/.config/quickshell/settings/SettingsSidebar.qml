@@ -62,7 +62,7 @@ Flickable {
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 6
                 text: parent.modelData ? parent.modelData.label.toUpperCase() : ""
-                color: "#6b6258"
+                color: Theme.textSubtitle
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -88,8 +88,8 @@ Flickable {
 
                 color: {
                     if (isActive) return Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18);
-                    if (mouse.pressed) return Qt.rgba(1, 1, 1, 0.10);
-                    if (mouse.containsMouse) return Qt.rgba(1, 1, 1, 0.06);
+                    if (mouse.pressed) return Theme.surfaceHover;
+                    if (mouse.containsMouse) return Theme.surfaceElev;
                     return "transparent";
                 }
                 Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutQuad } }
@@ -118,7 +118,7 @@ Flickable {
                     Rectangle {
                         width: 26; height: 26
                         radius: 7
-                        color: isActive ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.28) : Qt.rgba(1, 1, 1, 0.05)
+                        color: isActive ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.28) : Theme.surfaceElev
                         anchors.verticalCenter: parent.verticalCenter
                         Behavior on color { ColorAnimation { duration: 140 } }
 
@@ -126,14 +126,14 @@ Flickable {
                             anchors.centerIn: parent
                             name: modelData ? modelData.icon : ""
                             size: 15
-                            color: isActive ? Theme.accent : "#a89e8e"
+                            color: isActive ? Theme.accent : Theme.textSecondary
                             weight: isActive ? "fill" : "regular"
                         }
                     }
 
                     Text {
                         text: modelData ? modelData.label : ""
-                        color: isActive ? "#f5ede0" : "#cfc4b3"
+                        color: isActive ? Theme.textHeader : Theme.textSecondary
                         font.family: Theme.fontFamily
                         font.pixelSize: 13
                         font.weight: isActive ? Font.DemiBold : Font.Normal

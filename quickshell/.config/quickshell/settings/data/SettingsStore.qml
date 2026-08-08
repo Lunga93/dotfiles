@@ -34,6 +34,7 @@ QtObject {
             "selected_mood": null
         },
         "appearance": {
+            "color_scheme": "dark",
             "accent_mode": "dynamic",
             "manual_primary": null,
             "manual_secondary": null
@@ -196,10 +197,15 @@ QtObject {
     property var displayScale: get("display", "scale")
     property var nightLightEnabled: get("display", "night_light_enabled")
     property var nightLightTemperature: get("display", "night_light_temperature")
+    property var colorScheme: get("appearance", "color_scheme")
 
     function setDisplayScale(scale: string): void { set("display", "scale", scale) }
     function setNightLightEnabled(enabled: bool): void { set("display", "night_light_enabled", enabled) }
     function setNightLightTemperature(temp: int): void { set("display", "night_light_temperature", temp) }
+    function setColorScheme(scheme: string): void {
+        set("appearance", "color_scheme", scheme);
+        reapplyTheme();
+    }
 
     // ── Top Bar ──
     property var topBarGradientIntensity: get("top_bar", "gradient_intensity")

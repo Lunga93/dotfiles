@@ -87,7 +87,7 @@ Item {
     component Divider: Rectangle {
         width: parent.width
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Theme.dividerColor
     }
 
     // ─── Inline visual Slider ───────────────────────────────────────────
@@ -126,7 +126,7 @@ Item {
 
             Rectangle {
                 width: 14; height: 14; radius: 7
-                color: "#f5ede0"
+                color: Theme.textHeader
                 border.color: Qt.rgba(0, 0, 0, 0.35); border.width: 1
                 anchors.verticalCenter: parent.verticalCenter
                 x: Math.max(0, Math.min(parent.width - width,
@@ -265,12 +265,12 @@ Item {
                     spacing: 4
                     Text {
                         text: "Top Bar"
-                        color: "#f5ede0"
+                        color: Theme.textHeader
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
                         text: "Translucent bar tuning. Changes apply live."
-                        color: "#8a8175"
+                        color: Theme.textSubtitle
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
                 }
@@ -288,7 +288,7 @@ Item {
                     width: parent.width
                     height: 120
                     radius: Theme.radiusCard
-                    color: "#0f0b07"
+                    color: Theme.surfaceDeep
                     border.color: Theme.border
                     border.width: 1
                     clip: true
@@ -415,7 +415,7 @@ Item {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
             height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height

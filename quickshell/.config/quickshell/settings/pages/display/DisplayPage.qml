@@ -67,7 +67,7 @@ Item {
     component Divider: Rectangle {
         width: parent.width
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Theme.dividerColor
     }
 
     component LabelRow: Item {
@@ -153,12 +153,12 @@ Item {
                     spacing: 4
                     Text {
                         text: "Display"
-                        color: "#f5ede0"
+                        color: Theme.textHeader
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
                         text: "Scaling, night light, and per-display options."
-                        color: "#8a8175"
+                        color: Theme.textSubtitle
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
                 }
@@ -226,11 +226,29 @@ Item {
                     }
                 }
 
+                GroupShell {
+                    header: "COLOR SCHEME"
+                    accent: Theme.primary
+
+                    LabelRow {
+                        title: "Appearance mode"
+                        description: "Applies to the shell bar, popouts, settings, and all GTK/Qt apps."
+
+                        PillSelector {
+                            options: ["Dark", "Light"]
+                            currentIndex: SettingsStore.colorScheme === "light" ? 1 : 0
+                            onSelected: function(index) {
+                                SettingsStore.setColorScheme(index === 1 ? "light" : "dark");
+                            }
+                        }
+                    }
+                }
+
                 Rectangle {
                     width: parent.width
                     height: 56
                     radius: Theme.radiusCard
-                    color: Qt.rgba(1, 1, 1, 0.025)
+                    color: Theme.surfaceElev
                     border.color: Theme.border
                     border.width: 1
 
@@ -253,7 +271,7 @@ Item {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
             height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height

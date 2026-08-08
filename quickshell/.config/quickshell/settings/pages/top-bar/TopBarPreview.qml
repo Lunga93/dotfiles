@@ -66,7 +66,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         visible: !SettingsStore.currentWallpaper
-        color: "#1a1408"
+        color: Theme.surfaceDeep
     }
 
     // ─── Mock bar surface ──────────────────────────────────────────────
@@ -174,7 +174,7 @@ Item {
             id: gt
             property string text: ""
             property int pixelSize: 13
-            property color color: "#f5ede0"
+            property color color: Theme.textHeader
             implicitWidth: foreground.contentWidth
             implicitHeight: foreground.contentHeight
 
@@ -210,7 +210,7 @@ Item {
 
             Rectangle {
                 width: 8; height: 8; radius: 4
-                color: "#f5ede0"
+                color: Theme.textHeader
                 anchors.verticalCenter: parent.verticalCenter
             }
             Repeater {
@@ -230,7 +230,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: "zen-browser"
             pixelSize: 13
-            color: "#f5ede0"
+            color: Theme.textHeader
         }
 
         // Right: clock + power icon
@@ -244,13 +244,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "10:48"
                 pixelSize: 13
-                color: "#f5ede0"
+                color: Theme.textHeader
             }
             GlowText {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "⏻"
                 pixelSize: 14
-                color: "#f5ede0"
+                color: Theme.textHeader
             }
         }
     }

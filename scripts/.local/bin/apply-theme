@@ -29,9 +29,16 @@ if [ -d "$HOME/.cache/wal" ]; then
 fi
 
 echo "Generating colors with pywal..."
-if ! $WAL_CMD -n -i "$WALLPAPER" -q; then
-    echo "pywal failed."
-    exit 1
+if [ "$COLOR_SCHEME" = "light" ]; then
+    if ! $WAL_CMD -l -n -i "$WALLPAPER" -q; then
+        echo "pywal failed."
+        exit 1
+    fi
+else
+    if ! $WAL_CMD -n -i "$WALLPAPER" -q; then
+        echo "pywal failed."
+        exit 1
+    fi
 fi
 echo "pywal complete."
 
@@ -77,11 +84,13 @@ if [ -f "$SETTINGS_JSON" ] && command -v jq >/dev/null 2>&1; then
     ACCENT_MODE=$(jq -r '.appearance.accent_mode // "dynamic"' "$SETTINGS_JSON")
     MANUAL_PRIMARY=$(jq -r '.appearance.manual_primary // ""' "$SETTINGS_JSON")
     MANUAL_SECONDARY=$(jq -r '.appearance.manual_secondary // ""' "$SETTINGS_JSON")
+    COLOR_SCHEME=$(jq -r '.appearance.color_scheme // "dark"' "$SETTINGS_JSON")
     # One-shot migration of legacy field.
     [ -z "$MANUAL_PRIMARY" ] \
         && MANUAL_PRIMARY=$(jq -r '.appearance.manual_accent // ""' "$SETTINGS_JSON")
 fi
 echo "Accent mode: $ACCENT_MODE  manual_primary='$MANUAL_PRIMARY'  manual_secondary='$MANUAL_SECONDARY'"
+echo "Color scheme: $COLOR_SCHEME"
 
 # Pick primary + secondary from the pywal palette. Secondary requires hue gap
 # >= 60 deg from primary; falls back to next-best regardless if no candidate
@@ -164,8 +173,8 @@ echo "$SECONDARY" > "$LAST_SECONDARY_FILE"
 # its existing FileView watcher (no extra file plumbing needed).
 # Sibling temp file (not /tmp) — on tmpfs systems /tmp may be full.
 COLORS_TMP="${PY_COLORS}.tmp.$$"
-if jq --arg p "$ACCENT" --arg s "$SECONDARY" \
-       '.colors.primary_accent = $p | .colors.secondary_accent = $s' \
+if jq --arg p "$ACCENT" --arg s "$SECONDARY" --arg scheme "$COLOR_SCHEME" \
+       '.colors.primary_accent = $p | .colors.secondary_accent = $s | .scheme = $scheme' \
        "$PY_COLORS" > "$COLORS_TMP"; then
     mv -f "$COLORS_TMP" "$PY_COLORS"
 else
@@ -175,6 +184,9 @@ fi
 
 echo "Final accent (primary): $ACCENT"
 echo "Final secondary:        $SECONDARY"
+
+echo "Setting system color scheme: $COLOR_SCHEME"
+gsettings set org.gnome.desktop.interface color-scheme "prefer-$COLOR_SCHEME" 2>/dev/null || true
 INVERSE_ACCENT=""
 
 if [ -x "$HOME/dotfiles/scripts/.local/bin/accent-guardian" ]; then

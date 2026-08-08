@@ -69,7 +69,7 @@ Item {
     component Divider: Rectangle {
         width: parent.width
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Theme.dividerColor
     }
 
     component LabelRow: Item {
@@ -155,12 +155,12 @@ Item {
                     spacing: 4
                     Text {
                         text: "Icons"
-                        color: "#f5ede0"
+                        color: Theme.textHeader
                         font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold
                     }
                     Text {
                         text: "Icon pack, cursor theme, and cursor size."
-                        color: "#8a8175"
+                        color: Theme.textSubtitle
                         font.family: Theme.fontFamily; font.pixelSize: 12
                     }
                 }
@@ -235,7 +235,7 @@ Item {
                     width: parent.width
                     height: 56
                     radius: Theme.radiusCard
-                    color: Qt.rgba(1, 1, 1, 0.025)
+                    color: Theme.surfaceElev
                     border.color: Theme.border
                     border.width: 1
 
@@ -258,7 +258,7 @@ Item {
 
         Rectangle {
             anchors.right: parent.right; width: parent.width; radius: 2
-            color: Qt.rgba(1, 1, 1, 0.15)
+            color: Theme.border
             y: scroller.contentHeight > 0 ? (scroller.contentY / scroller.contentHeight) * parent.height : 0
             height: scroller.contentHeight > 0 ? Math.max(40, (scroller.height / scroller.contentHeight) * parent.height) : 0
             visible: scroller.contentHeight > scroller.height

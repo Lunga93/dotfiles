@@ -15,8 +15,8 @@ Item {
         id: track
         anchors.fill: parent
         radius: 13
-        color: root.checked ? Theme.secondary : "#2c2519"
-        border.color: root.checked ? Qt.darker(Theme.secondary, 1.2) : "#0e0a06"
+        color: root.checked ? Theme.secondary : Theme.surfaceDeep
+        border.color: root.checked ? Qt.darker(Theme.secondary, 1.2) : Theme.dividerColor
         border.width: 1
         Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
@@ -25,7 +25,7 @@ Item {
             width: 20
             height: 20
             radius: 10
-            color: "#ffffff"
+            color: Theme.foreground
             x: root.checked ? parent.width - width - 3 : 3
             y: 3
             Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }

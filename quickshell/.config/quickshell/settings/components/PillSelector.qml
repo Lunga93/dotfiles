@@ -12,8 +12,8 @@ Rectangle {
     height: 32
     width: pillRow.width + 6
     radius: 16
-    color: "#0f0b07"
-    border.color: "#0e0a06"
+    color: Theme.surfaceDeep
+    border.color: Theme.dividerColor
     border.width: 1
 
     Row {
@@ -37,8 +37,8 @@ Rectangle {
                 radius: 13
                 color: {
                     if (isActive) return Theme.secondary;
-                    if (pillArea.pressed) return Qt.rgba(1, 1, 1, 0.10);
-                    if (pillArea.containsMouse) return Qt.rgba(1, 1, 1, 0.05);
+                    if (pillArea.pressed) return Theme.surfaceHover;
+                    if (pillArea.containsMouse) return Theme.surfaceElev;
                     return "transparent";
                 }
                 Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
@@ -49,7 +49,7 @@ Rectangle {
                     id: pillText
                     anchors.centerIn: parent
                     text: modelData
-                    color: isActive ? "#1a1105" : "#cfc4b3"
+                    color: isActive ? Theme.foreground : Theme.textSecondary
                     font.family: Theme.fontFamily
                     font.pixelSize: 12
                     font.weight: isActive ? Font.DemiBold : Font.Medium

@@ -9,7 +9,7 @@ Rectangle {
     height: childrenRect.height
     radius: 14
     color: "#221c15"
-    border.color: "#0e0a06"
+    border.color: Theme.dividerColor
     border.width: 1
 
     signal frequencyChanged(string freq)
@@ -43,7 +43,7 @@ Rectangle {
                 anchors.left: parent.left; anchors.leftMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
                 text: "SCHEDULE"
-                color: "#6b6258"
+                color: Theme.textSubtitle
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -60,8 +60,8 @@ Rectangle {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 2
-                Text { text: "Frequency"; color: "#f5ede0"; font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium }
-                Text { text: "How often to fetch a new wallpaper"; color: "#8a8175"; font.family: Theme.fontFamily; font.pixelSize: 11 }
+                Text { text: "Frequency"; color: Theme.textHeader; font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium }
+                Text { text: "How often to fetch a new wallpaper"; color: Theme.textSubtitle; font.family: Theme.fontFamily; font.pixelSize: 11 }
             }
 
             PillSelector {
@@ -81,7 +81,7 @@ Rectangle {
             }
         }
 
-        Rectangle { width: parent.width - 32; x: 16; height: 1; color: "#0e0a06" }
+        Rectangle { width: parent.width - 32; x: 16; height: 1; color: Theme.dividerColor }
 
         Item {
             width: parent.width
@@ -91,8 +91,8 @@ Rectangle {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16
                 Column {
                     anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; spacing: 2
-                    Text { text: "Skip today"; color: "#f5ede0"; font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium }
-                    Text { text: "Keep current wallpaper for the rest of today"; color: "#8a8175"; font.family: Theme.fontFamily; font.pixelSize: 11 }
+                    Text { text: "Skip today"; color: Theme.textHeader; font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium }
+                    Text { text: "Keep current wallpaper for the rest of today"; color: Theme.textSubtitle; font.family: Theme.fontFamily; font.pixelSize: 11 }
                 }
                 ToggleSwitch {
                     anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
@@ -107,7 +107,7 @@ Rectangle {
             }
         }
 
-        Rectangle { width: parent.width - 32; x: 16; height: 1; color: "#0e0a06" }
+        Rectangle { width: parent.width - 32; x: 16; height: 1; color: Theme.dividerColor }
 
         Item {
             width: parent.width

@@ -9,7 +9,7 @@ Rectangle {
     height: childrenRect.height
     radius: 14
     color: "#221c15"
-    border.color: "#0e0a06"
+    border.color: Theme.dividerColor
     border.width: 1
 
     readonly property var allSources: [
@@ -53,7 +53,7 @@ Rectangle {
                 anchors.left: parent.left; anchors.leftMargin: 16
                 anchors.verticalCenter: parent.verticalCenter
                 text: "SOURCES"
-                color: "#6b6258"
+                color: Theme.textSubtitle
                 font.family: Theme.fontFamily
                 font.pixelSize: 10
                 font.weight: Font.Bold
@@ -86,7 +86,7 @@ Rectangle {
 
                             Rectangle {
                                 width: 28; height: 28; radius: 8
-                                color: isOn ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.04)
+                                color: isOn ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18) : Theme.dividerColor
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 PhosphorIcon {
@@ -103,12 +103,12 @@ Rectangle {
                                 spacing: 1
                                 Text {
                                     text: modelData.label
-                                    color: isOn ? "#f5ede0" : "#8a8175"
+                                    color: isOn ? Theme.textHeader : Theme.textSubtitle
                                     font.family: Theme.fontFamily; font.pixelSize: 13; font.weight: Font.Medium
                                 }
                                 Text {
                                     text: modelData.id === "local" ? (SettingsStore.get("wallpaper", "library_dir") || "~/Pictures/wallpapers") : ""
-                                    color: "#6b6258"
+                                    color: Theme.textSubtitle
                                     font.family: Theme.fontFamily; font.pixelSize: 10
                                     visible: modelData.id === "local"
                                     elide: Text.ElideMiddle
@@ -128,7 +128,7 @@ Rectangle {
                             Text {
                                 anchors.centerIn: parent
                                 text: "\u22ef"
-                                color: "#a89e8e"
+                                color: Theme.textSecondary
                                 font.pixelSize: 16
                                 font.weight: Font.Bold
                             }
@@ -173,7 +173,7 @@ Rectangle {
                                                 anchors.left: parent.left; anchors.leftMargin: 10
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 text: modelData.label
-                                                color: "#f5ede0"
+                                                color: Theme.textHeader
                                                 font.family: Theme.fontFamily; font.pixelSize: 12
                                             }
 
@@ -213,7 +213,7 @@ Rectangle {
                     anchors.left: parent.left; anchors.leftMargin: 16
                     anchors.right: parent.right; anchors.rightMargin: 16
                     height: 1
-                    color: "#0e0a06"
+                    color: Theme.dividerColor
                     visible: index < root.allSources.length - 1
                 }
             }

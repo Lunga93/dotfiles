@@ -58,7 +58,7 @@ Item {
             id: bubbleText
             anchors.centerIn: parent
             text: root.unitLabel
-            color: "#f5ede0"
+            color: Theme.textHeader
             font.family: Theme.fontFamily
             font.pixelSize: 11
             font.weight: Font.DemiBold
@@ -85,7 +85,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         height: 6
         radius: 3
-        color: "#1a1510"
+        color: Theme.sliderTrack
         border.color: Qt.rgba(0, 0, 0, 0.35)
         border.width: 1
 
@@ -110,7 +110,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
-            color: Qt.rgba(1, 1, 1, 0.04)
+            color: Theme.dividerColor
             opacity: trackArea.containsMouse ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 160 } }
         }
