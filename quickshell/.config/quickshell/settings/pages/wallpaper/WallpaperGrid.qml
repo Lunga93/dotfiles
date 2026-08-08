@@ -18,6 +18,8 @@ Item {
     height: gridFlick.y + Math.min(wallList.height + 16, 400) + 8
     clip: true
 
+    Component.onCompleted: scanner.scan()
+
     Process {
         id: scanner
         function scan(): void {

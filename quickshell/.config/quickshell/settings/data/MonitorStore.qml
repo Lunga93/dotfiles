@@ -8,51 +8,51 @@ QtObject {
     property var monitors: []
     property bool loaded: false
 
-    signal monitorsChanged()
-
     property Process _scanner: Process {
         command: ["true"]
-        onExited: {
-            if (exitCode !== 0) return;
-            try {
-                const raw = readAllStandardOutput();
-                const data = JSON.parse(raw);
-                const list = [];
-                for (const connector in data) {
-                    const m = data[connector];
-                    const logical = m.logical || {};
-                    list.push({
-                        connector: connector,
-                        name: m.name || connector,
-                        make: m.make || "",
-                        model: m.model || "",
-                        serial: m.serial || "",
-                        width: logical.width || 0,
-                        height: logical.height || 0,
-                        x: logical.x || 0,
-                        y: logical.y || 0,
-                        scale: logical.scale || 1.0,
-                        transform: logical.transform || "Normal",
-                        modes: m.modes || [],
-                        currentMode: m.current_mode !== undefined ? m.current_mode : 0,
-                        enabled: true
-                    });
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = text;
+                try {
+                    const data = JSON.parse(raw);
+                    const list = [];
+                    for (const connector in data) {
+                        if (!data.hasOwnProperty(connector)) continue;
+                        const m = data[connector];
+                        const logical = m.logical || {};
+                        list.push({
+                            connector: connector,
+                            name: m.name || connector,
+                            make: m.make || "",
+                            model: m.model || "",
+                            serial: m.serial || "",
+                            width: logical.width || 0,
+                            height: logical.height || 0,
+                            x: logical.x || 0,
+                            y: logical.y || 0,
+                            scale: logical.scale || 1.0,
+                            transform: logical.transform || "Normal",
+                            modes: m.modes || [],
+                            currentMode: m.current_mode !== undefined ? m.current_mode : 0,
+                            enabled: true
+                        });
+                    }
+                    list.sort((a, b) => a.x - b.x || a.y - b.y);
+                    store.monitors = list;
+                    store.loaded = true;
+                } catch (e) {
+                    console.warn("MonitorStore: failed to parse niri outputs", e);
                 }
-                list.sort((a, b) => a.x - b.x || a.y - b.y);
-                store.monitors = list;
-                store.loaded = true;
-                store.monitorsChanged();
-            } catch (e) {
-                console.warn("MonitorStore: failed to parse niri outputs", e);
             }
         }
+        stderr: StdioCollector {}
     }
 
     property Process _exec: Process { command: ["true"] }
 
     function refresh(): void {
         _scanner.command = ["bash", "-c", "niri msg -j outputs 2>/dev/null || echo '{}'"];
-        _scanner.start();
+        _scanner.running = true;
     }
 
     function modeLabel(mode): string {

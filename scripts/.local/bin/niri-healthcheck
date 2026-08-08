@@ -62,4 +62,12 @@ for svc in "${SERVICES[@]}"; do
     fi
 done
 
+# ── Quickshell (qs) ─────────────────────────────────────────────────
+if pgrep -x qs &>/dev/null || pgrep -f "quickshell" &>/dev/null; then
+    log "quickshell: running"
+else
+    log "quickshell: NOT RUNNING"
+    fire_webhook "quickshell" "quickshell (qs) process not running — bar may be missing"
+fi
+
 log "healthcheck complete"

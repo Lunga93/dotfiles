@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import Quickshell
 import "../../.."
 
@@ -89,8 +90,9 @@ Item {
 
                 Column {
                     id: contentCol
-                    anchors.fill: parent
-                    anchors.margins: 16
+                    anchors.left: parent.left; anchors.leftMargin: 16
+                    anchors.right: parent.right; anchors.rightMargin: 16
+                    anchors.top: parent.top; anchors.topMargin: 16
                     spacing: 8
 
                     Row {
