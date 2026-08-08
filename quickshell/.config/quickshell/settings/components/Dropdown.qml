@@ -67,16 +67,34 @@ Item {
             elide: Text.ElideRight
         }
 
-        PhosphorIcon {
+        Canvas {
             id: chevron
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: 14
             anchors.verticalCenter: parent.verticalCenter
-            name: "caret-down"
-            size: 13
-            color: Theme.textSecondary
+            width: 12
+            height: 8
             rotation: menu.opened ? 180 : 0
             Behavior on rotation { NumberAnimation { duration: Theme.durationMed; easing.type: Easing.OutCubic } }
+
+            property color caretColor: Theme.textSecondary
+            Connections {
+                target: Theme
+                function onTextSecondaryChanged() { chevron.requestPaint() }
+            }
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.reset();
+                ctx.strokeStyle = chevron.caretColor;
+                ctx.lineWidth = 1.8;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.beginPath();
+                ctx.moveTo(1, 1.5);
+                ctx.lineTo(width / 2, height - 1);
+                ctx.lineTo(width - 1, 1.5);
+                ctx.stroke();
+            }
         }
 
         MouseArea {
