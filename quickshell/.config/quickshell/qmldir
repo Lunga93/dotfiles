@@ -27,6 +27,8 @@ PowerButton 1.0 PowerButton.qml
 
 CalendarPopout 1.0 CalendarPopout.qml
 PowerMenuPopout 1.0 PowerMenuPopout.qml
+NetworkPanel 1.0 NetworkPanel.qml
+NetworkSegment 1.0 NetworkSegment.qml
 
 # Settings app
 SettingsWindow 1.0 settings/SettingsWindow.qml
