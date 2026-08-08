@@ -29,6 +29,7 @@ input {
 // You can run `niri msg outputs` to get the correct name for your displays.
 // You will have to remove "/-" and edit it before it takes effect.
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
+// BEGIN_AUTO_OUTPUTS — managed by apply-monitors, do not edit between markers
 
 output "ViewSonic Corporation VX2758-C-MH V9M191500306" {
     mode "1920x1080@143.996"
@@ -44,6 +45,8 @@ output "SKYDATA S.P.A. TV-monitor 0x01010101" {
     scale 1
     position x=1920 y=0
 }
+
+// END_AUTO_OUTPUTS
 
 // ────────────── Keybindings ──────────────
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Key-Bindings

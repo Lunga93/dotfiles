@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Persist current niri output state to config.kdl.
+
+Reads `niri msg -j outputs`, generates output blocks for each enabled
+display, and replaces the section between BEGIN_AUTO_OUTPUTS and
+END_AUTO_OUTPUTS markers in config.kdl.
+"""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+CONFIG = Path.home() / ".config/niri/config.kdl"
+BEGIN_MARKER = "// BEGIN_AUTO_OUTPUTS"
+END_MARKER = "// END_AUTO_OUTPUTS"
+
+
+def get_outputs() -> dict:
+    result = subprocess.run(
+        ["niri", "msg", "-j", "outputs"],
+        capture_output=True, text=True, timeout=5,
+    )
+    if result.returncode != 0:
+        print("apply-monitors: niri msg -j outputs failed", file=sys.stderr)
+        sys.exit(1)
+    return json.loads(result.stdout)
+
+
+def build_output_name(m: dict) -> str:
+    """Build the descriptive name string that niri uses in config."""
+    make = m.get("make", "")
+    model = m.get("model", "")
+    serial = m.get("serial", "")
+    parts = [p for p in [make, model, serial] if p]
+    if parts:
+        return " ".join(parts)
+    return m.get("name", "unknown")
+
+
+def mode_str(mode: dict) -> str:
+    w = mode["width"]
+    h = mode["height"]
+    hz = mode["refresh_rate"] / 1000.0
+    if hz == int(hz):
+        return f"{w}x{h}@{int(hz)}"
+    return f"{w}x{h}@{hz:.3f}".rstrip("0").rstrip(".")
+
+
+def generate_output_block(m: dict) -> str:
+    name = build_output_name(m)
+    logical = m.get("logical", {})
+    modes = m.get("modes", [])
+    current = m.get("current_mode", 0)
+
+    lines = [f'output "{name}" {{']
+
+    if modes and current < len(modes):
+        lines.append(f'    mode "{mode_str(modes[current])}"')
+
+    scale = logical.get("scale", 1.0)
+    if scale == int(scale):
+        lines.append(f"    scale {int(scale)}")
+    else:
+        lines.append(f"    scale {scale}")
+
+    x = logical.get("x", 0)
+    y = logical.get("y", 0)
+    lines.append(f"    position x={x} y={y}")
+
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def main():
+    outputs = get_outputs()
+
+    blocks = []
+    for _connector, m in outputs.items():
+        logical = m.get("logical", {})
+        if not logical:
+            continue
+        blocks.append(generate_output_block(m))
+
+    if not blocks:
+        print("apply-monitors: no active outputs found", file=sys.stderr)
+        return
+
+    new_section = "\n\n".join(blocks)
+
+    config_text = CONFIG.read_text()
+
+    start = config_text.find(BEGIN_MARKER)
+    end = config_text.find(END_MARKER)
+    if start == -1 or end == -1:
+        print("apply-monitors: markers not found in config.kdl", file=sys.stderr)
+        sys.exit(1)
+
+    pre = config_text[:start + len(BEGIN_MARKER)]
+    post = config_text[end:]
+    new_config = pre + "\n\n" + new_section + "\n\n" + post
+
+    CONFIG.write_text(new_config)
+    print(f"apply-monitors: wrote {len(blocks)} output(s) to {CONFIG}")
+
+    subprocess.run(["niri", "msg", "action", "load-config-file"], timeout=5)
+
+
+if __name__ == "__main__":
+    main()
