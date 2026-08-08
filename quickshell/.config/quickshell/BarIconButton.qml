@@ -1,4 +1,4 @@
-// Icon-only button used inside bar pills. Hover + active states.
+// Icon-only button used inside bar pills. Hover + active states tint the glyph.
 
 import QtQuick
 
@@ -18,20 +18,13 @@ Item {
     implicitHeight: Theme.barHeight
     implicitWidth: implicitHeight
 
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 4
-        radius: Theme.radiusControl - 2
-        color: mouse.pressed
-            ? Theme.surfacePressed
-            : (mouse.containsMouse ? Theme.surfaceHover : "transparent")
-        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-    }
-
     Text {
         anchors.centerIn: parent
         text: root.icon
-        color: root.active ? root.tintActive : root.tint
+        color: root.active ? root.tintActive
+             : mouse.pressed ? Theme.secondaryMuted
+             : mouse.containsMouse ? Theme.secondary
+             : root.tint
         font.pixelSize: root.fontSize
         font.family: Theme.fontMono
         Behavior on color { ColorAnimation { duration: Theme.durationFast } }

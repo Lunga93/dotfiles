@@ -1,5 +1,5 @@
 // Window list filtered to this output. Click activates, middle-click closes.
-// Active window gets the accent indicator.
+// Active window gets the accent indicator. App icons tint secondary on hover.
 
 import QtQuick
 import QtQuick.Layouts
@@ -60,14 +60,15 @@ Item {
                     anchors.bottomMargin: 4
                     radius: Theme.radiusControl - 2
                     color: mouse.pressed
-                        ? Theme.surfacePressed
-                        : (mouse.containsMouse
-                            ? Theme.surfaceHover
-                            : (tile.modelData && tile.modelData.activated ? Theme.surfaceElev : "transparent"))
+                        ? Theme.surfaceSecondaryPressed
+                        : mouse.containsMouse
+                            ? Theme.surfaceSecondaryHover
+                            : (tile.modelData && tile.modelData.activated ? Theme.secondarySoft : "transparent")
                     Behavior on color { ColorAnimation { duration: Theme.durationFast } }
                 }
 
                 IconImage {
+                    id: appIcon
                     anchors.centerIn: parent
                     width: Theme.barIconSize + 5
                     height: Theme.barIconSize + 5

@@ -1,5 +1,6 @@
 // Niri workspaces filtered to this output. Click to switch.
 // Active = full-opacity number with accent underline anchored to bar bottom.
+// Number tints secondary on hover.
 
 import QtQuick
 import QtQuick.Layouts
@@ -58,21 +59,13 @@ Item {
                 Layout.preferredWidth: 28
                 Layout.fillHeight: true
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.topMargin: 5
-                    anchors.bottomMargin: 5
-                    radius: Theme.radiusControl - 2
-                    color: mouse.pressed
-                        ? Theme.surfacePressed
-                        : (mouse.containsMouse ? Theme.surfaceHover : "transparent")
-                    Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-                }
-
                 Text {
                     anchors.centerIn: parent
                     text: ws.modelData.idx + ""
-                    color: ws.modelData.is_active ? Theme.textPrimary : Theme.textTertiary
+                    color: ws.modelData.is_active ? Theme.textPrimary
+                         : mouse.pressed ? Theme.secondaryMuted
+                         : mouse.containsMouse ? Theme.secondary
+                         : Theme.textTertiary
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.barFontSize
                     font.weight: ws.modelData.is_active ? Font.DemiBold : Font.Medium

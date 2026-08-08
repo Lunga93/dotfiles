@@ -1,4 +1,4 @@
-// Circular icon button. Used inside popouts.
+// Icon-only button used inside popouts. Hover tints the glyph.
 
 import QtQuick
 
@@ -18,8 +18,8 @@ Item {
         anchors.fill: parent
         radius: width / 2
         color: mouse.pressed
-            ? Theme.surfacePressed
-            : (mouse.containsMouse ? Theme.surfaceHover : Theme.surfaceElev)
+            ? Theme.surfaceSecondaryPressed
+            : (mouse.containsMouse ? Theme.surfaceSecondaryHover : Theme.surfaceElev)
         Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 
