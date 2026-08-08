@@ -15,6 +15,7 @@ Flickable {
 
     Component.onCompleted: {
         MoodCatalog.refresh();
+        wallpaperGrid.scanner.scan();
     }
 
     Column {

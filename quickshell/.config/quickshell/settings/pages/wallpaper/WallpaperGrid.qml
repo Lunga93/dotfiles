@@ -15,7 +15,7 @@ Item {
 
     readonly property var sourceWallpapers: root.moodFilter !== "" ? root.wallpaperPaths : root.wallpapers
 
-    height: root.moodFilter !== "" ? (gridHeader.height + Math.min(wallList.height, 400) + 8) : 0
+    height: gridFlick.y + Math.min(wallList.height + 16, 400) + 8
     clip: true
 
     Process {

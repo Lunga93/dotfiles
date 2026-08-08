@@ -32,7 +32,7 @@ start_wlsunset() {
         return 0
     fi
     pkill -x wlsunset 2>/dev/null || true
-    "$WLSUNSET" -t "$temp" -T "$temp" &
+    "$WLSUNSET" -t "$temp" -T "$((temp + 1))" &
     echo $! > "$PIDFILE"
 }
 
