@@ -12,6 +12,11 @@ ShellRoot {
         Qt.application.styleHints.colorScheme = Qt.Dark;
     }
 
+    Process {
+        command: ["bash", "-c", "~/.local/bin/apply-display-scale"]
+        Component.onCompleted: startDetached()
+    }
+
     Variants {
         model: Quickshell.screens
         Bar {}

@@ -208,7 +208,10 @@ QtObject {
     property var nightLightTemperature: get("display", "night_light_temperature")
     property var colorScheme: get("appearance", "color_scheme")
 
-    function setDisplayScale(scale: string): void { set("display", "scale", scale) }
+    function setDisplayScale(scale: string): void {
+        set("display", "scale", scale);
+        execScript("~/.local/bin/apply-display-scale");
+    }
     function setNightLightEnabled(enabled: bool): void {
         set("display", "night_light_enabled", enabled);
         execScript("~/.local/bin/night-light");
