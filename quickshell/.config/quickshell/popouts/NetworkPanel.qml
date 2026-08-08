@@ -1,6 +1,5 @@
 // Floating network control. Self-contained window reading nmcli via
-// network-status/network-scan scripts. IPC with the segment through
-// Globals.networkPanelVisible/networkPanelZ.
+// network-status/network-scan scripts. Toggled via Globals.networkPanel.
 
 import QtQuick
 import QtQuick.Layouts
@@ -11,7 +10,7 @@ import "../"
 PanelWindow {
     id: panel
 
-    visible: Globals.networkPanelVisible
+    visible: false
 
     anchors.top: true
     anchors.left: true
@@ -29,6 +28,8 @@ PanelWindow {
     property string errorMsg: ""
     property string passwordSsid: ""
     property string passwordValue: ""
+
+    property bool networkingEnabled: true
 
     Process {
         id: watcher
@@ -71,6 +72,7 @@ PanelWindow {
 
     Process { id: toggleProc }
     Process { id: connectProc; running: false; command: ["true"] }
+    Process { id: disconnectProc; running: false; command: ["true"] }
 
     Timer {
         id: connectTimer
@@ -110,8 +112,25 @@ PanelWindow {
         connectProc.running = true;
     }
 
+    function disconnectNetwork() {
+        var devs = netState.devices || [];
+        for (var i = 0; i < devs.length; i++) {
+            var d = devs[i];
+            if (d.state === "connected") {
+                disconnectProc.command = ["nmcli", "device", "disconnect", d.interface];
+                disconnectProc.running = true;
+                return;
+            }
+        }
+    }
+
+    function toggleNetworking(on) {
+        toggleProc.command = ["nmcli", "networking", on ? "on" : "off"];
+        toggleProc.startDetached();
+    }
+
     function openSettings() {
-        Globals.networkPanelVisible = false;
+        panel.visible = false;
         toggleProc.command = ["gnome-control-center", "network"];
         toggleProc.startDetached();
     }
@@ -122,7 +141,7 @@ PanelWindow {
 
     MouseArea {
         anchors.fill: parent
-        onClicked: Globals.networkPanelVisible = false
+        onClicked: panel.visible = false
     }
 
     Card {
@@ -173,7 +192,7 @@ PanelWindow {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Globals.networkPanelVisible = false
+                            onClicked: panel.visible = false
                         }
                     }
                 }
@@ -238,6 +257,76 @@ PanelWindow {
                                     anchors.verticalCenter: parent.verticalCenter
                                     Behavior on color { ColorAnimation { duration: Theme.durationFast } }
                                 }
+                            }
+                        }
+
+                        Text {
+                            visible: netState && netState.state === "connected"
+                            text: "Disconnect"
+                            color: Theme.destructive
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: disconnectNetwork()
+                            }
+                        }
+                    }
+                }
+
+                // ── Divider ──
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.border
+                }
+
+                // ── Networking toggle ──
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    Text {
+                        text: "Enable Networking"
+                        color: Theme.textPrimary
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                    }
+                    Item { Layout.fillWidth: true }
+                    Rectangle {
+                        id: netToggleBg
+                        width: 44; height: 24; radius: 12
+                        color: networkingEnabled
+                            ? Theme.accentSoft
+                            : Qt.rgba(1, 1, 1, 0.08)
+                        border.color: networkingEnabled
+                            ? Theme.accentMuted
+                            : Theme.border
+                        border.width: 1
+
+                        Rectangle {
+                            width: 20; height: 20; radius: 10
+                            x: networkingEnabled
+                                ? netToggleBg.width - width - 2 : 2
+                            y: (netToggleBg.height - height) / 2
+                            color: networkingEnabled
+                                ? Theme.accent : Theme.textTertiary
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: Theme.durationFast
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                networkingEnabled = !networkingEnabled;
+                                toggleNetworking(networkingEnabled);
                             }
                         }
                     }

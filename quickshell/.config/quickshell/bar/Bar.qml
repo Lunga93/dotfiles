@@ -24,6 +24,8 @@ PanelWindow {
     exclusionMode: ExclusionMode.Normal
     exclusiveZone: Theme.barHeight + Theme.barMarginTop
 
+    BarGradient {}
+
     Item {
         anchors.fill: parent
 
@@ -64,6 +66,7 @@ PanelWindow {
 
             ClipboardButton    { Layout.alignment: Qt.AlignVCenter }
             TraySegment        { Layout.alignment: Qt.AlignVCenter }
+            NetworkSegment     { Layout.alignment: Qt.AlignVCenter }
             BluetoothSegment   { Layout.alignment: Qt.AlignVCenter }
             VolumeSegment      { Layout.alignment: Qt.AlignVCenter }
             ClockSegment       { Layout.alignment: Qt.AlignVCenter }

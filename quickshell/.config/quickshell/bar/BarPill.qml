@@ -18,7 +18,8 @@ Item {
     Rectangle {
         id: bg
         anchors.fill: parent
-        color: Theme.barPillBg
+        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b,
+                       SettingsStore.topBarBgOpacity)
         radius: Theme.radiusPill
         border.color: Theme.border
         border.width: 1

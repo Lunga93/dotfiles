@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# desktop-menu — right-click desktop context menu (launched via wofi).
+# Provides quick actions for reloading components and changing wallpaper.
+
+choice=$(echo -e " Reload All Components\n Reload Quickshell\n Reload SwayNC\n Reload Niri Config\n Change Wallpaper" | \
+    wofi --dmenu --prompt="Desktop" \
+         --width=300 --height=280 \
+         -o ~/.config/wofi/style.css 2>/dev/null) || exit 0
+
+case "$choice" in
+    *Reload\ All*)       reload-desktop all ;;
+    *Reload\ Quickshell*) reload-desktop quickshell ;;
+    *Reload\ SwayNC*)    reload-desktop swaync ;;
+    *Reload\ Niri*)      reload-desktop niri ;;
+    *Change\ Wallpaper*) exec wallpaper-control ;;
+esac

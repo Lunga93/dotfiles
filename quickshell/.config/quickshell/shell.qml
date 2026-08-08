@@ -12,6 +12,31 @@ ShellRoot {
         Qt.application.styleHints.colorScheme = Qt.Dark;
     }
 
+    FileView {
+        id: menuQss
+        path: Quickshell.env("HOME") + "/.config/quickshell/menu.qss"
+        preload: true
+        onLoaded: {
+            try { Qt.application.styleSheet = text(); } catch (e) {}
+        }
+        onFileChanged: {
+            try { Qt.application.styleSheet = text(); } catch (e) {}
+        }
+    }
+
+    Process {
+        running: true
+        command: ["sh", "-c", "gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d \"'\" | tr -d '\n'"]
+        stdout: SplitParser {
+            onRead: function(line) {
+                if (line && line !== SettingsStore.iconTheme) {
+                    SettingsStore.set("icons", "icon_theme", line);
+                    SettingsStore.iconTheme = line;
+                }
+            }
+        }
+    }
+
     Variants {
         model: Quickshell.screens
         Bar {}
@@ -20,6 +45,7 @@ ShellRoot {
     AudioPanel      { id: audioPanel }
     CalendarPopout  { id: calendarPopout }
     PowerMenuPopout { id: powerPopout }
+    NetworkPanel    { id: networkPanel }
     SettingsWindow  { id: settingsWindow }
 
     Item {
@@ -27,6 +53,7 @@ ShellRoot {
             Globals.audioPanel     = audioPanel;
             Globals.calendarPopout = calendarPopout;
             Globals.powerPopout    = powerPopout;
+            Globals.networkPanel   = networkPanel;
         }
     }
 

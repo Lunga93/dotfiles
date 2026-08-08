@@ -96,12 +96,14 @@ Item {
         property real from: 0.0
         property real to: 1.0
         property real value: 0.0
+        property real dragValue: 0.0
+        property bool dragging: false
         signal valueChangedByUser(real value)
 
         implicitHeight: 24
 
         readonly property real fraction: (slider.to - slider.from) > 0
-            ? Math.max(0, Math.min(1, (slider.value - slider.from) / (slider.to - slider.from)))
+            ? Math.max(0, Math.min(1, ((slider.dragging ? slider.dragValue : slider.value) - slider.from) / (slider.to - slider.from)))
             : 0
 
         Rectangle {
@@ -153,15 +155,17 @@ Item {
                     if (w <= 0) return;
                     const f = Math.max(0, Math.min(1, mx / w));
                     const v = slider.from + f * (slider.to - slider.from);
-                    if (v !== slider.value) {
-                        slider.value = v;
-                        slider.valueChangedByUser(v);
-                    }
+                    dragValue = v;
+                    dragging = true;
                 }
 
                 onPressed: function(mouse) { updateFromX(mouse.x); }
                 onPositionChanged: function(mouse) {
                     if (pressed) updateFromX(mouse.x);
+                }
+                onReleased: {
+                    dragging = false;
+                    slider.valueChangedByUser(dragValue);
                 }
             }
         }
@@ -345,7 +349,7 @@ Item {
                             to: 0.60
                             value: SettingsStore.topBarBgOpacity
                             onValueChangedByUser: function(v) {
-                                SettingsStore.set("top_bar", "bg_opacity", v);
+                                SettingsStore.set("top_bar", "background_opacity", v);
                             }
                         }
                     }
