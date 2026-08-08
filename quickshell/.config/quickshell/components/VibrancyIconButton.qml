@@ -1,12 +1,6 @@
-// Icon-only bar button for the Vibrancy preset. Behaves identically to
-// BarIconButton (hover/press/active states, scroll + right/middle button
-// signals) but adds a soft glow halo around the glyph, intensity-controlled
-// by SettingsStore.data.top_bar.vibrancy.text_glow.
-//
-// Note on font_family: the icon glyphs come from a Nerd Font Mono so the
-// user-picked text font (Inter / SF Pro / …) does NOT apply to the icon
-// itself — overriding it would render boxes. The text_glow setting is
-// honoured, since it's a visual-effect knob, not a font choice.
+// Icon-only bar button for the Vibrancy preset. Glyph tints accent on hover.
+// Adds a soft glow halo around the glyph, intensity-controlled by
+// SettingsStore.data.top_bar.vibrancy.text_glow.
 
 import QtQuick
 import QtQuick.Effects
@@ -21,10 +15,7 @@ Item {
     property string tooltip: ""
     property int fontSize: Theme.barIconSize + 2
 
-    // Read live from settings — keeps icons in sync with the rest of the bar.
     property real   glow:       SettingsStore.topBarTextGlow
-    // Exposed for parity with BarGlowText / future text labels inside the
-    // button; not applied to the icon glyph itself (see note above).
     property string fontFamily: SettingsStore.topBarFontFamily
 
     signal clicked()
@@ -35,23 +26,13 @@ Item {
     implicitHeight: Theme.barHeight
     implicitWidth: implicitHeight
 
-    // Hover / pressed background — same subtle wash as BarIconButton.
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 4
-        radius: Theme.radiusControl - 2
-        color: mouse.pressed
-            ? Theme.surfacePressed
-            : (mouse.containsMouse ? Theme.surfaceHover : "transparent")
-        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-    }
-
-    // Glow halo — duplicated, blurred glyph underlay.
     Text {
         id: glowLayer
         anchors.centerIn: parent
         text: root.icon
-        color: root.active ? root.tintActive : root.tint
+        color: root.active ? root.tintActive
+             : mouse.containsMouse || mouse.pressed ? root.tintActive
+             : root.tint
         font.pixelSize: root.fontSize
         font.family: Theme.fontMono
         opacity: root.glow * 0.7
@@ -65,11 +46,12 @@ Item {
         Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 
-    // Crisp visible glyph on top.
     Text {
         anchors.centerIn: parent
         text: root.icon
-        color: root.active ? root.tintActive : root.tint
+        color: root.active ? root.tintActive
+             : mouse.containsMouse || mouse.pressed ? root.tintActive
+             : root.tint
         font.pixelSize: root.fontSize
         font.family: Theme.fontMono
         renderType: Text.NativeRendering

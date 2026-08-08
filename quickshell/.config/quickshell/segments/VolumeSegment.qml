@@ -1,4 +1,5 @@
 // Volume pill segment: dynamic icon + percent. Click toggles the AudioPanel.
+// Text tints accent on hover.
 
 import QtQuick
 import QtQuick.Layouts
@@ -37,16 +38,6 @@ Item {
         root.sink.audio.volume = v;
     }
 
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 4
-        radius: Theme.radiusControl - 2
-        color: mouse.pressed
-            ? Theme.surfacePressed
-            : (mouse.containsMouse ? Theme.surfaceHover : "transparent")
-        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-    }
-
     RowLayout {
         id: inner
         anchors.centerIn: parent
@@ -54,7 +45,9 @@ Item {
 
         Text {
             text: root.sinkIcon()
-            color: root.muted ? Theme.destructive : Theme.textPrimary
+            color: root.muted ? Theme.destructive
+                 : mouse.containsMouse || mouse.pressed ? Theme.accent
+                 : Theme.textPrimary
             font.pixelSize: Theme.barIconSize + 3
             font.family: Theme.fontMono
             verticalAlignment: Text.AlignVCenter
@@ -64,8 +57,11 @@ Item {
 
         BarText {
             text: Math.round(root.volume * 100) + "%"
-            color: root.muted ? Theme.textTertiary : Theme.textPrimary
+            color: root.muted ? Theme.textTertiary
+                 : mouse.containsMouse || mouse.pressed ? Theme.accent
+                 : Theme.textPrimary
             font.weight: Font.Medium
+            Behavior on color { ColorAnimation { duration: Theme.durationFast } }
         }
     }
 

@@ -1,4 +1,5 @@
 // "Mon 28 13:42" — clicks toggle the calendar popout directly.
+// Text tints accent on hover.
 
 import QtQuick
 import Quickshell
@@ -14,21 +15,13 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: 4
-        radius: Theme.radiusControl - 2
-        color: mouse.pressed
-            ? Theme.surfacePressed
-            : (mouse.containsMouse ? Theme.surfaceHover : "transparent")
-        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-    }
-
     BarText {
         id: label
         anchors.centerIn: parent
         text: Qt.formatDateTime(clock.date, "ddd HH:mm")
+        color: mouse.containsMouse || mouse.pressed ? Theme.accent : Theme.textPrimary
         font.weight: Font.DemiBold
+        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 
     MouseArea {
