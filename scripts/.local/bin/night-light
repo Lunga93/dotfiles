@@ -9,8 +9,10 @@ set -euo pipefail
 SETTINGS="$HOME/.config/dotfiles/settings.json"
 PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/wlsunset-night-light.pid"
 
-WLSUNSET="$(command -v wlsunset || true)"
-JQ="$(command -v jq || true)"
+WLSUNSET="/usr/bin/wlsunset"
+JQ="/usr/bin/jq"
+[ -x "$WLSUNSET" ] || WLSUNSET="$(command -v wlsunset || true)"
+[ -x "$JQ" ] || JQ="$(command -v jq || true)"
 
 warn() { echo "night-light: $*" >&2; }
 

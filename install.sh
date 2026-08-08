@@ -285,6 +285,12 @@ enable_services() {
             warn "Could not enable wallpaper-cleanup.timer"
     fi
 
+    if systemctl --user list-unit-files night-light.service &>/dev/null; then
+        info "Enabling night-light.service ..."
+        run systemctl --user enable --now night-light.service || \
+            warn "Could not enable night-light.service (enable manually after login)"
+    fi
+
     info "Fetching first daily wallpaper ..."
     run systemctl --user start daily-wallpaper.service || \
         warn "Could not trigger initial wallpaper fetch"
