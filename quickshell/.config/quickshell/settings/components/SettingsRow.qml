@@ -1,3 +1,6 @@
+// Settings row: title + optional description/hint on the left, default
+// `control` slot on the right. Rows read like markup:
+
 import QtQuick
 import QtQuick.Controls
 import Quickshell
@@ -7,45 +10,55 @@ Item {
     id: root
     property string title: ""
     property string description: ""
-    property string accentColor: Theme.accent
-    property int rowHeight: 44
-
-    signal clicked
+    property string hint: ""
+    default property alias control: controlSlot.data
 
     width: parent.width
-    height: rowHeight
+    height: Math.max(60, textCol.height + 28)
 
-    Rectangle {
-        anchors.fill: parent
-        color: mouseArea.containsMouse ? Theme.surfaceHover : "transparent"
-        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
+    Column {
+        id: textCol
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        anchors.right: controlSlot.left
+        anchors.rightMargin: 16
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 3
 
-        Column {
-            anchors.left: parent.left
-            anchors.leftMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-
-            Text {
-                text: root.title
-                color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: 13
-                font.weight: Font.Medium
-            }
-            Text {
-                text: root.description
-                color: Theme.textSecondary
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                visible: root.description !== ""
-            }
+        Text {
+            text: root.title
+            color: Theme.textPrimary
+            font.family: Theme.fontFamily
+            font.pixelSize: 13
+            font.weight: Font.Medium
+        }
+        Text {
+            width: parent.width
+            text: root.description
+            color: Theme.textSecondary
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            visible: root.description !== ""
+            wrapMode: Text.WordWrap
+        }
+        Text {
+            width: parent.width
+            text: root.hint
+            color: Theme.textTertiary
+            font.family: Theme.fontFamily
+            font.pixelSize: 10
+            font.italic: true
+            visible: root.hint !== ""
+            wrapMode: Text.WordWrap
         }
     }
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        onClicked: root.clicked()
+    Item {
+        id: controlSlot
+        anchors.right: parent.right
+        anchors.rightMargin: 20
+        anchors.verticalCenter: parent.verticalCenter
+        width: childrenRect.width
+        height: childrenRect.height
     }
 }
