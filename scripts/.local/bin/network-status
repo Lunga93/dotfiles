@@ -13,7 +13,7 @@ fi
 
 NMCLI="$(command -v nmcli || true)"
 if [ -z "$NMCLI" ]; then
-    echo '{"error":"nmcli not found","state":"unavailable","type":"","ssid":"","signal":0,"ip":"","wifi_enabled":false,"wifi_powered":false,"devices":[]}'
+    echo '{"error":"nmcli not found","state":"unavailable","type":"","ssid":"","signal":0,"ip":"","wifi_hw":false,"wifi_enabled":false,"wifi_powered":false,"devices":[]}'
     exit 0
 fi
 
@@ -34,13 +34,15 @@ snapshot() {
             '. + [{"interface": $dev, "type": $type, "state": $state, "connection": $conn}]')
     done < <("$NMCLI" -t -f DEVICE,TYPE,STATE,CONNECTION device status 2>/dev/null || true)
 
-    local wifi_dev
+    local wifi_dev wifi_hw wifi_state
+    wifi_hw=$(echo "$devices_json" | "$JQ" '[.[] | select(.type == "wifi")] | length')
     wifi_dev=$(echo "$devices_json" | "$JQ" -r '[.[] | select(.type == "wifi") | .interface] | first // ""')
 
     if [ -n "$wifi_dev" ]; then
-        local wifi_state
         wifi_state=$(echo "$devices_json" | "$JQ" -r --arg d "$wifi_dev" '.[] | select(.interface == $d) | .state')
-        [ "$wifi_state" = "connected" ] && wifi_powered=true
+        # Radio is powered when the device exists and is not in "unavailable"
+        # (unavailable == hardware present but radio off / driver not bound).
+        [ "$wifi_state" != "unavailable" ] && wifi_powered=true
     fi
 
     # Find primary connection (first connected device)
@@ -72,10 +74,11 @@ snapshot() {
             --argjson signal "${signal:-0}" \
             --arg ip "${ip:-}" \
             --arg state "$state" \
+            --argjson wifi_hw "${wifi_hw:-0}" \
             --argjson wifi_enabled "$wifi_enabled" \
             --argjson wifi_powered "$wifi_powered" \
             --argjson devices "$devices_json" \
-            '{type: $type, ssid: $ssid, signal: $signal, ip: $ip, state: $state, wifi_enabled: $wifi_enabled, wifi_powered: $wifi_powered, devices: $devices}'
+            '{type: $type, ssid: $ssid, signal: $signal, ip: $ip, state: $state, wifi_hw: ($wifi_hw > 0), wifi_enabled: $wifi_enabled, wifi_powered: $wifi_powered, devices: $devices}'
     else
         local has_powered
         has_powered=$(echo "$devices_json" | "$JQ" '[.[] | select(.type == "wifi" and .state != "unavailable")] | length')
@@ -83,10 +86,11 @@ snapshot() {
 
         "$JQ" -nc \
             --arg state "disconnected" \
+            --argjson wifi_hw "${wifi_hw:-0}" \
             --argjson wifi_enabled "$wifi_enabled" \
             --argjson wifi_powered "$wifi_powered" \
             --argjson devices "$devices_json" \
-            '{state: $state, type: "", ssid: "", signal: 0, ip: "", wifi_enabled: $wifi_enabled, wifi_powered: $wifi_powered, devices: $devices}'
+            '{state: $state, type: "", ssid: "", signal: 0, ip: "", wifi_hw: ($wifi_hw > 0), wifi_enabled: $wifi_enabled, wifi_powered: $wifi_powered, devices: $devices}'
     fi
 }
 
