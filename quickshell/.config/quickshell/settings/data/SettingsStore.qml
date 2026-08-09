@@ -61,9 +61,6 @@ QtObject {
             "input_volume": 100,
             "input_muted": false,
             "alert_sounds_enabled": true
-        },
-        "network": {
-            "wifi_enabled": true
         }
     })
 
@@ -265,9 +262,4 @@ QtObject {
     function setInputVolume(vol: int) { set("sound", "input_volume", vol) }
     function setInputMuted(muted: bool) { set("sound", "input_muted", muted) }
     function setAlertSoundsEnabled(enabled: bool) { set("sound", "alert_sounds_enabled", enabled) }
-
-    // ── Network ──
-    property var wifiEnabled: (store._revision, get("network", "wifi_enabled"))
-
-    function setWifiEnabled(enabled: bool) { set("network", "wifi_enabled", enabled) }
 }
