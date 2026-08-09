@@ -221,6 +221,12 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 | 6 | Sound | `pages/sound/SoundPage.qml` |: | Yes (wpctl) |
 | 7 | System Info | `pages/sysinfo/SysInfoPage.qml` | `components/LogView.qml` | Yes (read-only) |
 
+> [!NOTE] **Wallpaper page** (`pages/wallpaper/`): `WallpaperGrid.qml` shows the mood's
+> thumbnails in a recycling `GridView` (lazy — only visible cells decode, `cacheBuffer: 400`)
+> rather than a `Column`+`Repeater`, so grid cost tracks what's on screen, not library size.
+> The grid height caps at 400px and scrolls internally. `MoodTile.qml` cards are a static
+> gradient with hover/press scale only (the old infinite specular sweep was removed).
+
 ### Adding a page
 
 1. Create `pages/<category>/<Name>Page.qml`
