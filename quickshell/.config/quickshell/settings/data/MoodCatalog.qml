@@ -27,7 +27,7 @@ QtObject {
         return 0;
     }
 
-    function wallpapersForMood(moodId: string): var {
+    function wallpapersForMood(moodId: string) {
         return _moodCache[moodId] || [];
     }
 
@@ -50,7 +50,7 @@ QtObject {
         }
     }
 
-    function _parse(rawJson: string): void {
+    function _parse(rawJson: string) {
         try {
             const parsed = JSON.parse(rawJson);
             const tags = parsed.tags || {};
@@ -86,7 +86,7 @@ QtObject {
         }
     }
 
-    function refresh(): void {
+    function refresh() {
         _cacheFile.reload();
     }
 }

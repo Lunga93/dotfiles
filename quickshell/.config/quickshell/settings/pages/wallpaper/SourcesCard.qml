@@ -28,14 +28,14 @@ Rectangle {
         return en[id] !== false;
     }
 
-    function setEnabled(id: string, enabled: bool): void {
+    function setEnabled(id: string, enabled: bool) {
         const en = Object.assign({}, SettingsStore.get("wallpaper", "sources_enabled") || {});
         en[id] = enabled;
         SettingsStore.set("wallpaper", "sources_enabled", en);
         root.sourcesChanged();
     }
 
-    function folderPicker(): void {
+    function folderPicker() {
         const cmd = "zenity --file-selection --directory --title='Select Wallpaper Library' 2>/dev/null || kdialog --getexistingdirectory 2>/dev/null || echo ''";
         SettingsStore.execScript("result=$(" + cmd + "); if [ -n \"$result\" ]; then " +
             "sed -i 's|\"library_dir\": \"[^\"]*\"|\"library_dir\": \"'$result'\"|' ~/.config/dotfiles/settings.json; " +

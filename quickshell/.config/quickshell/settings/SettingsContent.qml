@@ -7,43 +7,28 @@ Item {
     id: root
     property int activeIndex: 0
 
-    WallpaperPage {
-        visible: activeIndex === 0
-        anchors.fill: parent
-    }
+    // Lazy page map: pages load on first visit (React.lazy analog) instead of
+    // being instantiated eagerly at startup. Switching pages destroys the
+    // previous one, so transient page state (scroll, probe processes) resets.
+    //
+    // Deliberately synchronous: an asynchronous Loader shows a blank/white
+    // frame while incubating and races when sources change rapidly, so page
+    // switches would flash and quick navigation could break the window. A
+    // synchronous swap happens atomically within the frame — no gap, no race.
+    readonly property var pageSources: [
+        "pages/wallpaper/WallpaperPage.qml",
+        "pages/top-bar/TopBarPage.qml",
+        "pages/icons/IconsPage.qml",
+        "pages/display/DisplayPage.qml",
+        "pages/keybindings/KeybindingsPage.qml",
+        "pages/network/NetworkPage.qml",
+        "pages/sound/SoundPage.qml",
+        "pages/sysinfo/SysInfoPage.qml",
+    ]
 
-    TopBarPage {
-        visible: activeIndex === 1
+    Loader {
+        id: pageLoader
         anchors.fill: parent
-    }
-
-    IconsPage {
-        visible: activeIndex === 2
-        anchors.fill: parent
-    }
-
-    DisplayPage {
-        visible: activeIndex === 3
-        anchors.fill: parent
-    }
-
-    KeybindingsPage {
-        visible: activeIndex === 4
-        anchors.fill: parent
-    }
-
-    NetworkPage {
-        visible: activeIndex === 5
-        anchors.fill: parent
-    }
-
-    SoundPage {
-        visible: activeIndex === 6
-        anchors.fill: parent
-    }
-
-    SysInfoPage {
-        visible: activeIndex === 7
-        anchors.fill: parent
+        source: pageSources[Math.max(0, Math.min(root.activeIndex, pageSources.length - 1))]
     }
 }

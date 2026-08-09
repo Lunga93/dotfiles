@@ -18,116 +18,6 @@ Item {
         return 0;
     }
 
-    component GroupShell: Column {
-        id: gs
-        property string header: ""
-        property string accent: Theme.primary
-        default property alias content: inner.data
-
-        width: parent.width
-
-        Row {
-            spacing: 8
-            leftPadding: 16
-            topPadding: 12
-            bottomPadding: 8
-            visible: gs.header !== ""
-
-            Rectangle {
-                width: 3; height: 12
-                radius: 2
-                anchors.verticalCenter: parent.verticalCenter
-                color: gs.accent
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: gs.header
-                color: Theme.textSecondary
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                font.weight: Font.Bold
-                font.letterSpacing: 0.6
-            }
-        }
-
-        Rectangle {
-            width: parent.width
-            height: inner.height
-            radius: Theme.radiusCard
-            color: Theme.surfaceElev
-            border.color: Theme.border
-            border.width: 1
-            clip: true
-
-            Column {
-                id: inner
-                width: parent.width
-            }
-        }
-    }
-
-    component Divider: Rectangle {
-        width: parent.width
-        height: 1
-        color: Theme.dividerColor
-    }
-
-    component LabelRow: Item {
-        id: lr
-        property string title: ""
-        property string description: ""
-        property string hint: ""
-        default property alias control: controlSlot.data
-
-        width: parent.width
-        height: Math.max(60, textCol.height + 28)
-
-        Column {
-            id: textCol
-            anchors.left: parent.left
-            anchors.leftMargin: 20
-            anchors.right: controlSlot.left
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 3
-
-            Text {
-                text: lr.title
-                color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: 13
-                font.weight: Font.Medium
-            }
-            Text {
-                width: parent.width
-                text: lr.description
-                color: Theme.textSecondary
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                visible: lr.description !== ""
-                wrapMode: Text.WordWrap
-            }
-            Text {
-                width: parent.width
-                text: lr.hint
-                color: Theme.textTertiary
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                font.italic: true
-                visible: lr.hint !== ""
-                wrapMode: Text.WordWrap
-            }
-        }
-
-        Item {
-            id: controlSlot
-            anchors.right: parent.right
-            anchors.rightMargin: 20
-            anchors.verticalCenter: parent.verticalCenter
-            width: childrenRect.width
-            height: childrenRect.height
-        }
-    }
 
     Flickable {
         id: scroller
@@ -172,11 +62,11 @@ Item {
                 spacing: 18
                 bottomPadding: 32
 
-                GroupShell {
+                SettingsGroup {
                     header: "ICON PACK"
                     accent: Theme.primary
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Theme"
                         description: "GTK icon theme used by all applications."
                         hint: SettingsStore.iconTheme && root.indexOf(root.iconThemeKeys, SettingsStore.iconTheme) === 0 && SettingsStore.iconTheme !== "Adwaita"
@@ -193,11 +83,11 @@ Item {
                     }
                 }
 
-                GroupShell {
+                SettingsGroup {
                     header: "CURSOR"
                     accent: Theme.secondary
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Theme"
                         description: "Mouse cursor style."
 
@@ -212,7 +102,7 @@ Item {
 
                     Divider {}
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Size"
                         description: "Cursor diameter in pixels."
 

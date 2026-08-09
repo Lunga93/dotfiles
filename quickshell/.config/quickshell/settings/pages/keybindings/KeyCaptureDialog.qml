@@ -26,7 +26,7 @@ Item {
     signal accepted(string newKey)
     signal rejected()
 
-    function _parseInitial(): void {
+    function _parseInitial() {
         modMod = modShift = modCtrl = modAlt = false;
         finalKey = "";
         if (!initialKey) return;

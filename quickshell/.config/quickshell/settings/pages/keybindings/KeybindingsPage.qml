@@ -101,7 +101,7 @@ Item {
         interval: 2800
         onTriggered: root.toastText = ""
     }
-    function _showToast(text: string, isError: bool): void {
+    function _showToast(text: string, isError: bool) {
         root.toastText = text;
         root.toastError = isError;
         _toastTimer.restart();
@@ -123,42 +123,6 @@ Item {
     }
 
     // ─── Group / row components ────────────────────────────────────────────
-    component GroupShell: Column {
-        id: gs
-        property string header: ""
-        default property alias content: inner.data
-        width: parent.width
-
-        Text {
-            text: gs.header
-            color: Theme.textSecondary
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            font.weight: Font.Bold
-            font.letterSpacing: 0.6
-            textFormat: Text.PlainText
-            leftPadding: 16
-            rightPadding: 16
-            topPadding: 12
-            bottomPadding: 8
-            visible: gs.header !== ""
-        }
-
-        Rectangle {
-            width: parent.width
-            height: inner.height
-            radius: Theme.radiusCard
-            color: Theme.surfaceElev
-            border.color: Theme.border
-            border.width: 1
-            clip: true
-
-            Column {
-                id: inner
-                width: parent.width
-            }
-        }
-    }
 
     component KeyRow: Rectangle {
         id: kr
@@ -252,7 +216,7 @@ Item {
     // ─── Capture dialog wiring ─────────────────────────────────────────────
     property string _captureOldKey: ""
 
-    function _openCapture(oldKey: string, label: string): void {
+    function _openCapture(oldKey: string, label: string) {
         root._captureOldKey = oldKey;
         capture.actionLabel = label;
         capture.initialKey = oldKey;
@@ -348,7 +312,7 @@ Item {
 
                 Repeater {
                     model: root.groups
-                    delegate: GroupShell {
+                    delegate: SettingsGroup {
                         header: modelData.name
                         width: parent.width
 

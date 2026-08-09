@@ -73,49 +73,6 @@ Item {
         onExited: function(code) { if (code !== 0) root.uptime = "Unknown" }
     }
 
-    component GroupShell: Column {
-        id: gs
-        property string header: ""
-        default property alias content: inner.data
-
-        width: parent.width
-
-        Text {
-            text: gs.header
-            color: Theme.textSecondary
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            font.weight: Font.Bold
-            font.letterSpacing: 0.6
-            textFormat: Text.PlainText
-            leftPadding: 16
-            rightPadding: 16
-            topPadding: 12
-            bottomPadding: 8
-            visible: gs.header !== ""
-        }
-
-        Rectangle {
-            width: parent.width
-            height: inner.height
-            radius: Theme.radiusCard
-            color: Theme.surfaceElev
-            border.color: Theme.border
-            border.width: 1
-            clip: true
-
-            Column {
-                id: inner
-                width: parent.width
-            }
-        }
-    }
-
-    component Divider: Rectangle {
-        width: parent.width
-        height: 1
-        color: Theme.dividerColor
-    }
 
     component InfoRow: Item {
         id: ir
@@ -190,7 +147,7 @@ Item {
                 spacing: 16
                 bottomPadding: 32
 
-                GroupShell {
+                SettingsGroup {
                     header: "SYSTEM"
 
                     InfoRow { label: "OS";            value: root.osName }
@@ -200,7 +157,7 @@ Item {
                     InfoRow { label: "Uptime";        value: root.uptime }
                 }
 
-                GroupShell {
+                SettingsGroup {
                     header: "HARDWARE"
 
                     InfoRow { label: "CPU";           value: root.cpuModel }
@@ -210,7 +167,7 @@ Item {
                     InfoRow { label: "Disk (/)";      value: root.diskTotal }
                 }
 
-                GroupShell {
+                SettingsGroup {
                     header: "DIAGNOSTICS"
 
                     LogView {
