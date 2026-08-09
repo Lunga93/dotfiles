@@ -21,10 +21,7 @@ Rectangle {
         { id: "picsum",   label: "Picsum",       icon: "image" }
     ]
 
-    signal sourcesChanged()
-
-    function isEnabled(id: string): bool {
-        const en = SettingsStore.get("wallpaper", "sources_enabled") || {};
+    function isEnabled(id: string): bool {        const en = SettingsStore.get("wallpaper", "sources_enabled") || {};
         return en[id] !== false;
     }
 
@@ -32,7 +29,6 @@ Rectangle {
         const en = Object.assign({}, SettingsStore.get("wallpaper", "sources_enabled") || {});
         en[id] = enabled;
         SettingsStore.set("wallpaper", "sources_enabled", en);
-        root.sourcesChanged();
     }
 
     function folderPicker() {
