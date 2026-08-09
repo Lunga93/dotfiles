@@ -9,7 +9,6 @@ Item {
     property string moodFilter: ""
     property var wallpaperPaths: []
     property var wallpapers: []
-    property string applyingPath: ""
 
     signal wallpaperSelected(string path)
 

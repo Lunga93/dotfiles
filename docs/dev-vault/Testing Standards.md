@@ -269,8 +269,8 @@ sequenceDiagram
 | `wallpaper-cleanup` | 6 | ✓ | bash |
 | `clipboard-manager` | 4 | ✓ | bash |
 | `lock-screen` | 3 | ✓ | bash |
-| `network-status` | 6 | ✓ | bash |
-| `network-scan` | 5 | ✓ | bash |
+| `network-status` | 5 | ✓ | bash |
+| `network-scan` | 6 | ✓ | bash |
 | `accent-guardian` | 4 | ✓ | bash |
 | `niri-keybind` | 10 | bats | python |
 | `tag-wallpaper-moods` | 7 | bats | python |

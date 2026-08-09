@@ -11,9 +11,11 @@ QtObject {
     property var audioPanel: null
     property var calendarPopout: null
     property var powerPopout: null
+    property var networkPanel: null
+    property var settingsWindow: null
 
     function _allPopouts(): var {
-        return [audioPanel, calendarPopout, powerPopout].filter(p => p !== null);
+        return [audioPanel, calendarPopout, powerPopout, networkPanel].filter(p => p !== null);
     }
 
     function toggle(target: var): void {
@@ -28,5 +30,14 @@ QtObject {
 
     function closeAll(): void {
         for (const p of _allPopouts()) p.visible = false;
+    }
+
+    // Settings network page index in SettingsContent.pageSources.
+    function openNetworkSettings(): void {
+        closeAll();
+        if (settingsWindow) {
+            settingsWindow.activeIndex = 5;
+            settingsWindow.visible = true;
+        }
     }
 }

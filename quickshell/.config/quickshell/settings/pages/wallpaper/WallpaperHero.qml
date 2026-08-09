@@ -11,7 +11,6 @@ Item {
     property string browseMoodLabel: ""
     property int browseMoodCount: 0
     signal backToAll()
-    signal accentSelected(string hex)  // kept for backward-compat
 
     height: 196
 

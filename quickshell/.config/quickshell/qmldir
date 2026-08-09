@@ -1,6 +1,7 @@
 singleton Theme 1.0 design/Theme.qml
 singleton Globals 1.0 state/Globals.qml
 singleton AudioNames 1.0 audio/AudioNames.qml
+singleton NetworkStore 1.0 settings/data/NetworkStore.qml
 
 Card 1.0 components/Card.qml
 Popout 1.0 popouts/Popout.qml
@@ -8,6 +9,7 @@ IconButton 1.0 components/IconButton.qml
 VolumeSlider 1.0 components/VolumeSlider.qml
 VolumeRow 1.0 components/VolumeRow.qml
 DeviceChip 1.0 components/DeviceChip.qml
+NetworkList 1.0 components/NetworkList.qml
 AudioPanel 1.0 popouts/AudioPanel.qml
 
 BarPill 1.0 bar/BarPill.qml
@@ -67,6 +69,7 @@ MonitorPanel 1.0 settings/pages/display/MonitorPanel.qml
 KeybindingsPage 1.0 settings/pages/keybindings/KeybindingsPage.qml
 KeyCaptureDialog 1.0 settings/pages/keybindings/KeyCaptureDialog.qml
 NetworkPage 1.0 settings/pages/network/NetworkPage.qml
+SavedConnectionRow 1.0 settings/pages/network/SavedConnectionRow.qml
 SoundPage 1.0 settings/pages/sound/SoundPage.qml
 SysInfoPage 1.0 settings/pages/sysinfo/SysInfoPage.qml
 

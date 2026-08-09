@@ -56,8 +56,8 @@ graph LR
 | `test-theme` | Diagnostics: swww, state, pywal, SDDM |
 | `lock-screen` | swaylock-effects with blur |
 | `clipboard-manager` | Wofi + cliphist + wl-copy |
-| `network-status` | JSON network state via nmcli |
-| `network-scan` | JSON wifi scan results |
+| `network-status` | JSON network state via nmcli: connection type/SSID/signal/IP + `wifi_hw`/`wifi_enabled`/`wifi_powered` flags. `--watch` polls every 5s. `wifi_hw` = a wifi device is visible to the daemon (driver bound); `wifi_powered` = that device is not `unavailable` (radio off). |
+| `network-scan` | JSON wifi scan results. Parses terse nmcli from the right so SSIDs containing `:` survive; SSIDs JSON-escaped via `jq -Rsc` (never interpolated); dedupes by SSID case-insensitively keeping strongest signal; reports `wifi_hw`/`wifi_enabled` and a `bars` (1-4) estimate |
 | `view-logs` | Alacritty tailing log files |
 | `sddm-greeter-debug` | Test SDDM greeter in window |
 | `test-alacritty.sh` | Validate config, auto-repair duplicates |

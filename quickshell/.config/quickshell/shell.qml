@@ -25,6 +25,7 @@ ShellRoot {
     AudioPanel      { id: audioPanel }
     CalendarPopout  { id: calendarPopout }
     PowerMenuPopout { id: powerPopout }
+    NetworkPanel    { id: networkPanel }
     SettingsWindow  { id: settingsWindow }
 
     Item {
@@ -32,6 +33,8 @@ ShellRoot {
             Globals.audioPanel     = audioPanel;
             Globals.calendarPopout = calendarPopout;
             Globals.powerPopout    = powerPopout;
+            Globals.networkPanel   = networkPanel;
+            Globals.settingsWindow = settingsWindow;
         }
     }
 
@@ -50,6 +53,13 @@ ShellRoot {
     IpcHandler {
         target: "power"
         function toggle(): void { Globals.toggle(powerPopout) }
+    }
+
+    IpcHandler {
+        target: "network"
+        function toggle(): void { Globals.toggle(networkPanel) }
+        function show(): void   { networkPanel.visible = true }
+        function hide(): void   { networkPanel.visible = false }
     }
 
     IpcHandler {

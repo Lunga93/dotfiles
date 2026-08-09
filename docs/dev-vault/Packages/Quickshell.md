@@ -77,7 +77,7 @@ graph TB
 | `AudioPanel.qml` | `qs ipc call audio toggle` | Volume sliders + device selector |
 | `CalendarPopout.qml` | `qs ipc call calendar toggle` | Calendar widget |
 | `PowerMenuPopout.qml` | `qs ipc call power toggle` | Shutdown/reboot/logout |
-| `NetworkPanel.qml` | `qs ipc call network toggle` | WiFi network list + connection manager |
+| `NetworkPanel.qml` | `qs ipc call network toggle` | WiFi/Ethernet status + available networks + connect, all through the `NetworkStore` singleton. Footer opens the Settings network page |
 
 ## Integration Points
 
@@ -88,6 +88,13 @@ graph LR
     QS -->|native service| WM[ToplevelManager]
     QS -->|Process| AS[audio-status]
     QS -->|Process| BS[bluetooth-status]
+    QS -->|Process| NS[network-status]
+    QS -->|Process| SC[network-scan]
+    NS -->|JSON| NSTORE[NetworkStore singleton]
+    SC -->|JSON| NSTORE
+    NSTORE -->|state| SEG[NetworkSegment]
+    NSTORE -->|state| PANEL[NetworkPanel]
+    NSTORE -->|state| PAGE[Settings NetworkPage]
     QS -->|read ~/.cache/wal/| PL[Palette.qml]
     NI[Niri] -->|event-stream| QS
     AT[apply-theme] -->|writes| PL
@@ -100,6 +107,7 @@ graph LR
 > - **Script-based** (BluetoothSegment): spawns `bluetooth-status --watch` via `Process` with `SplitParser` for JSON streaming
 > - **Niri IPC** (WorkspacesSegment): subscribes to `niri msg --json event-stream` via Process
 > - **Wayland protocol** (TraySegment, TaskbarSegment): native Quickshell services
+> - **NetworkStore singleton** (NetworkSegment, NetworkPanel, Settings NetworkPage): a single `network-status --watch` `Process` in `settings/data/NetworkStore.qml` streams state to all three views; scans and nmcli actions are also multiplexed there (one watcher, not one per view)
 
 ## IPC Protocol
 
