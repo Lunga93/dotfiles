@@ -27,24 +27,6 @@ Item {
             GradientStop { position: 1.0; color: root.gradientEnd }
         }
 
-        Rectangle {
-            id: specular
-            width: parent.width * 1.5
-            height: parent.height * 2
-            color: Theme.surfaceElev
-            rotation: 25
-            x: -width
-            y: -height * 0.5
-
-            SequentialAnimation on x {
-                loops: Animation.Infinite
-                running: !root.selected && !hoverArea.containsMouse
-                PauseAnimation { duration: 4000 }
-                NumberAnimation { from: -width; to: parent.width + width; duration: 2000; easing.type: Easing.OutCubic }
-                PauseAnimation { duration: 2000 }
-            }
-        }
-
         scale: hoverArea.pressed ? 0.95 : (hoverArea.containsMouse ? 1.03 : 1.0)
         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
