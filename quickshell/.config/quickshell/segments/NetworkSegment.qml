@@ -1,14 +1,14 @@
 // Network status icon. Shows wifi signal, ethernet, or disconnected.
-// Click toggles the NetworkPanel popout.
+// State comes from the shared NetworkStore singleton (single watcher);
+// click toggles the NetworkPanel popout.
 
 import QtQuick
-import Quickshell.Io
 import "../"
 
 BarIconButton {
     id: root
 
-    property var state: ({state: "disconnected", wifi_enabled: false, wifi_powered: false, ssid: "", type: ""})
+    readonly property var state: NetworkStore.state
     readonly property bool hasConnection: state.state === "connected"
 
     function iconChar(): string {
@@ -31,18 +31,6 @@ BarIconButton {
     tooltip: hasConnection
         ? (state.type === "ethernet" ? "Wired" : (state.ssid || "Connected"))
         : (state.wifi_enabled ? "Disconnected" : "WiFi off")
-
-    Process {
-        id: watcher
-        running: true
-        command: ["sh", "-c", "exec ~/.local/bin/network-status --watch"]
-        stdout: SplitParser {
-            onRead: (line) => {
-                try { root.state = JSON.parse(line); } catch (e) {}
-            }
-        }
-        onRunningChanged: if (!running) running = true
-    }
 
     onClicked: Globals.toggle(Globals.networkPanel)
     onRightClicked: Globals.toggle(Globals.networkPanel)
