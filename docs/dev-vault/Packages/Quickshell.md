@@ -224,7 +224,7 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 ### Adding a page
 
 1. Create `pages/<category>/<Name>Page.qml`
-2. Add its source path to `pageSources[]` in `SettingsContent.qml` at the matching `activeIndex`. Pages load lazily on first visit: `SettingsContent` swaps a single `Loader` per `activeIndex`, so a page's probe processes (nmcli/wpctl/free/df) only spawn when that page is opened.
+2. Add its source path to `pageSources[]` in `SettingsContent.qml` at the matching `activeIndex`. Pages load lazily on first visit: `SettingsContent` swaps a single synchronous `Loader` per `activeIndex`, so a page's probe processes (nmcli/wpctl/free/df) only spawn when that page is opened. Keep the Loader synchronous — an async one shows a white frame while incubating and races when pages are switched quickly.
 3. Register the type in root `qmldir`
 4. Update the category list in `data/Categories.qml`
 
