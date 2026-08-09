@@ -224,9 +224,30 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 ### Adding a page
 
 1. Create `pages/<category>/<Name>Page.qml`
-2. Add its entry in `SettingsContent.qml` at the matching `activeIndex`
+2. Add its source path to `pageSources[]` in `SettingsContent.qml` at the matching `activeIndex`. Pages load lazily on first visit: `SettingsContent` swaps a single `Loader` per `activeIndex`, so a page's probe processes (nmcli/wpctl/free/df) only spawn when that page is opened.
 3. Register the type in root `qmldir`
 4. Update the category list in `data/Categories.qml`
+
+### Shared component library
+
+Page markup is declarative markup over shared components — build groups as
+`SettingsGroup` (accent-bar header + card) containing `SettingsRow` (title +
+optional description/hint + default `control` slot) separated by `Divider`:
+
+```qml
+SettingsGroup { header: "Audio"
+    SettingsRow { title: "Volume"; description: "Output level"
+        SettingsSlider { from: 0; to: 100; value: ...; onValueChangedByUser: ... }
+    }
+    Divider {}
+    SettingsRow { title: "Mute"; ToggleSwitch { ... } }
+}
+```
+
+- `components/SettingsGroup.qml`: accent-bar header (`header`, `accent`) + bordered card shell; default property collects rows.
+- `components/SettingsRow.qml`: `title`, `description`, `hint`, default `control` slot (right-aligned). Use `SettingsSlider`/`ToggleSwitch`/`PillSelector`/`Dropdown` as the control.
+- `components/Divider.qml`: 1px hairline between rows.
+- Page-specific rows stay inline (e.g. `KeyRow` in Keybindings, `InfoRow` in SysInfo) — only promote what's duplicated across pages.
 
 ### Data layer
 
@@ -234,6 +255,7 @@ The settings app is a full-window configuration panel inside the `qs` daemon. It
 - `data/Categories.qml`: sidebar category definitions
 - `data/KeybindingsStore.qml`: niri keybind query/rebind via `niri-keybind` script
 - `data/MoodCatalog.qml`: mood taxonomy for wallpaper tagging
+- `data/MonitorStore.qml`: singleton store for `niri msg -j outputs`; holds only Process plumbing and thin delegating wrappers. Pure parsing/sorting/labeling lives in `logic/monitors.js` (`parseMonitors`, `modeLabel`, `currentModeLabel`, `modeString`) so it stays unit-testable and QML-free.
 - `components/Toast.qml`: reusable toast notification (info/success/error)
 - `components/Dropdown.qml`: animated option list (top-level `Popup`, so it escapes page clipping). API: `options`, `currentIndex`, `maxVisible`, `placeholder`, `selected(index)`; helper `openPopup()`/`closePopup()`, `popupOpen`. Opens upward when there isn't enough space below the trigger. Used where a fixed pill row would overflow (Display resolution/scale, Wallpaper schedule frequency).
 - `components/LogView.qml`: scrolling log viewer with Follow/Clear pills and error/warn/info row tinting. API: `title`, `lines`, `maxLines`, `follow`, `cleared()`; helpers `appendLine(text)`, `clear()`. Used on the System Info page (e.g. wallpaper-cleanup log via `FileView watchChanges`).
