@@ -212,6 +212,53 @@ EOF
     chmod +x "$SANDBOX_ROOT/bin/bluetoothctl"
 }
 
+# ── Network mocks ─────────────────────────────────────────────────────────────
+# Drives nmcli. SANDBOX_NET_DEVSTATUS lines: DEVICE:TYPE:STATE:CONNECTION
+# (STATE "unavailable" simulates an unbound driver / radio off).
+# SANDBOX_NET_WIFILIST lines: SSID:SIGNAL:SECURITY (SSIDs may contain ':').
+install_network_mocks() {
+    : "${SANDBOX_NET_RADIO:=enabled}"
+    : "${SANDBOX_NET_DEVSTATUS:="enp5s0:ethernet:connected:Wired connection 1"}"
+    : "${SANDBOX_NET_WIFILIST:=}"
+    : "${SANDBOX_NET_CONNSSID:=}"
+    : "${SANDBOX_NET_IP:=192.168.10.102/24}"
+    export SANDBOX_NET_RADIO SANDBOX_NET_DEVSTATUS SANDBOX_NET_WIFILIST
+    export SANDBOX_NET_CONNSSID SANDBOX_NET_IP
+
+    cat > "$SANDBOX_ROOT/bin/nmcli" <<'EOF'
+#!/usr/bin/env bash
+echo "[MOCK] nmcli $*" >> "$SANDBOX_ROOT/calls.log"
+subcmd=""; ftype=false
+for a in "$@"; do
+    case "$a" in
+        radio)      subcmd=radio ;;
+        device)     subcmd=device ;;
+        wifi)       [ "$subcmd" = device ] && subcmd=wifi ;;
+        list)       [ "$subcmd" = wifi ] && subcmd=wifi_list ;;
+        status)     [ "$subcmd" = device ] && subcmd=devstatus ;;
+        connection) subcmd=connection ;;
+        show)       [ "$subcmd" = connection ] && subcmd=connshow ;;
+        TYPE)       ftype=true ;;
+    esac
+done
+case "$subcmd" in
+    radio)     printf '%s\n' "$SANDBOX_NET_RADIO" ;;
+    devstatus)
+        if [ "$ftype" = true ]; then
+            printf '%s\n' "$SANDBOX_NET_DEVSTATUS" | awk -F: '{print $2}'
+        else
+            printf '%s\n' "$SANDBOX_NET_DEVSTATUS"
+        fi
+        ;;
+    wifi_list) printf '%s\n' "$SANDBOX_NET_WIFILIST" ;;
+    connshow)  printf '802-11-wireless.ssid:%s\n' "$SANDBOX_NET_CONNSSID" ;;
+    *)         printf 'IP4.ADDRESS[1]:%s\n' "$SANDBOX_NET_IP" ;;
+esac
+exit 0
+EOF
+    chmod +x "$SANDBOX_ROOT/bin/nmcli"
+}
+
 run_install_sh() {
     (cd "$SANDBOX_REPO" && PATH="$SANDBOX_ROOT/bin:$PATH" HOME="$SANDBOX_HOME" bash ./install.sh)
 }
