@@ -71,13 +71,13 @@ QtObject {
         }
     }
 
-    function reload(): void {
+    function reload() {
         store.loading = true;
         _lister.command = [store.scriptPath, "list"];
         _lister.running = true;
     }
 
-    function setBinding(oldKey: string, newKey: string): void {
+    function setBinding(oldKey: string, newKey: string) {
         if (!oldKey || !newKey) return;
         if (oldKey === newKey) {
             store.setSucceeded(oldKey, newKey);
@@ -89,7 +89,7 @@ QtObject {
         _setter.running = true;
     }
 
-    function bindingFor(actionBody: string): var {
+    function bindingFor(actionBody: string) {
         for (let i = 0; i < store.bindings.length; ++i) {
             if (store.bindings[i].action === actionBody) return store.bindings[i];
         }

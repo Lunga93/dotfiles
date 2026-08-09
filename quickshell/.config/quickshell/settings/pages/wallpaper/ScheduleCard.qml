@@ -16,7 +16,7 @@ Rectangle {
 
     readonly property string currentFrequency: SettingsStore.get("wallpaper", "frequency") || "daily"
 
-    function applyFrequency(freq: string): void {
+    function applyFrequency(freq: string) {
         SettingsStore.set("wallpaper", "frequency", freq);
         root.frequencyChanged(freq);
         let cmd = "";

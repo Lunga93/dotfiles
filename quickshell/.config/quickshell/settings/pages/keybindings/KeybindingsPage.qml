@@ -101,7 +101,7 @@ Item {
         interval: 2800
         onTriggered: root.toastText = ""
     }
-    function _showToast(text: string, isError: bool): void {
+    function _showToast(text: string, isError: bool) {
         root.toastText = text;
         root.toastError = isError;
         _toastTimer.restart();
@@ -216,7 +216,7 @@ Item {
     // ─── Capture dialog wiring ─────────────────────────────────────────────
     property string _captureOldKey: ""
 
-    function _openCapture(oldKey: string, label: string): void {
+    function _openCapture(oldKey: string, label: string) {
         root._captureOldKey = oldKey;
         capture.actionLabel = label;
         capture.initialKey = oldKey;

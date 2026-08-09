@@ -25,14 +25,14 @@ Item {
         return "info";
     }
 
-    function appendLine(text: string): void {
+    function appendLine(text: string) {
         const all = root.lines.slice();
         all.push(text);
         if (all.length > root.maxLines) all.splice(0, all.length - root.maxLines);
         root.lines = all;
     }
 
-    function clear(): void {
+    function clear() {
         root.lines = [];
         root.cleared();
     }

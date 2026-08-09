@@ -22,7 +22,7 @@ Item {
 
     Process {
         id: scanner
-        function scan(): void {
+        function scan() {
             const libDir = SettingsStore.get("wallpaper", "library_dir") || Quickshell.env("HOME") + "/Pictures/wallpapers";
             command = ["bash", "-c", "find '" + libDir + "' -maxdepth 3 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \\) 2>/dev/null | sort"];
             root.wallpapers = [];

@@ -21,15 +21,15 @@ PanelWindow {
     property int activeIndex: 0
     property bool windowExpanded: SettingsStore.selectedMood ? true : false
 
-    function open(): void {
+    function open() {
         window.visible = true;
     }
 
-    function close(): void {
+    function close() {
         window.visible = false;
     }
 
-    function toggle(): void {
+    function toggle() {
         if (window.visible) close();
         else open();
     }

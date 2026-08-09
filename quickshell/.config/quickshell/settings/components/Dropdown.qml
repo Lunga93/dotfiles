@@ -17,8 +17,8 @@ Item {
 
     signal selected(int index)
 
-    function openPopup(): void { menu.open() }
-    function closePopup(): void { menu.close() }
+    function openPopup() { menu.open() }
+    function closePopup() { menu.close() }
 
     implicitWidth: 200
     implicitHeight: trigger.height

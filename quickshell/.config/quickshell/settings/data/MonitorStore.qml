@@ -26,7 +26,7 @@ QtObject {
 
     property Process _exec: Process { command: ["true"] }
 
-    function refresh(): void {
+    function refresh() {
         _scanner.command = ["bash", "-c", "niri msg -j outputs 2>/dev/null || echo '{}'"];
         _scanner.running = true;
     }
@@ -39,7 +39,7 @@ QtObject {
         return Monitors.currentModeLabel(monitor);
     }
 
-    function setMode(monitor, modeIndex): void {
+    function setMode(monitor, modeIndex) {
         if (!monitor) return;
         const name = monitor.connector || monitor.name;
         const mode = monitor.modes[modeIndex];
@@ -49,14 +49,14 @@ QtObject {
         _exec.startDetached();
     }
 
-    function setScale(monitor, scale): void {
+    function setScale(monitor, scale) {
         if (!monitor) return;
         const name = monitor.connector || monitor.name;
         _exec.command = ["bash", "-c", "niri msg output '" + name + "' scale " + scale + " && niri msg action load-config-file"];
         _exec.startDetached();
     }
 
-    function applyConfig(): void {
+    function applyConfig() {
         _exec.command = ["bash", "-c", "~/.local/bin/apply-monitors"];
         _exec.startDetached();
     }

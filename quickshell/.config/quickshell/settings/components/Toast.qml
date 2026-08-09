@@ -23,7 +23,7 @@ Rectangle {
         onTriggered: root.message = ""
     }
 
-    function show(msg: string, t: string): void {
+    function show(msg: string, t: string) {
         message = msg; type = t || "info"; hideTimer.restart()
     }
 

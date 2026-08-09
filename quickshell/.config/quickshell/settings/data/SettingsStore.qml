@@ -116,21 +116,21 @@ QtObject {
 
     property real _pendingReapply: 0
 
-    function save(): void {
+    function save() {
         const json = JSON.stringify(store.data, null, 2);
         const cmd = "mkdir -p " + Quickshell.env("HOME") + "/.config/dotfiles && cat > '" + store.settingsPath + "' << 'ENDOFFILE'\n" + json + "\nENDOFFILE";
         _writer.command = ["bash", "-c", cmd];
         _writer.startDetached();
     }
 
-    function _scheduleReapply(): void {
+    function _scheduleReapply() {
         _pendingReapply = Date.now();
         _exec.command = ["bash", "-c",
             "sleep 0.5 && ~/.local/bin/apply-theme \"$(cat ~/.config/current_wallpaper)\""];
         _exec.startDetached();
     }
 
-    function set(section: string, key: string, value: var): void {
+    function set(section: string, key: string, value) {
         if (!store.data[section]) {
             store.data[section] = {};
         }
@@ -139,24 +139,24 @@ QtObject {
         store.changed();
     }
 
-    function loadSelectedMood(): void {
+    function loadSelectedMood() {
         const mood = store.get("wallpaper", "selected_mood");
         store.selectedMood = mood || "";
     }
 
-    function get(section: string, key: string): var {
+    function get(section: string, key: string) {
         if (store.data[section]) {
             return store.data[section][key];
         }
         return null;
     }
 
-    function execScript(cmd: string): void {
+    function execScript(cmd: string) {
         _exec.command = ["bash", "-c", cmd];
         _exec.startDetached();
     }
 
-    function setWallpaper(path: string): void {
+    function setWallpaper(path: string) {
         execScript("~/.local/bin/set-wallpaper '" + path + "'");
         // push to recent (max 10, dedup, MRU first)
         let recent = store.data.wallpaper.recent || [];
@@ -166,11 +166,11 @@ QtObject {
         set("wallpaper", "recent", recent);
     }
 
-    function fetchWallpaper(): void {
+    function fetchWallpaper() {
         execScript("~/.local/bin/fetch-wallpaper");
     }
 
-    function migrateAccentFields(): void {
+    function migrateAccentFields() {
         const app = store.data.appearance || {};
         if (app.manual_accent && !app.manual_primary) {
             app.manual_primary = app.manual_accent;
@@ -179,29 +179,29 @@ QtObject {
         store.data.appearance = app;
     }
 
-    function setManualPrimary(hex: string): void {
+    function setManualPrimary(hex: string) {
         set("appearance", "manual_primary", hex);
         set("appearance", "accent_mode", "manual");
         reapplyTheme();
     }
 
-    function setManualSecondary(hex: string): void {
+    function setManualSecondary(hex: string) {
         set("appearance", "manual_secondary", hex);
         set("appearance", "accent_mode", "manual");
         reapplyTheme();
     }
 
-    function setAccentMode(mode: string): void {
+    function setAccentMode(mode: string) {
         set("appearance", "accent_mode", mode);
         reapplyTheme();
     }
 
-    function reapplyTheme(): void {
+    function reapplyTheme() {
         _scheduleReapply();
     }
 
     // Kept for backward compat with any callers still using setManualAccent.
-    function setManualAccent(hex: string): void {
+    function setManualAccent(hex: string) {
         setManualPrimary(hex);
     }
 
@@ -211,19 +211,19 @@ QtObject {
     property var nightLightTemperature: (store._revision, get("display", "night_light_temperature"))
     property var colorScheme: (store._revision, get("appearance", "color_scheme"))
 
-    function setDisplayScale(scale: string): void {
+    function setDisplayScale(scale: string) {
         set("display", "scale", scale);
         execScript("~/.local/bin/apply-display-scale");
     }
-    function setNightLightEnabled(enabled: bool): void {
+    function setNightLightEnabled(enabled: bool) {
         set("display", "night_light_enabled", enabled);
         execScript("~/.local/bin/night-light");
     }
-    function setNightLightTemperature(temp: int): void {
+    function setNightLightTemperature(temp: int) {
         set("display", "night_light_temperature", temp);
         execScript("~/.local/bin/night-light");
     }
-    function setColorScheme(scheme: string): void {
+    function setColorScheme(scheme: string) {
         console.log("SettingsStore: setColorScheme", scheme);
         set("appearance", "color_scheme", scheme);
         _scheduleReapply();
@@ -240,15 +240,15 @@ QtObject {
     property var cursorTheme: (store._revision, get("icons", "cursor_theme"))
     property var cursorSize: (store._revision, get("icons", "cursor_size"))
 
-    function setIconTheme(theme: string): void {
+    function setIconTheme(theme: string) {
         set("icons", "icon_theme", theme);
         execScript("gsettings set org.gnome.desktop.interface icon-theme '" + theme + "'");
     }
-    function setCursorTheme(theme: string): void {
+    function setCursorTheme(theme: string) {
         set("icons", "cursor_theme", theme);
         execScript("gsettings set org.gnome.desktop.interface cursor-theme '" + theme + "'");
     }
-    function setCursorSize(size: int): void {
+    function setCursorSize(size: int) {
         set("icons", "cursor_size", size);
         execScript("gsettings set org.gnome.desktop.interface cursor-size " + size);
     }
@@ -260,14 +260,14 @@ QtObject {
     property var inputMuted: (store._revision, get("sound", "input_muted"))
     property var alertSoundsEnabled: (store._revision, get("sound", "alert_sounds_enabled"))
 
-    function setOutputVolume(vol: int): void { set("sound", "output_volume", vol) }
-    function setOutputMuted(muted: bool): void { set("sound", "output_muted", muted) }
-    function setInputVolume(vol: int): void { set("sound", "input_volume", vol) }
-    function setInputMuted(muted: bool): void { set("sound", "input_muted", muted) }
-    function setAlertSoundsEnabled(enabled: bool): void { set("sound", "alert_sounds_enabled", enabled) }
+    function setOutputVolume(vol: int) { set("sound", "output_volume", vol) }
+    function setOutputMuted(muted: bool) { set("sound", "output_muted", muted) }
+    function setInputVolume(vol: int) { set("sound", "input_volume", vol) }
+    function setInputMuted(muted: bool) { set("sound", "input_muted", muted) }
+    function setAlertSoundsEnabled(enabled: bool) { set("sound", "alert_sounds_enabled", enabled) }
 
     // ── Network ──
     property var wifiEnabled: (store._revision, get("network", "wifi_enabled"))
 
-    function setWifiEnabled(enabled: bool): void { set("network", "wifi_enabled", enabled) }
+    function setWifiEnabled(enabled: bool) { set("network", "wifi_enabled", enabled) }
 }
