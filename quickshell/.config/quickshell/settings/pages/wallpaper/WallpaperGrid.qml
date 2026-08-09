@@ -15,7 +15,7 @@ Item {
 
     readonly property var sourceWallpapers: root.moodFilter !== "" ? root.wallpaperPaths : root.wallpapers
 
-    height: gridFlick.y + Math.min(wallList.height + 16, 400) + 8
+    height: gridHeader.height + Math.min(grid.contentHeight, 400) + 8
     clip: true
 
     Component.onCompleted: scanner.scan()
@@ -71,69 +71,59 @@ Item {
         }
     }
 
-    Flickable {
-        id: gridFlick
+    GridView {
+        id: grid
         anchors.top: gridHeader.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: Math.min(wallList.height + 16, 400)
-        contentWidth: parent.width
-        contentHeight: wallList.height + 16
+        height: Math.min(contentHeight, 400)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        flickDeceleration: 6000
+        maximumFlickVelocity: 3500
+        cellWidth: 152
+        cellHeight: 132
+        cacheBuffer: 400
 
-        Column {
-            id: wallList
-            anchors.left: parent.left
-            anchors.leftMargin: 12
-            width: parent.width - 24
-            spacing: 8
+        model: root.sourceWallpapers
 
-            Repeater {
-                model: root.sourceWallpapers
+        delegate: Rectangle {
+            required property string modelData
+            width: 144; height: 124
+            radius: 10
+            color: Theme.surfaceDeep
+            border.width: modelData === SettingsStore.currentWallpaper ? 2 : 1
+            border.color: modelData === SettingsStore.currentWallpaper ? Theme.accent : Theme.dividerColor
+            clip: true
 
-                delegate: Rectangle {
-                    required property string modelData
-                    width: parent.width - 24; height: 96
-                    radius: 10
-                    color: Theme.surfaceDeep
-                    border.width: modelData === SettingsStore.currentWallpaper ? 2 : 1
-                    border.color: modelData === SettingsStore.currentWallpaper ? Theme.accent : Theme.dividerColor
-                    clip: true
+            Image {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 96
+                source: "file://" + modelData
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize.width: 288
+                sourceSize.height: 192
+                smooth: true
+            }
 
-                    Row {
-                        anchors.fill: parent
-                        anchors.margins: 4
-                        spacing: 8
+            Text {
+                anchors.left: parent.left; anchors.leftMargin: 8
+                anchors.right: parent.right; anchors.rightMargin: 8
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 6
+                text: root.basename(modelData)
+                color: Theme.textSecondary
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                elide: Text.ElideMiddle
+            }
 
-                        Image {
-                            width: 156; height: 88
-                            source: "file://" + modelData
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            sourceSize.width: 312
-                            sourceSize.height: 176
-                            smooth: true
-                            cache: true
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.basename(modelData)
-                            color: Theme.textHeader
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 11
-                            elide: Text.ElideMiddle
-                            width: parent.width - 176
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.wallpaperSelected(modelData)
-                    }
-                }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.wallpaperSelected(modelData)
             }
         }
     }
