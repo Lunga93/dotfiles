@@ -8,7 +8,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "../../.."
-import "../../../logic/network.js" as Net
+import "../../logic/network.js" as Net
 
 Item {
     id: root

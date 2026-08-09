@@ -61,6 +61,7 @@ graph LR
 | `view-logs` | Alacritty tailing log files |
 | `sddm-greeter-debug` | Test SDDM greeter in window |
 | `test-alacritty.sh` | Validate config, auto-repair duplicates |
+| `lint-qml` | Loads the quickshell config headlessly; fails on load errors and unresolved `Script ... unavailable` imports (the silent-blank-page class) |
 | `test-coverage` | Runs bats + kcov, aggregates coverage, compares baseline |
 | `night-light` | wlsunset controller. `--watch` polls settings.json every 3s for live toggle |
 | `reload-desktop` | Reloads niri config, restarts swaync and quickshell |
