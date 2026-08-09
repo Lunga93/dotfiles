@@ -6,7 +6,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import "../../.."
-import "../../../logic/network.js" as Net
+import "../../logic/network.js" as Net
 
 Item {
     id: row

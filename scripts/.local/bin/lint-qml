@@ -12,6 +12,10 @@ if echo "$output" | grep -q "Failed to load configuration"; then
     echo "  FAIL: config fails to load (bar would crash)"
     echo "$output" | sed -n '/ERROR:/,$p' | sed 's/^/  /' >&2
     errors=$((errors + 1))
+elif echo "$output" | grep -q "Script .* unavailable"; then
+    echo "  FAIL: an unresolved import would silently blank a page (e.g. a wrong '../' depth)"
+    echo "$output" | grep "unavailable" | sed 's/^/  /' >&2
+    errors=$((errors + 1))
 elif echo "$output" | grep -q "Configuration Loaded"; then
     echo "  OK: config loads cleanly"
     echo "$output" | grep "caused by" | sed 's/^/  /' >&2 || true
