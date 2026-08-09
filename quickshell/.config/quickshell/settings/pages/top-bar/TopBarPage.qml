@@ -41,197 +41,6 @@ Item {
         }
     }
 
-    // ─── Inline group container ─────────────────────────────────────────
-    component GroupShell: Column {
-        id: gs
-        property string header: ""
-        default property alias content: inner.data
-
-        width: parent.width
-
-        Text {
-            text: gs.header
-            color: Theme.textSecondary
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            font.weight: Font.Bold
-            font.letterSpacing: 0.6
-            textFormat: Text.PlainText
-            leftPadding: 16
-            rightPadding: 16
-            topPadding: 12
-            bottomPadding: 8
-            visible: gs.header !== ""
-        }
-
-        Rectangle {
-            width: parent.width
-            height: inner.height
-            radius: Theme.radiusCard
-            color: Theme.surfaceElev
-            border.color: Theme.border
-            border.width: 1
-            clip: true
-
-            Column {
-                id: inner
-                width: parent.width
-            }
-        }
-    }
-
-    component Divider: Rectangle {
-        width: parent.width
-        height: 1
-        color: Theme.dividerColor
-    }
-
-    // ─── Inline visual Slider ───────────────────────────────────────────
-    component VSlider: Item {
-        id: slider
-        property real from: 0.0
-        property real to: 1.0
-        property real value: 0.0
-        signal valueChangedByUser(real value)
-
-        implicitHeight: 24
-
-        readonly property real fraction: (slider.to - slider.from) > 0
-            ? Math.max(0, Math.min(1, (slider.value - slider.from) / (slider.to - slider.from)))
-            : 0
-
-        Rectangle {
-            id: track
-            anchors.left: parent.left
-            anchors.right: pctLabel.left
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            height: 4
-            radius: 2
-            color: Theme.surfaceElev
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width * slider.fraction
-                radius: 2
-                color: Theme.primary
-                Behavior on width { NumberAnimation { duration: Theme.durationFast } }
-            }
-
-            Rectangle {
-                width: 14; height: 14; radius: 7
-                color: Theme.textHeader
-                border.color: Qt.rgba(0, 0, 0, 0.35); border.width: 1
-                anchors.verticalCenter: parent.verticalCenter
-                x: Math.max(0, Math.min(parent.width - width,
-                    parent.width * slider.fraction - width / 2))
-                Behavior on x { NumberAnimation { duration: Theme.durationFast } }
-
-                Rectangle {
-                    anchors.fill: parent; anchors.margins: -1
-                    radius: parent.radius + 1
-                    color: "transparent"
-                    border.color: Qt.rgba(0, 0, 0, 0.18); border.width: 1
-                    z: -1
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                anchors.margins: -8
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-
-                function updateFromX(mx) {
-                    const w = track.width;
-                    if (w <= 0) return;
-                    const f = Math.max(0, Math.min(1, mx / w));
-                    const v = slider.from + f * (slider.to - slider.from);
-                    if (v !== slider.value) {
-                        slider.value = v;
-                        slider.valueChangedByUser(v);
-                    }
-                }
-
-                onPressed: function(mouse) { updateFromX(mouse.x); }
-                onPositionChanged: function(mouse) {
-                    if (pressed) updateFromX(mouse.x);
-                }
-            }
-        }
-
-        Text {
-            id: pctLabel
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: 42
-            horizontalAlignment: Text.AlignRight
-            text: Math.round(slider.fraction * 100) + "%"
-            color: Theme.textSecondary
-            font.family: Theme.fontFamily
-            font.pixelSize: 12
-        }
-    }
-
-    // ─── Inline labelled row ────────────────────────────────────────────
-    component LabelRow: Item {
-        id: lr
-        property string title: ""
-        property string description: ""
-        property string hint: ""
-        default property alias control: controlSlot.data
-
-        width: parent.width
-        height: Math.max(56, textCol.height + 24)
-
-        Column {
-            id: textCol
-            anchors.left: parent.left
-            anchors.leftMargin: 16
-            anchors.right: controlSlot.left
-            anchors.rightMargin: 12
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
-
-            Text {
-                text: lr.title
-                color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: 13
-                font.weight: Font.Medium
-            }
-            Text {
-                width: parent.width
-                text: lr.description
-                color: Theme.textSecondary
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                visible: lr.description !== ""
-                wrapMode: Text.WordWrap
-            }
-            Text {
-                width: parent.width
-                text: lr.hint
-                color: Theme.textTertiary
-                font.family: Theme.fontFamily
-                font.pixelSize: 10
-                font.italic: true
-                visible: lr.hint !== ""
-                wrapMode: Text.WordWrap
-            }
-        }
-
-        Item {
-            id: controlSlot
-            anchors.right: parent.right
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            width: childrenRect.width
-            height: childrenRect.height
-        }
-    }
 
     // ─── Layout ─────────────────────────────────────────────────────────
     Flickable {
@@ -293,14 +102,14 @@ Item {
                 }
 
                 // Surface
-                GroupShell {
+                SettingsGroup {
                     header: "SURFACE"
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Background opacity"
                         description: "Bar tint strength. Lower lets more wallpaper show through."
 
-                        VSlider {
+                        SettingsSlider {
                             width: 240
                             from: 0.10
                             to: 0.60
@@ -313,11 +122,11 @@ Item {
 
                     Divider {}
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Text glow"
                         description: "Soft halo behind bar text and icons."
 
-                        VSlider {
+                        SettingsSlider {
                             width: 240
                             from: 0.0
                             to: 1.0
@@ -330,10 +139,10 @@ Item {
                 }
 
                 // Typography
-                GroupShell {
+                SettingsGroup {
                     header: "TYPOGRAPHY"
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Font family"
                         description: "Used for all bar text. Falls back silently if not installed."
                         hint: root.fontInstalled(SettingsStore.topBarFontFamily)
@@ -351,7 +160,7 @@ Item {
 
                     Divider {}
 
-                    LabelRow {
+                    SettingsRow {
                         title: "Weight"
                         description: "Stroke weight for bar text."
 
