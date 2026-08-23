@@ -3,15 +3,44 @@ set -euo pipefail
 
 # lock-screen
 # Prefer swaylock-effects if available, otherwise fall back to swaylock.
+# Handles vertical and multi-monitor layouts.
 
 SWAYLOCK_EFFECTS="$(command -v swaylock-effects || true)"
 SWAYLOCK="$(command -v swaylock || true)"
 
+# Detect if any output is rotated (vertical display)
+ROTATED=$(niri msg --json outputs 2>/dev/null | \
+    jq -r '.[].transform // "normal"' 2>/dev/null | \
+    grep -c -E '90|270' || true)
+
+INDICATOR_ARGS=()
+if [ "$ROTATED" -gt 0 ]; then
+    # On vertical displays, use smaller indicator to avoid keyboard overlap
+    INDICATOR_ARGS=(--indicator-caps-lock --indicator-radius 80 --indicator-thickness 10)
+fi
+
 if [ -n "$SWAYLOCK_EFFECTS" ]; then
-    # Example options: blur, effect-strength etc. Adjust to taste.
-    exec "$SWAYLOCK_EFFECTS" --blur 7 --effect "boxblur" --indicator
+    exec "$SWAYLOCK_EFFECTS" \
+        --blur 7 \
+        --effect "boxblur" \
+        --indicator \
+        --ring-color "00000000" \
+        --key-hl-color "0a84ffcc" \
+        --bs-hl-color "ff453acc" \
+        --inside-color "00000088" \
+        --text-color "f5f5f7" \
+        --line-color "00000000" \
+        --separator-color "00000000" \
+        "${INDICATOR_ARGS[@]}"
 elif [ -n "$SWAYLOCK" ]; then
-    exec "$SWAYLOCK"
+    exec "$SWAYLOCK" \
+        --ring-color "00000000" \
+        --key-hl-color "0a84ffcc" \
+        --bs-hl-color "ff453acc" \
+        --inside-color "00000088" \
+        --text-color "f5f5f7" \
+        --line-color "00000000" \
+        --separator-color "00000000"
 else
     echo "No lockscreen binary found (swaylock-effects or swaylock)." >&2
     exit 2

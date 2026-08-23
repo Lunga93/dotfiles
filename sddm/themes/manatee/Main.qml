@@ -9,8 +9,8 @@ import "."
 Item {
     id: root
 
-    width: 1920
-    height: 1080
+    width: Screen.width
+    height: Screen.height
 
     property int currentUserIndex: userModel ? userModel.lastIndex : 0
     property int currentSessionIndex: sessionModel ? sessionModel.lastIndex : 0
