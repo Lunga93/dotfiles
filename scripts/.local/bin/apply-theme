@@ -3,7 +3,7 @@ set -euo pipefail
 
 LOG_FILE="$HOME/.local/share/dotfiles/apply-theme.log"
 mkdir -p "$(dirname "$LOG_FILE")"
->"$LOG_FILE"
+: >"$LOG_FILE"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "--- Starting apply-theme: $(date) ---"
@@ -198,8 +198,6 @@ echo "Final secondary:        $SECONDARY"
 
 echo "Setting system color scheme: $COLOR_SCHEME"
 gsettings set org.gnome.desktop.interface color-scheme "prefer-$COLOR_SCHEME" 2>/dev/null || true
-INVERSE_ACCENT=""
-
 if [ -x "$HOME/dotfiles/scripts/.local/bin/accent-guardian" ]; then
     "$HOME/dotfiles/scripts/.local/bin/accent-guardian" || true
 fi
