@@ -4,16 +4,15 @@
 * {
     font-family: "Inter", "Symbols Nerd Font", "MesloLGS Nerd Font", "Font Awesome 6 Free", Roboto, Helvetica, Arial, sans-serif;
     font-size: 15px;
-    color: #e0e0e0;
+    color: var(--wal-fg, #c8e9f5);
 }
 
 /* Main window */
 window {
     margin: 0;
-    /* Increased opacity to 0.9 (90%) to hide background clutter */
-    background-color: rgba(30, 34, 42, 0.9);
+    background-color: var(--wal-bg, #020305)e6;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--wal-border, rgba(255, 255, 255, 0.08));
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
@@ -32,18 +31,18 @@ window {
 
 /* Input bar */
 #input {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #ffffff;
+    background-color: var(--wal-input-bg, rgba(255, 255, 255, 0.04));
+    color: var(--wal-fg, #ffffff);
     border-radius: 999px;
     padding: 10px 16px;
     margin: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--wal-border, rgba(255, 255, 255, 0.08));
     box-shadow: none;
 }
 
 #input:focus {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--wal-accent, rgba(255, 255, 255, 0.15));
+    box-shadow: 0 0 10px var(--wal-accent, rgba(255, 255, 255, 0.05));
 }
 
 /* Scroll Area */
@@ -61,22 +60,39 @@ window {
     margin-bottom: 4px;
     border: none;
     background-color: transparent;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
+}
+
+/* Hover */
+#entry:hover {
+    background-color: var(--wal-hover-bg, rgba(255, 255, 255, 0.06));
 }
 
 /* Selected Entry */
 #entry:selected {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: var(--wal-selected-bg, rgba(56, 190, 245, 0.18));
+    color: var(--wal-fg, #ffffff);
     font-weight: bold;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--wal-accent, rgba(255, 255, 255, 0.05));
 }
 
-#text {
-    margin-left: 10px;
-}
-
+/* App icon */
 #img {
-    margin-right: 10px;
+    margin-right: 12px;
+    min-width: 32px;
+    min-height: 32px;
     background: transparent;
+}
+
+/* App name text */
+#text {
+    margin-left: 4px;
+    color: var(--wal-fg, #e0e0e0);
+}
+
+/* Subtext (description) */
+#text ko {
+    color: var(--wal-fg, #e0e0e0);
+    opacity: 0.5;
+    font-size: 12px;
 }

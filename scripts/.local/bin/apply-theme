@@ -323,9 +323,26 @@ fi
 
 WOFI_DIR="$HOME/.config/wofi"
 if [ -d "$WOFI_DIR" ]; then
+    # Derive surface and border from BG
+    WOFI_SURFACE=$(python3 - "$BG" <<'PY'
+import sys
+h = sys.argv[1].lstrip('#')
+r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+def lighten(v): return min(255, v + 18)
+print(f"#{lighten(r):02x}{lighten(g):02x}{lighten(b):02x}")
+PY
+)
     cat > "$WOFI_DIR/colors-wal.css" <<CSS
-#input { background-color: ${BG}14; color: ${FG}; }
-#entry:selected { background-color: ${ACCENT}33; color: ${FG}; }
+:root {
+    --wal-bg: ${BG};
+    --wal-fg: ${FG};
+    --wal-accent: ${ACCENT};
+    --wal-surface: ${WOFI_SURFACE};
+    --wal-border: ${FG}18;
+    --wal-input-bg: ${FG}0a;
+    --wal-selected-bg: ${ACCENT}30;
+    --wal-hover-bg: ${FG}12;
+}
 CSS
 fi
 
