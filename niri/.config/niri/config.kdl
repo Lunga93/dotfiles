@@ -41,7 +41,7 @@ output "Dell Inc. DELL P2422H 3P0RYF3" {
 output "ViewSonic Corporation VX2758-C-MH V9M191500306" {
     mode "1920x1080@60.000"
     scale 1
-    position x=0 y=819
+    position x=0 y=606
 }
 
 // END_AUTO_OUTPUTS
@@ -55,6 +55,7 @@ binds {
     // ─── Applications ───
     MOD+RETURN                          hotkey-overlay-title="Open Terminal: alacritty" { spawn-sh "alacritty"; }
     MOD+SPACE                           hotkey-overlay-title="Open App Launcher: wofi" { spawn-sh "wofi --show drun"; }
+    MOD+SHIFT+SPACE                     hotkey-overlay-title="Spotlight Search" { spawn-sh "qs ipc call spotlight toggle"; }
     MOD+B                               hotkey-overlay-title="Open Browser: zen-browser" { spawn-sh "zen-browser"; }
     // MOD+ALT+L                           hotkey-overlay-title="Lock Screen: swaylock" { spawn-sh "swaylock"; }
     
@@ -226,8 +227,8 @@ binds {
 
         focus-ring {
             width 3
-            active-color "#52C7FA"
-            inactive-color "#52C7FA"
+            active-color "#AE5B3A"
+            inactive-color "#AE5B3A"
         }
 
         shadow {

@@ -28,6 +28,7 @@ ClockSegment 1.0 segments/ClockSegment.qml
 ClipboardButton 1.0 segments/ClipboardButton.qml
 PowerButton 1.0 segments/PowerButton.qml
 
+Aperture 1.0 popouts/Aperture.qml
 CalendarPopout 1.0 popouts/CalendarPopout.qml
 PowerMenuPopout 1.0 popouts/PowerMenuPopout.qml
 NetworkPanel 1.0 popouts/NetworkPanel.qml
@@ -72,6 +73,15 @@ NetworkPage 1.0 settings/pages/network/NetworkPage.qml
 SavedConnectionRow 1.0 settings/pages/network/SavedConnectionRow.qml
 SoundPage 1.0 settings/pages/sound/SoundPage.qml
 SysInfoPage 1.0 settings/pages/sysinfo/SysInfoPage.qml
+
+# Spotlight launcher
+SpotlightStyle 1.0 launcher/SpotlightStyle.qml
+SpotlightAppProvider 1.0 launcher/SpotlightAppProvider.qml
+SpotlightWallpaperProvider 1.0 launcher/SpotlightWallpaperProvider.qml
+SpotlightClipboardProvider 1.0 launcher/SpotlightClipboardProvider.qml
+SpotlightSearchBar 1.0 launcher/SpotlightSearchBar.qml
+SpotlightResultsPanel 1.0 launcher/SpotlightResultsPanel.qml
+LauncherWindow 1.0 launcher/LauncherWindow.qml
 
 # Mood browser components
 singleton MoodCatalog 1.0 settings/data/MoodCatalog.qml
