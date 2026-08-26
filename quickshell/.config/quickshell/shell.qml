@@ -1,6 +1,7 @@
 //@ pragma UseQApplication
 // Quickshell entry. One Bar per screen + the floating popouts.
 
+//@ pragma IconTheme AdwaitaLegacy
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -22,11 +23,13 @@ ShellRoot {
         Bar {}
     }
 
+    Aperture        { id: aperture }
     AudioPanel      { id: audioPanel }
     CalendarPopout  { id: calendarPopout }
     PowerMenuPopout { id: powerPopout }
     NetworkPanel    { id: networkPanel }
     SettingsWindow  { id: settingsWindow }
+    LauncherWindow  { id: spotlight }
 
     Item {
         Component.onCompleted: {
@@ -36,6 +39,13 @@ ShellRoot {
             Globals.networkPanel   = networkPanel;
             Globals.settingsWindow = settingsWindow;
         }
+    }
+
+    IpcHandler {
+        target: "aperture"
+        function toggle(): void { aperture.toggle() }
+        function show(): void   { aperture.show() }
+        function hide(): void   { aperture.hide() }
     }
 
     IpcHandler {
@@ -67,5 +77,12 @@ ShellRoot {
         function toggle(): void { settingsWindow.toggle() }
         function show(): void   { settingsWindow.open() }
         function hide(): void   { settingsWindow.close() }
+    }
+
+    IpcHandler {
+        target: "spotlight"
+        function toggle(): void { spotlight.toggle() }
+        function show(): void   { spotlight.show() }
+        function hide(): void   { spotlight.hide() }
     }
 }
